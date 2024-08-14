@@ -2,8 +2,6 @@ package com.hamza.fruitsappbackend.dto;
 
 import com.hamza.fruitsappbackend.constant.OrderStatus;
 import com.hamza.fruitsappbackend.constant.PaymentMethod;
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PastOrPresent;
 import jakarta.validation.constraints.Positive;
@@ -11,6 +9,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -20,11 +19,11 @@ import java.util.List;
 @AllArgsConstructor
 public class OrderDTO {
 
-    @NotNull(message = "Order ID cannot be null")
     private Long id;
 
     @Positive(message = "Total price must be a positive value")
-    private double totalPrice;
+    @NotNull(message = "Total price is required")
+    private Double totalPrice;
 
     @NotNull(message = "Order status cannot be null")
     private OrderStatus status;
@@ -38,15 +37,12 @@ public class OrderDTO {
     @PastOrPresent(message = "Updated date cannot be in the future")
     private LocalDateTime updatedAt;
 
-    @NotNull(message = "User information is required")
-    @Valid
-    private UserDTO user;
+    @NotNull(message = "User ID is required")
+    private Long userId;
 
-    @NotNull(message = "Address information is required")
-    @Valid
-    private AddressDTO address;
+    @NotNull(message = "Address ID is required")
+    private Long addressId;
 
-    @NotEmpty(message = "Order must contain at least one order item")
-    @Valid
+    @NotNull(message = "Order items are required")
     private List<OrderItemDTO> orderItems;
 }

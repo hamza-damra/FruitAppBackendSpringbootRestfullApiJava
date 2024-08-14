@@ -2,6 +2,7 @@ package com.hamza.fruitsappbackend.controller;
 
 import com.hamza.fruitsappbackend.dto.AddressDTO;
 import com.hamza.fruitsappbackend.service.AddressService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -20,13 +21,13 @@ public class AddressController {
         this.addressService = addressService;
     }
 
-    @PostMapping
-    public ResponseEntity<AddressDTO> createAddress(@RequestBody AddressDTO addressDTO) {
+    @PostMapping("/create")
+    public ResponseEntity<AddressDTO> createAddress(@RequestBody @Valid AddressDTO addressDTO) {
         AddressDTO savedAddress = addressService.saveAddress(addressDTO);
         return ResponseEntity.ok(savedAddress);
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/get-by-id/{id}")
     public ResponseEntity<AddressDTO> getAddressById(@PathVariable Long id) {
         Optional<AddressDTO> addressDTO = addressService.getAddressById(id);
         return addressDTO.map(ResponseEntity::ok)
@@ -39,22 +40,36 @@ public class AddressController {
         return ResponseEntity.ok(addresses);
     }
 
-    @GetMapping
+    @GetMapping("all")
     public ResponseEntity<List<AddressDTO>> getAllAddresses() {
         List<AddressDTO> addresses = addressService.getAllAddresses();
         return ResponseEntity.ok(addresses);
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<AddressDTO> updateAddress(@PathVariable Long id, @RequestBody AddressDTO addressDTO) {
+    @PutMapping("/update-by-id/{id}")
+    public ResponseEntity<AddressDTO> updateAddress(@PathVariable Long id, @RequestBody @Valid AddressDTO addressDTO) {
         addressDTO.setId(id);
         AddressDTO updatedAddress = addressService.updateAddress(addressDTO);
         return ResponseEntity.ok(updatedAddress);
     }
 
-    @DeleteMapping("/{id}")
+    @PutMapping("/update-by-user-id/{id}")
+    public ResponseEntity<AddressDTO> updateAddressByUserId(@PathVariable("id") Long userId, @RequestBody @Valid AddressDTO addressDTO) {
+        addressDTO.setUserId(userId);
+        AddressDTO updatedAddress = addressService.updateAddressByUserId(addressDTO);
+        return ResponseEntity.ok(updatedAddress);
+    }
+
+    @DeleteMapping("/delete-by-id/{id}")
     public ResponseEntity<Void> deleteAddressById(@PathVariable Long id) {
         addressService.deleteAddressById(id);
         return ResponseEntity.noContent().build();
     }
+    // delete user by userId
+    @DeleteMapping("/delete-by-user-id/{userId}")
+    public ResponseEntity<String> deleteAddressesByUserId(@PathVariable Long userId) {
+        addressService.deleteAddressByUserId(userId);
+        return ResponseEntity.ok("Address has been deleted successfully");
+    }
+
 }

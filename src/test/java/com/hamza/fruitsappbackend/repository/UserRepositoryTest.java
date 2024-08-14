@@ -27,7 +27,7 @@ class UserRepositoryTest {
         user = new User();
         user.setName("John Doe");
         user.setEmail("johndoe@example.com");
-        user.setPasswordHash("hashedpassword");
+        user.setPassword("hashedpassword");
     }
 
     @Test
@@ -36,7 +36,7 @@ class UserRepositoryTest {
         assertNotNull(savedUser.getId());
         assertEquals("John Doe", savedUser.getName());
         assertEquals("johndoe@example.com", savedUser.getEmail());
-        assertEquals("hashedpassword", savedUser.getPasswordHash());
+        assertEquals("hashedpassword", savedUser.getPassword());
     }
 
     @Test
@@ -104,7 +104,7 @@ class UserRepositoryTest {
         User anotherUser = new User();
         anotherUser.setName("Jane Smith");
         anotherUser.setEmail("johndoe@example.com"); // Same email as the first user
-        anotherUser.setPasswordHash("anotherhashedpassword");
+        anotherUser.setPassword("anotherhashedpassword");
 
         assertThrows(DataIntegrityViolationException.class, () -> {
             userRepository.save(anotherUser);

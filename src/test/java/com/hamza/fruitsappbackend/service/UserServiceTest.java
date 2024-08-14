@@ -16,7 +16,6 @@ import org.mockito.MockitoAnnotations;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -52,7 +51,7 @@ class UserServiceImplTest {
         user.setId(1L);
         user.setName("John Doe");
         user.setEmail("johndoe@example.com");
-        user.setPasswordHash("hashedpassword");
+        user.setPassword("hashedpassword");
         user.setAddresses(Arrays.asList(address));
 
         addressDTO = new AddressDTO();
@@ -64,7 +63,7 @@ class UserServiceImplTest {
         userDTO.setId(1L);
         userDTO.setName("John Doe");
         userDTO.setEmail("johndoe@example.com");
-        userDTO.setPasswordHash("hashedpassword");
+        userDTO.setPassword("hashedpassword");
         userDTO.setAddresses(Arrays.asList(addressDTO));
     }
 

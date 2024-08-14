@@ -1,6 +1,7 @@
 package com.hamza.fruitsappbackend.controller;
 
 import com.hamza.fruitsappbackend.dto.RoleDto;
+import com.hamza.fruitsappbackend.dto.RolesResponseDto;
 import com.hamza.fruitsappbackend.service.RoleService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -42,8 +43,10 @@ public class RoleController {
     }
 
     @GetMapping("/all")
-    public ResponseEntity<List<RoleDto>> getAllRoles() {
-        return new ResponseEntity<>(roleService.getAllRoles(), HttpStatus.OK);
+    public ResponseEntity<RolesResponseDto> getAllRoles() {
+        List<RoleDto> roles = roleService.getAllRoles();
+        RolesResponseDto response = new RolesResponseDto(roles, roles.size());
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
 }

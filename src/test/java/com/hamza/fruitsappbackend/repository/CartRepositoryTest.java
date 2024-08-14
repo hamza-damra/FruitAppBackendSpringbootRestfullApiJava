@@ -30,7 +30,7 @@ class CartRepositoryTest {
         user = new User();
         user.setName("John Doe");
         user.setEmail("johndoe@example.com");
-        user.setPasswordHash("hashedpassword");
+        user.setPassword("hashedpassword");
         userRepository.save(user);
 
         cart = new Cart();

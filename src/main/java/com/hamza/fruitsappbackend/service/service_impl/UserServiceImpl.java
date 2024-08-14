@@ -12,6 +12,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -38,11 +39,13 @@ public class UserServiceImpl implements UserService {
     public UserDTO saveUser(UserDTO userDTO) {
         User user = modelMapper.map(userDTO, User.class);
 
-        // Encode the password
-        user.setPasswordHash(passwordEncoder.encode(user.getPasswordHash()));
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
 
-        // Assign roles if provided
-        if (userDTO.getRoles() != null) {
+        if (user.getRoles() == null) {
+            user.setRoles(new HashSet<>());
+        }
+
+        if (userDTO.getRoles() != null && !userDTO.getRoles().isEmpty()) {
             Set<Role> roles = userDTO.getRoles().stream()
                     .map(roleDto -> roleRepository.findByName(roleDto.getName())
                             .orElseThrow(() -> new RuntimeException("Role not found")))
@@ -90,8 +93,8 @@ public class UserServiceImpl implements UserService {
             if (userDTO.getEmail() != null) {
                 existingUser.setEmail(userDTO.getEmail());
             }
-            if (userDTO.getPasswordHash() != null) {
-                existingUser.setPasswordHash(passwordEncoder.encode(userDTO.getPasswordHash()));
+            if (userDTO.getPassword() != null) {
+                existingUser.setPassword(passwordEncoder.encode(userDTO.getPassword()));
             }
 
             // Assign roles if provided
@@ -163,7 +166,7 @@ public class UserServiceImpl implements UserService {
 
         return org.springframework.security.core.userdetails.User.builder()
                 .username(user.getEmail())
-                .password(user.getPasswordHash())
+                .password(user.getPassword())
                 .authorities(user.getRoles().stream()
                         .map(role -> "ROLE_" + role.getName())
                         .toList()

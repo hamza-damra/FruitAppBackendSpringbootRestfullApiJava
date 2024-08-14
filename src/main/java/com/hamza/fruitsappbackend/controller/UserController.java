@@ -43,7 +43,7 @@ public class UserController {
 
         // Authenticate the newly created user
         Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(userDTO.getEmail(), userDTO.getPasswordHash()));
+                new UsernamePasswordAuthenticationToken(userDTO.getEmail(), userDTO.getPassword()));
 
         // Generate token
         String token = jwtTokenProvider.generateToken(authentication);
@@ -91,14 +91,14 @@ public class UserController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteUserById(@PathVariable Long id) {
+    public ResponseEntity<String> deleteUserById(@PathVariable Long id) {
         userService.deleteUserById(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok("User deleted successfully !");
     }
 
     @DeleteMapping("/email/{email}")
-    public ResponseEntity<Void> deleteUserByEmail(@PathVariable String email) {
+    public ResponseEntity<String> deleteUserByEmail(@PathVariable String email) {
         userService.deleteUserByEmail(email);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok("User deleted successfully !");
     }
 }

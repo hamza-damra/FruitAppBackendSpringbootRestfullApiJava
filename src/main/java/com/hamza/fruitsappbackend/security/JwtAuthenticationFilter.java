@@ -76,7 +76,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     private boolean isUnsecuredEndpoint(String requestURI) {
-        return requestURI.equals("/api/v1/users/register") || requestURI.equals("/api/v1/users/login") || requestURI.equals("/api/v1/roles/create");
+        return requestURI.startsWith("/api/v1/users/") || requestURI.startsWith("/api/v1/roles/") || requestURI.startsWith("/api/v1/orders");
     }
 
     private String getJwtTokenFromRequest(HttpServletRequest request) {

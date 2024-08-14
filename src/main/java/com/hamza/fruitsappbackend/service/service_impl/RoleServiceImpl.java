@@ -33,8 +33,8 @@ public class RoleServiceImpl implements RoleService {
         Role existingRole = roleRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Role not found with id: " + id));
 
-        // Update the role properties
-        existingRole.setName(roleDto.getName().toUpperCase());
+
+        existingRole.setName("ROLE_" + roleDto.getName().toUpperCase());
 
         Role updatedRole = roleRepository.save(existingRole);
         return modelMapper.map(updatedRole, RoleDto.class);
@@ -46,8 +46,13 @@ public class RoleServiceImpl implements RoleService {
         Role role = roleRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Role not found with id: " + id));
 
+        if (!role.getUsers().isEmpty()) {
+            throw new RuntimeException("Role cannot be deleted as it is associated with users.");
+        }
+
         roleRepository.delete(role);
     }
+
 
     @Override
     @Transactional

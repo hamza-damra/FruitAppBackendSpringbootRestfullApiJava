@@ -18,4 +18,10 @@ public interface OrderService {
     OrderDTO updateOrder(OrderDTO orderDTO);
 
     void deleteOrderById(Long id);
+
+    void deleteOrdersByUserId(Long userId);
+
+    void deleteOrderByIdAndUserId(Long orderId, Long userId);
+
+    OrderDTO updateOrderByUserIdAndOrderId(Long orderId, Long userId, OrderDTO orderDTO);
 }

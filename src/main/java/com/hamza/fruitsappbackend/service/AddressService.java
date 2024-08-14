@@ -18,4 +18,8 @@ public interface AddressService {
     AddressDTO updateAddress(AddressDTO addressDTO);
 
     void deleteAddressById(Long id);
+
+    void deleteAddressByUserId(Long userId);
+
+    AddressDTO updateAddressByUserId(AddressDTO addressDTO);
 }
