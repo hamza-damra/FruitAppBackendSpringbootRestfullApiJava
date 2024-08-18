@@ -35,26 +35,21 @@ public class OrderItemServiceImpl implements OrderItemService {
 
     @Override
     public OrderItemDTO saveOrderItem(OrderItemDTO orderItemDTO) {
-        OrderItem orderItem = modelMapper.map(orderItemDTO, OrderItem.class);
+        // Retrieve the Product by ID
+        Product product = productRepository.findById(orderItemDTO.getProductId())
+                .orElseThrow(() -> new RuntimeException("Product not found for the given ID: " + orderItemDTO.getProductId()));
 
-        // Retrieve the Product and its price
-        Optional<Product> productOptional = productRepository.findById(orderItem.getProduct().getId());
-        if (productOptional.isPresent()) {
-            Product product = productOptional.get();
-            orderItem.setProduct(product); // Set the product in OrderItem
-            BigDecimal productPrice = BigDecimal.valueOf(product.getPrice());
-            logger.debug("Setting price for OrderItem: {}", productPrice); // Log the price
-            orderItem.setPrice(productPrice); // Set the price from the product
-        } else {
-            throw new RuntimeException("Product not found for the given ID.");
-        }
+        // Create the OrderItem entity manually
+        OrderItem orderItem = new OrderItem();
+        orderItem.setProduct(product);
+        orderItem.setQuantity(orderItemDTO.getQuantity());
+        orderItem.setPrice(BigDecimal.valueOf(product.getPrice()));
+        // Note: The order should already be set before calling this service
 
-        // Ensure that the Order is set before saving the OrderItem
-        if (orderItem.getOrder() == null) {
-            throw new RuntimeException("Order not set in OrderItem.");
-        }
-
+        // Save the OrderItem
         OrderItem savedOrderItem = orderItemRepository.save(orderItem);
+
+        // Map the saved entity back to DTO to ensure the ID is captured
         return modelMapper.map(savedOrderItem, OrderItemDTO.class);
     }
 
@@ -62,8 +57,10 @@ public class OrderItemServiceImpl implements OrderItemService {
     public Optional<OrderItemDTO> getOrderItemById(Long id) {
         return orderItemRepository.findById(id)
                 .map(orderItem -> {
-                    OrderItemDTO orderItemDTO = modelMapper.map(orderItem, OrderItemDTO.class);
-                    orderItemDTO.setPrice(orderItem.getProduct().getPrice()); // Set the price from Product
+                    OrderItemDTO orderItemDTO = new OrderItemDTO();
+                    orderItemDTO.setId(orderItem.getId());
+                    orderItemDTO.setProductId(orderItem.getProduct().getId());
+                    orderItemDTO.setQuantity(orderItem.getQuantity());
                     return orderItemDTO;
                 });
     }
@@ -71,7 +68,13 @@ public class OrderItemServiceImpl implements OrderItemService {
     @Override
     public List<OrderItemDTO> getOrderItemsByOrderId(Long orderId) {
         return orderItemRepository.findByOrderId(orderId).stream()
-                .map(orderItem -> modelMapper.map(orderItem, OrderItemDTO.class))
+                .map(orderItem -> {
+                    OrderItemDTO orderItemDTO = new OrderItemDTO();
+                    orderItemDTO.setId(orderItem.getId());
+                    orderItemDTO.setProductId(orderItem.getProduct().getId());
+                    orderItemDTO.setQuantity(orderItem.getQuantity());
+                    return orderItemDTO;
+                })
                 .collect(Collectors.toList());
     }
 
@@ -79,8 +82,10 @@ public class OrderItemServiceImpl implements OrderItemService {
     public List<OrderItemDTO> getAllOrderItems() {
         return orderItemRepository.findAll().stream()
                 .map(orderItem -> {
-                    OrderItemDTO orderItemDTO = modelMapper.map(orderItem, OrderItemDTO.class);
-                    orderItemDTO.setPrice(orderItem.getProduct().getPrice()); // Set the price from Product
+                    OrderItemDTO orderItemDTO = new OrderItemDTO();
+                    orderItemDTO.setId(orderItem.getId());
+                    orderItemDTO.setProductId(orderItem.getProduct().getId());
+                    orderItemDTO.setQuantity(orderItem.getQuantity());
                     return orderItemDTO;
                 })
                 .collect(Collectors.toList());
@@ -98,18 +103,12 @@ public class OrderItemServiceImpl implements OrderItemService {
             }
 
             // Update product
-            if (orderItemDTO.getProduct() != null) {
-                Optional<Product> productOptional = productRepository.findById(orderItemDTO.getProduct().getId());
-                if (productOptional.isPresent()) {
-                    Product product = productOptional.get();
-                    existingOrderItem.setProduct(product);
-                    BigDecimal productPrice = BigDecimal.valueOf(product.getPrice());
-                    logger.debug("Updating price for OrderItem: {}", productPrice); // Log the price
-                    existingOrderItem.setPrice(productPrice); // Update the price from Product
-                } else {
-                    throw new RuntimeException("Product not found for the given ID.");
-                }
-            }
+            Product product = productRepository.findById(orderItemDTO.getProductId())
+                    .orElseThrow(() -> new RuntimeException("Product not found for the given ID."));
+            existingOrderItem.setProduct(product);
+            BigDecimal productPrice = BigDecimal.valueOf(product.getPrice());
+            logger.debug("Updating price for OrderItem: {}", productPrice);
+            existingOrderItem.setPrice(productPrice); // Update the price from Product
 
             OrderItem updatedOrderItem = orderItemRepository.save(existingOrderItem);
             return modelMapper.map(updatedOrderItem, OrderItemDTO.class);

@@ -92,10 +92,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
 
     private boolean isInvalidUrl(String requestURI) {
-        return !requestURI.startsWith("/api/v1/users/") &&
-                !requestURI.startsWith("/api/v1/roles/") &&
-                !requestURI.startsWith("/api/v1/orders") &&
-                !requestURI.startsWith("/api/carts/");
+        return false;
+//        return !requestURI.startsWith("/api/v1/users/") &&
+//                !requestURI.startsWith("/api/v1/roles/") &&
+//                !requestURI.startsWith("/api/v1/orders") &&
+//                !requestURI.startsWith("/api/carts/") &&
+//                !requestURI.startsWith("/api/v1/products/");
     }
 
     private boolean isUnsecuredEndpoint(String requestURI) {

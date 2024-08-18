@@ -1,8 +1,11 @@
 package com.hamza.fruitsappbackend.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.hamza.fruitsappbackend.constant.OrderStatus;
 import com.hamza.fruitsappbackend.constant.PaymentMethod;
-import com.hamza.fruitsappbackend.validators.ValidTotalPrice;
+import com.hamza.fruitsappbackend.validators.annotation.ValidTotalPrice;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PastOrPresent;
 import jakarta.validation.constraints.Positive;
@@ -34,9 +37,11 @@ public class OrderDTO {
     @NotNull(message = "Payment method cannot be null")
     private PaymentMethod paymentMethod;
 
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
     @PastOrPresent(message = "Creation date cannot be in the future")
     private LocalDateTime createdAt;
 
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
     @PastOrPresent(message = "Updated date cannot be in the future")
     private LocalDateTime updatedAt;
 

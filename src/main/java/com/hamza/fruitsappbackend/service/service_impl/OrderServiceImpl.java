@@ -6,16 +6,11 @@ import com.hamza.fruitsappbackend.entity.Order;
 import com.hamza.fruitsappbackend.entity.OrderItem;
 import com.hamza.fruitsappbackend.entity.User;
 import com.hamza.fruitsappbackend.entity.Address;
-import com.hamza.fruitsappbackend.repository.OrderRepository;
-import com.hamza.fruitsappbackend.repository.UserRepository;
-import com.hamza.fruitsappbackend.repository.AddressRepository;
-import com.hamza.fruitsappbackend.service.OrderItemService;
+import com.hamza.fruitsappbackend.repository.*;
 import com.hamza.fruitsappbackend.service.OrderService;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import org.modelmapper.ModelMapper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -27,70 +22,84 @@ import java.util.stream.Collectors;
 @Service
 public class OrderServiceImpl implements OrderService {
 
-    private static final Logger logger = LoggerFactory.getLogger(OrderServiceImpl.class);
-
     private final OrderRepository orderRepository;
     private final UserRepository userRepository;
+    private final OrderItemRepository orderItemRepository;
     private final AddressRepository addressRepository;
-    private final OrderItemService orderItemService;
+    private final ProductRepository productRepository;
     private final ModelMapper modelMapper;
 
     @Autowired
-    public OrderServiceImpl(OrderRepository orderRepository, UserRepository userRepository,
-                            AddressRepository addressRepository, OrderItemService orderItemService,
+    public OrderServiceImpl(OrderRepository orderRepository, UserRepository userRepository, OrderItemRepository orderItemRepository,
+                            AddressRepository addressRepository, ProductRepository productRepository,
                             ModelMapper modelMapper) {
         this.orderRepository = orderRepository;
         this.userRepository = userRepository;
+        this.orderItemRepository = orderItemRepository;
         this.addressRepository = addressRepository;
-        this.orderItemService = orderItemService;
+        this.productRepository = productRepository;
         this.modelMapper = modelMapper;
     }
 
     @Override
     @Transactional
     public OrderDTO saveOrder(OrderDTO orderDTO) {
+
         Order order = modelMapper.map(orderDTO, Order.class);
+
+        // Set user and address
         setUserAndAddress(orderDTO, order);
 
-        // Save the order first to ensure it has an ID
+        // Save the order to ensure it has an ID
         Order savedOrder = orderRepository.save(order);
 
-        // Ensure that order items are associated with the saved order
-        orderDTO.getOrderItems().forEach(orderItemDTO -> {
-            OrderItem orderItem = modelMapper.map(orderItemDTO, OrderItem.class);
-            orderItem.setOrder(savedOrder); // Set the reference to the saved order
+        // Save associated order items
+        List<OrderItemDTO> savedOrderItems = saveOrderItems(orderDTO, savedOrder);
 
-            // Log the price for the order item
-            logger.debug("Saving OrderItem with price: {}", orderItem.getPrice());
+        // Map the saved order to DTO and set the saved order items
+        OrderDTO savedOrderDTO = modelMapper.map(savedOrder, OrderDTO.class);
+        savedOrderDTO.setOrderItems(savedOrderItems);
 
-            orderItemService.saveOrderItem(modelMapper.map(orderItem, OrderItemDTO.class)); // Save order item
-        });
-
-        return modelMapper.map(savedOrder, OrderDTO.class);
+        return savedOrderDTO;
     }
 
     @Override
     public OrderDTO updateOrder(OrderDTO orderDTO) {
         Order order = orderRepository.findById(orderDTO.getId())
                 .orElseThrow(() -> new EntityNotFoundException("Order not found with ID: " + orderDTO.getId()));
-        mapOrderDetails(orderDTO, order);
+
+        // Set order details, user, and address
         setUserAndAddress(orderDTO, order);
 
-        // Update the order items
-        order.getOrderItems().clear(); // Clear existing items
-        orderDTO.getOrderItems().forEach(orderItemDTO -> {
-            orderItemDTO.setOrderId(order.getId());
-            OrderItemDTO savedOrderItemDTO = orderItemService.saveOrderItem(orderItemDTO);
-            OrderItem orderItem = modelMapper.map(savedOrderItemDTO, OrderItem.class);
+        // Clear existing order items
+        order.getOrderItems().clear();
 
-            // Log the price for the updated order item
-            logger.debug("Updating OrderItem with price: {}", orderItem.getPrice());
-
-            order.addOrderItem(orderItem);
-        });
+        // Save associated order items
+        List<OrderItemDTO> savedOrderItems = saveOrderItems(orderDTO, order);
 
         Order updatedOrder = orderRepository.save(order);
-        return modelMapper.map(updatedOrder, OrderDTO.class);
+
+        // Map the updated order to DTO and set the saved order items
+        OrderDTO updatedOrderDTO = modelMapper.map(updatedOrder, OrderDTO.class);
+        updatedOrderDTO.setOrderItems(savedOrderItems);
+
+        return updatedOrderDTO;
+    }
+
+    private List<OrderItemDTO> saveOrderItems(OrderDTO orderDTO, Order order) {
+        return orderDTO.getOrderItems().stream()
+                .map(orderItemDTO -> {
+                    OrderItem orderItem = new OrderItem();
+                    orderItem.setOrder(order);
+                    orderItem.setProduct(productRepository.findById(orderItemDTO.getProductId())
+                            .orElseThrow(() -> new RuntimeException("Product not found with ID: " + orderItemDTO.getProductId())));
+                    orderItem.setQuantity(orderItemDTO.getQuantity());
+                    orderItem.setPrice(BigDecimal.valueOf(orderItem.getProduct().getPrice()));
+
+                    OrderItem savedOrderItem = orderItemRepository.save(orderItem);
+                    return modelMapper.map(savedOrderItem, OrderItemDTO.class);
+                })
+                .collect(Collectors.toList());
     }
 
     private void setUserAndAddress(OrderDTO orderDTO, Order order) {
@@ -156,32 +165,19 @@ public class OrderServiceImpl implements OrderService {
         Optional<Order> existingOrderOpt = orderRepository.findByIdAndUserId(orderId, userId);
         if (existingOrderOpt.isPresent()) {
             Order existingOrder = existingOrderOpt.get();
-            mapOrderDetails(orderDTO, existingOrder);
             setUserAndAddress(orderDTO, existingOrder);
 
             // Update the order items
-            existingOrder.getOrderItems().clear(); // Clear existing items
-            orderDTO.getOrderItems().forEach(orderItemDTO -> {
-                orderItemDTO.setOrderId(existingOrder.getId());
-                OrderItemDTO savedOrderItemDTO = orderItemService.saveOrderItem(orderItemDTO);
-                OrderItem orderItem = modelMapper.map(savedOrderItemDTO, OrderItem.class);
-
-                // Log the price for the updated order item
-                logger.debug("Updating OrderItem with price: {}", orderItem.getPrice());
-
-                existingOrder.addOrderItem(orderItem);
-            });
+            existingOrder.getOrderItems().clear();
+            List<OrderItemDTO> savedOrderItems = saveOrderItems(orderDTO, existingOrder);
 
             Order updatedOrder = orderRepository.save(existingOrder);
-            return modelMapper.map(updatedOrder, OrderDTO.class);
+            OrderDTO updatedOrderDTO = modelMapper.map(updatedOrder, OrderDTO.class);
+            updatedOrderDTO.setOrderItems(savedOrderItems);
+
+            return updatedOrderDTO;
         } else {
             throw new EntityNotFoundException("Order not found for order ID: " + orderId + " and user ID: " + userId);
         }
-    }
-
-    private void mapOrderDetails(OrderDTO orderDTO, Order order) {
-        order.setTotalPrice(orderDTO.getTotalPrice());
-        order.setStatus(orderDTO.getStatus());
-        order.setPaymentMethod(orderDTO.getPaymentMethod());
     }
 }

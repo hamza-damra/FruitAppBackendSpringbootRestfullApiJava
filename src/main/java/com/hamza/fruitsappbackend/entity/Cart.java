@@ -1,5 +1,6 @@
 package com.hamza.fruitsappbackend.entity;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -47,13 +48,12 @@ public class Cart {
         updatedAt = LocalDateTime.now();
     }
 
-    // Method to add a CartItem to the Cart
     public void addCartItem(CartItem cartItem) {
         cartItems.add(cartItem);
-        cartItem.setCart(this);  // Ensure the bidirectional relationship is maintained
+        cartItem.setCart(this);
     }
 
-    // Method to remove a CartItem from the Cart
+
     public void removeCartItem(CartItem cartItem) {
         cartItems.remove(cartItem);
         cartItem.setCart(null);

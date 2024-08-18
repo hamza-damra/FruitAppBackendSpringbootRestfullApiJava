@@ -16,7 +16,6 @@ import lombok.Setter;
 @AllArgsConstructor
 public class ProductDTO {
 
-    @NotNull(message = "ID cannot be null")
     @Min(value = 1, message = "ID must be a positive number")
     private Long id;
 

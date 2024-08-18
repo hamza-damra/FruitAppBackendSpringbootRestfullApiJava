@@ -7,8 +7,6 @@ import com.hamza.fruitsappbackend.repository.CartItemRepository;
 import com.hamza.fruitsappbackend.repository.ProductRepository;
 import com.hamza.fruitsappbackend.service.CartItemService;
 import org.modelmapper.ModelMapper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -19,8 +17,6 @@ import java.util.stream.Collectors;
 
 @Service
 public class CartItemServiceImpl implements CartItemService {
-
-    private static final Logger logger = LoggerFactory.getLogger(CartItemServiceImpl.class);
 
     private final CartItemRepository cartItemRepository;
     private final ProductRepository productRepository;
@@ -35,26 +31,25 @@ public class CartItemServiceImpl implements CartItemService {
 
     @Override
     public CartItemDTO saveCartItem(CartItemDTO cartItemDTO) {
-        CartItem cartItem = modelMapper.map(cartItemDTO, CartItem.class);
+        // Retrieve the Product by ID
+        Product product = productRepository.findById(cartItemDTO.getProductId())
+                .orElseThrow(() -> new RuntimeException("Product not found for the given ID: " + cartItemDTO.getProductId()));
 
-        // Retrieve the Product and its price
-        Optional<Product> productOptional = productRepository.findById(cartItem.getProduct().getId());
-        if (productOptional.isPresent()) {
-            Product product = productOptional.get();
-            cartItem.setProduct(product); // Set the product in CartItem
-            BigDecimal productPrice = BigDecimal.valueOf(product.getPrice());
-            logger.debug("Setting price for CartItem: {}", productPrice); // Log the price
-            cartItem.setPrice(productPrice); // Set the price from the product
-        } else {
-            throw new RuntimeException("Product not found for the given ID.");
-        }
+        // Create the CartItem entity manually
+        CartItem cartItem = new CartItem();
+        cartItem.setProduct(product);
+        cartItem.setQuantity(cartItemDTO.getQuantity());
+        cartItem.setPrice(BigDecimal.valueOf(product.getPrice()));
 
         // Ensure that the Cart is set before saving the CartItem
         if (cartItem.getCart() == null) {
-            throw new RuntimeException("Cart not set in CartItem.");
+            throw new RuntimeException("Cart not set in CartItem. This indicates that the CartItem is not properly associated with a Cart.");
         }
 
+        // Save the CartItem
         CartItem savedCartItem = cartItemRepository.save(cartItem);
+
+        // Map the saved entity back to DTO to ensure the ID is captured
         return modelMapper.map(savedCartItem, CartItemDTO.class);
     }
 
@@ -63,7 +58,7 @@ public class CartItemServiceImpl implements CartItemService {
         return cartItemRepository.findById(id)
                 .map(cartItem -> {
                     CartItemDTO cartItemDTO = modelMapper.map(cartItem, CartItemDTO.class);
-                    cartItemDTO.setPrice(BigDecimal.valueOf(cartItem.getProduct().getPrice())); // Set the price from Product
+                    cartItemDTO.setProductId(cartItem.getProduct().getId());
                     return cartItemDTO;
                 });
     }
@@ -71,7 +66,11 @@ public class CartItemServiceImpl implements CartItemService {
     @Override
     public List<CartItemDTO> getCartItemsByCartId(Long cartId) {
         return cartItemRepository.findByCartId(cartId).stream()
-                .map(cartItem -> modelMapper.map(cartItem, CartItemDTO.class))
+                .map(cartItem -> {
+                    CartItemDTO cartItemDTO = modelMapper.map(cartItem, CartItemDTO.class);
+                    cartItemDTO.setProductId(cartItem.getProduct().getId());
+                    return cartItemDTO;
+                })
                 .collect(Collectors.toList());
     }
 
@@ -80,7 +79,7 @@ public class CartItemServiceImpl implements CartItemService {
         return cartItemRepository.findAll().stream()
                 .map(cartItem -> {
                     CartItemDTO cartItemDTO = modelMapper.map(cartItem, CartItemDTO.class);
-                    cartItemDTO.setPrice(BigDecimal.valueOf(cartItem.getProduct().getPrice())); // Set the price from Product
+                    cartItemDTO.setProductId(cartItem.getProduct().getId());
                     return cartItemDTO;
                 })
                 .collect(Collectors.toList());
@@ -98,23 +97,17 @@ public class CartItemServiceImpl implements CartItemService {
             }
 
             // Update product
-            if (cartItemDTO.getProduct() != null) {
-                Optional<Product> productOptional = productRepository.findById(cartItemDTO.getProduct().getId());
-                if (productOptional.isPresent()) {
-                    Product product = productOptional.get();
-                    existingCartItem.setProduct(product);
-                    BigDecimal productPrice = BigDecimal.valueOf(product.getPrice());
-                    logger.debug("Updating price for CartItem: {}", productPrice); // Log the price
-                    existingCartItem.setPrice(productPrice); // Update the price from Product
-                } else {
-                    throw new RuntimeException("Product not found for the given ID.");
-                }
+            if (cartItemDTO.getProductId() != null) {
+                Product product = productRepository.findById(cartItemDTO.getProductId())
+                        .orElseThrow(() -> new RuntimeException("Product not found for the given ID: " + cartItemDTO.getProductId()));
+                existingCartItem.setProduct(product);
+                existingCartItem.setPrice(BigDecimal.valueOf(product.getPrice()));
             }
 
             CartItem updatedCartItem = cartItemRepository.save(existingCartItem);
             return modelMapper.map(updatedCartItem, CartItemDTO.class);
         } else {
-            return null;
+            throw new RuntimeException("CartItem not found with ID: " + cartItemDTO.getId());
         }
     }
 

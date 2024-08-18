@@ -1,5 +1,6 @@
-package com.hamza.fruitsappbackend.validators;
+package com.hamza.fruitsappbackend.validators.annotation;
 
+import com.hamza.fruitsappbackend.validators.TotalPriceValidator;
 import jakarta.validation.Constraint;
 import jakarta.validation.Payload;
 
@@ -8,11 +9,11 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-@Target({ ElementType.FIELD })
+@Constraint(validatedBy = TotalPriceValidator.class)
+@Target({ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
-@Constraint(validatedBy = UniqueEmailValidator.class)
-public @interface UniqueEmail {
-    String message() default "Email already in use";
+public @interface ValidTotalPrice {
+    String message() default "Provided total price does not match the calculated total price.";
     Class<?>[] groups() default {};
     Class<? extends Payload>[] payload() default {};
 }
