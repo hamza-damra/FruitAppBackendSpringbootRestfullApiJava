@@ -29,7 +29,6 @@ public class ReviewServiceImpl implements ReviewService {
     public ReviewDTO saveReview(ReviewDTO reviewDTO) {
         Review review = modelMapper.map(reviewDTO, Review.class);
 
-        // Map the image URLs to ReviewImage entities
         List<ReviewImage> reviewImages = reviewDTO.getImageUrls().stream()
                 .map(url -> new ReviewImage(null, url, review))
                 .collect(Collectors.toList());

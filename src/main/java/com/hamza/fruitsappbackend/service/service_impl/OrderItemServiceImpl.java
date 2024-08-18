@@ -35,21 +35,16 @@ public class OrderItemServiceImpl implements OrderItemService {
 
     @Override
     public OrderItemDTO saveOrderItem(OrderItemDTO orderItemDTO) {
-        // Retrieve the Product by ID
         Product product = productRepository.findById(orderItemDTO.getProductId())
                 .orElseThrow(() -> new RuntimeException("Product not found for the given ID: " + orderItemDTO.getProductId()));
 
-        // Create the OrderItem entity manually
         OrderItem orderItem = new OrderItem();
         orderItem.setProduct(product);
         orderItem.setQuantity(orderItemDTO.getQuantity());
         orderItem.setPrice(BigDecimal.valueOf(product.getPrice()));
-        // Note: The order should already be set before calling this service
 
-        // Save the OrderItem
         OrderItem savedOrderItem = orderItemRepository.save(orderItem);
 
-        // Map the saved entity back to DTO to ensure the ID is captured
         return modelMapper.map(savedOrderItem, OrderItemDTO.class);
     }
 
@@ -97,12 +92,10 @@ public class OrderItemServiceImpl implements OrderItemService {
         if (existingOrderItemOptional.isPresent()) {
             OrderItem existingOrderItem = existingOrderItemOptional.get();
 
-            // Update quantity
             if (orderItemDTO.getQuantity() > 0) {
                 existingOrderItem.setQuantity(orderItemDTO.getQuantity());
             }
 
-            // Update product
             Product product = productRepository.findById(orderItemDTO.getProductId())
                     .orElseThrow(() -> new RuntimeException("Product not found for the given ID."));
             existingOrderItem.setProduct(product);

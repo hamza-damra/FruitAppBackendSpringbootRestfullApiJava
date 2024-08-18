@@ -41,14 +41,11 @@ public class UserController {
         logger.info("Registering user");
         UserDTO createdUser = userService.saveUser(userDTO);
 
-        // Authenticate the newly created user
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(userDTO.getEmail(), userDTO.getPassword()));
 
-        // Generate token
         String token = jwtTokenProvider.generateToken(authentication);
 
-        // Return the token in the response body
         return new ResponseEntity<>(new JwtAuthResponseDtoSignup(createdUser, token), HttpStatus.CREATED);
     }
 
@@ -59,10 +56,8 @@ public class UserController {
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(email, password));
 
-            // Generate token
             String token = jwtTokenProvider.generateToken(authentication);
 
-            // Return the token in the response body
             return new ResponseEntity<>(new JwtAuthResponseDtoLogin(token), HttpStatus.OK);
         } catch (AuthenticationException e) {
             logger.severe("User not authenticated: " + e.getMessage());

@@ -48,23 +48,19 @@ public class CartServiceImpl implements CartService {
     public CartDTO saveCart(CartDTO cartDTO) {
         Cart cart = modelMapper.map(cartDTO, Cart.class);
 
-        // Set User
         User user = userRepository.findById(cartDTO.getUserId())
                 .orElseThrow(() -> new RuntimeException("User not found with ID: " + cartDTO.getUserId()));
         cart.setUser(user);
 
-        // Save the Cart to ensure it has an ID
         Cart savedCart = cartRepository.save(cart);
 
-        // Group cart items by productId and sum quantities
         Map<Long, Integer> productQuantities = cartDTO.getCartItems().stream()
                 .collect(Collectors.toMap(
                         CartItemDTO::getProductId,
                         CartItemDTO::getQuantity,
-                        Integer::sum  // Merge function to sum quantities
+                        Integer::sum
                 ));
 
-        // Save each unique CartItem
         List<CartItemDTO> savedCartItems = productQuantities.entrySet().stream()
                 .map(entry -> {
                     CartItem cartItem = new CartItem();
@@ -79,7 +75,6 @@ public class CartServiceImpl implements CartService {
                 })
                 .collect(Collectors.toList());
 
-        // Map saved Cart back to DTO, including the saved CartItems
         CartDTO savedCartDTO = modelMapper.map(savedCart, CartDTO.class);
         savedCartDTO.setCartItems(savedCartItems);
 
@@ -88,7 +83,6 @@ public class CartServiceImpl implements CartService {
 
     @Override
     public CartDTO updateCart(CartDTO cartDTO) {
-        // Similar logic to saveCart() but ensuring we are updating an existing cart
         Cart cart = cartRepository.findById(cartDTO.getId())
                 .orElseThrow(() -> new RuntimeException("Cart not found with ID: " + cartDTO.getId()));
 
@@ -96,7 +90,6 @@ public class CartServiceImpl implements CartService {
                 .orElseThrow(() -> new RuntimeException("User not found with ID: " + cartDTO.getUserId()));
         cart.setUser(user);
 
-        // Update the cart items
         cart.getCartItems().clear();
 
         List<CartItemDTO> savedCartItems = cartDTO.getCartItems().stream()
@@ -172,7 +165,7 @@ public class CartServiceImpl implements CartService {
                 .orElseThrow(() -> new RuntimeException("Product not found with ID: " + cartItemDTO.getProductId())));
         cartItem.setQuantity(cartItemDTO.getQuantity());
         cartItem.setPrice(BigDecimal.valueOf(cartItem.getProduct().getPrice()));
-        cartItem.setCart(cart);  // Set the cart in the cart item
+        cartItem.setCart(cart);
 
         CartItem savedCartItem = cartItemRepository.save(cartItem);
         return modelMapper.map(savedCartItem, CartItemDTO.class);
@@ -190,7 +183,7 @@ public class CartServiceImpl implements CartService {
             throw new RuntimeException("CartItem does not belong to the specified cart");
         }
 
-        cart.removeCartItem(cartItem);  // Remove the cart item from the cart
-        cartItemRepository.delete(cartItem);  // Delete the cart item from the repository
+        cart.removeCartItem(cartItem);
+        cartItemRepository.delete(cartItem);
     }
 }

@@ -65,7 +65,6 @@ public class AddressController {
         addressService.deleteAddressById(id);
         return ResponseEntity.noContent().build();
     }
-    // delete user by userId
     @DeleteMapping("/delete-by-user-id/{userId}")
     public ResponseEntity<String> deleteAddressesByUserId(@PathVariable Long userId) {
         addressService.deleteAddressByUserId(userId);

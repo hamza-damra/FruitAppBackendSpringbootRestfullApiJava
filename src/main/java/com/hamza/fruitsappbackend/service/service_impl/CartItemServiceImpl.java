@@ -31,25 +31,20 @@ public class CartItemServiceImpl implements CartItemService {
 
     @Override
     public CartItemDTO saveCartItem(CartItemDTO cartItemDTO) {
-        // Retrieve the Product by ID
         Product product = productRepository.findById(cartItemDTO.getProductId())
                 .orElseThrow(() -> new RuntimeException("Product not found for the given ID: " + cartItemDTO.getProductId()));
 
-        // Create the CartItem entity manually
         CartItem cartItem = new CartItem();
         cartItem.setProduct(product);
         cartItem.setQuantity(cartItemDTO.getQuantity());
         cartItem.setPrice(BigDecimal.valueOf(product.getPrice()));
 
-        // Ensure that the Cart is set before saving the CartItem
         if (cartItem.getCart() == null) {
             throw new RuntimeException("Cart not set in CartItem. This indicates that the CartItem is not properly associated with a Cart.");
         }
 
-        // Save the CartItem
         CartItem savedCartItem = cartItemRepository.save(cartItem);
 
-        // Map the saved entity back to DTO to ensure the ID is captured
         return modelMapper.map(savedCartItem, CartItemDTO.class);
     }
 
@@ -91,12 +86,10 @@ public class CartItemServiceImpl implements CartItemService {
         if (existingCartItemOptional.isPresent()) {
             CartItem existingCartItem = existingCartItemOptional.get();
 
-            // Update quantity
             if (cartItemDTO.getQuantity() > 0) {
                 existingCartItem.setQuantity(cartItemDTO.getQuantity());
             }
 
-            // Update product
             if (cartItemDTO.getProductId() != null) {
                 Product product = productRepository.findById(cartItemDTO.getProductId())
                         .orElseThrow(() -> new RuntimeException("Product not found for the given ID: " + cartItemDTO.getProductId()));

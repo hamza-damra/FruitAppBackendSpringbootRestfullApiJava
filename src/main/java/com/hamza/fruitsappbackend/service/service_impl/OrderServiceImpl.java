@@ -47,16 +47,12 @@ public class OrderServiceImpl implements OrderService {
 
         Order order = modelMapper.map(orderDTO, Order.class);
 
-        // Set user and address
         setUserAndAddress(orderDTO, order);
 
-        // Save the order to ensure it has an ID
         Order savedOrder = orderRepository.save(order);
 
-        // Save associated order items
         List<OrderItemDTO> savedOrderItems = saveOrderItems(orderDTO, savedOrder);
 
-        // Map the saved order to DTO and set the saved order items
         OrderDTO savedOrderDTO = modelMapper.map(savedOrder, OrderDTO.class);
         savedOrderDTO.setOrderItems(savedOrderItems);
 
@@ -68,18 +64,14 @@ public class OrderServiceImpl implements OrderService {
         Order order = orderRepository.findById(orderDTO.getId())
                 .orElseThrow(() -> new EntityNotFoundException("Order not found with ID: " + orderDTO.getId()));
 
-        // Set order details, user, and address
         setUserAndAddress(orderDTO, order);
 
-        // Clear existing order items
         order.getOrderItems().clear();
 
-        // Save associated order items
         List<OrderItemDTO> savedOrderItems = saveOrderItems(orderDTO, order);
 
         Order updatedOrder = orderRepository.save(order);
 
-        // Map the updated order to DTO and set the saved order items
         OrderDTO updatedOrderDTO = modelMapper.map(updatedOrder, OrderDTO.class);
         updatedOrderDTO.setOrderItems(savedOrderItems);
 
@@ -167,7 +159,6 @@ public class OrderServiceImpl implements OrderService {
             Order existingOrder = existingOrderOpt.get();
             setUserAndAddress(orderDTO, existingOrder);
 
-            // Update the order items
             existingOrder.getOrderItems().clear();
             List<OrderItemDTO> savedOrderItems = saveOrderItems(orderDTO, existingOrder);
 

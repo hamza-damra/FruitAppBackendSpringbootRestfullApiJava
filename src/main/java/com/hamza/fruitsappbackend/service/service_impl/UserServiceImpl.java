@@ -53,10 +53,8 @@ public class UserServiceImpl implements UserService {
             user.setRoles(roles);
         }
 
-        // Map and assign related entities
         mapAndSetRelatedEntities(userDTO, user);
 
-        // Save the user entity
         User savedUser = userRepository.save(user);
         return modelMapper.map(savedUser, UserDTO.class);
     }
@@ -86,7 +84,6 @@ public class UserServiceImpl implements UserService {
         if (existingUserOptional.isPresent()) {
             User existingUser = existingUserOptional.get();
 
-            // Update simple fields if not null
             if (userDTO.getName() != null) {
                 existingUser.setName(userDTO.getName());
             }
@@ -97,7 +94,6 @@ public class UserServiceImpl implements UserService {
                 existingUser.setPassword(passwordEncoder.encode(userDTO.getPassword()));
             }
 
-            // Assign roles if provided
             if (userDTO.getRoles() != null) {
                 Set<Role> roles = userDTO.getRoles().stream()
                         .map(roleDto -> roleRepository.findByName(roleDto.getName())
@@ -106,7 +102,6 @@ public class UserServiceImpl implements UserService {
                 existingUser.setRoles(roles);
             }
 
-            // Map and assign related entities
             mapAndSetRelatedEntities(userDTO, existingUser);
 
             User updatedUser = userRepository.save(existingUser);
@@ -126,9 +121,7 @@ public class UserServiceImpl implements UserService {
         userRepository.findByEmail(email).ifPresent(userRepository::delete);
     }
 
-    /**
-     * Helper method to map and set related entities like addresses, cart, orders, and reviews.
-     */
+
     private void mapAndSetRelatedEntities(UserDTO userDTO, User user) {
         if (userDTO.getAddresses() != null) {
             user.setAddresses(

@@ -18,7 +18,7 @@ public class UniqueUserCartValidator implements ConstraintValidator<UniqueUserCa
     @Override
     public boolean isValid(Long userId, ConstraintValidatorContext context) {
         if (userId == null) {
-            return true; // Null values can be handled by @NotNull if required
+            return true;
         }
         return cartRepository.findByUserId(userId).isEmpty();
     }
