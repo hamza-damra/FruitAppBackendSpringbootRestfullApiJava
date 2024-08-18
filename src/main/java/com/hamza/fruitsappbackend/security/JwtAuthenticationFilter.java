@@ -1,5 +1,7 @@
 package com.hamza.fruitsappbackend.security;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.hamza.fruitsappbackend.exception.CustomErrorResponse;
 import com.hamza.fruitsappbackend.exception.JwtAuthenticationException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -37,6 +39,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String requestURI = request.getRequestURI();
         logger.info("Request URI: " + requestURI);
 
+        if (isInvalidUrl(requestURI)) {
+            logger.warning("Invalid URL accessed: " + requestURI);
+            CustomErrorResponse errorResponse = new CustomErrorResponse("Invalid URL: The requested endpoint does not exist.", HttpServletResponse.SC_NOT_FOUND);
+            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+            response.setContentType("application/json");
+            response.getWriter().write(new ObjectMapper().writeValueAsString(errorResponse));
+            return;
+        }
+
         if (isUnsecuredEndpoint(requestURI)) {
             logger.info("Unsecured endpoint accessed: " + requestURI);
             filterChain.doFilter(request, response);
@@ -49,8 +60,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             if (!StringUtils.hasText(token)) {
                 logger.warning("No token provided for secured endpoint: " + requestURI);
+                CustomErrorResponse errorResponse = new CustomErrorResponse("Token is required. Please add a token.", HttpServletResponse.SC_BAD_REQUEST);
                 response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                response.getWriter().write("Token is required. Please add a token.");
+                response.setContentType("application/json");
+                response.getWriter().write(new ObjectMapper().writeValueAsString(errorResponse));
                 return;
             }
 
@@ -70,9 +83,19 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         } catch (JwtAuthenticationException ex) {
             SecurityContextHolder.clearContext();
             logger.warning("JWT authentication failed: " + ex.getMessage());
+            CustomErrorResponse errorResponse = new CustomErrorResponse("Unauthorized: Invalid JWT token. Please log in again.", HttpServletResponse.SC_UNAUTHORIZED);
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.getWriter().write("Unauthorized: Invalid JWT token. Please log in again.");
+            response.setContentType("application/json");
+            response.getWriter().write(new ObjectMapper().writeValueAsString(errorResponse));
         }
+    }
+
+
+    private boolean isInvalidUrl(String requestURI) {
+        return !requestURI.startsWith("/api/v1/users/") &&
+                !requestURI.startsWith("/api/v1/roles/") &&
+                !requestURI.startsWith("/api/v1/orders") &&
+                !requestURI.startsWith("/api/carts/");
     }
 
     private boolean isUnsecuredEndpoint(String requestURI) {

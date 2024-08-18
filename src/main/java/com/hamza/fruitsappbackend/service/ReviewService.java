@@ -20,4 +20,6 @@ public interface ReviewService {
     ReviewDTO updateReview(ReviewDTO reviewDTO);
 
     void deleteReviewById(Long id);
+
+    ReviewDTO likeReview(Long reviewId);
 }

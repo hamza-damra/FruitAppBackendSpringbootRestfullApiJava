@@ -63,4 +63,10 @@ public class ReviewController {
         reviewService.deleteReviewById(id);
         return ResponseEntity.noContent().build();
     }
+
+    @PutMapping("/{id}/like")
+    public ResponseEntity<ReviewDTO> likeReview(@PathVariable Long id) {
+        ReviewDTO reviewDTO = reviewService.likeReview(id);
+        return ResponseEntity.ok(reviewDTO);
+    }
 }

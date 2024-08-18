@@ -7,15 +7,20 @@ import com.hamza.fruitsappbackend.repository.OrderItemRepository;
 import com.hamza.fruitsappbackend.repository.ProductRepository;
 import com.hamza.fruitsappbackend.service.OrderItemService;
 import org.modelmapper.ModelMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
 public class OrderItemServiceImpl implements OrderItemService {
+
+    private static final Logger logger = LoggerFactory.getLogger(OrderItemServiceImpl.class);
 
     private final OrderItemRepository orderItemRepository;
     private final ProductRepository productRepository;
@@ -37,9 +42,16 @@ public class OrderItemServiceImpl implements OrderItemService {
         if (productOptional.isPresent()) {
             Product product = productOptional.get();
             orderItem.setProduct(product); // Set the product in OrderItem
-            orderItem.setPrice(product.getPrice()); // Set the price from the product
+            BigDecimal productPrice = BigDecimal.valueOf(product.getPrice());
+            logger.debug("Setting price for OrderItem: {}", productPrice); // Log the price
+            orderItem.setPrice(productPrice); // Set the price from the product
         } else {
             throw new RuntimeException("Product not found for the given ID.");
+        }
+
+        // Ensure that the Order is set before saving the OrderItem
+        if (orderItem.getOrder() == null) {
+            throw new RuntimeException("Order not set in OrderItem.");
         }
 
         OrderItem savedOrderItem = orderItemRepository.save(orderItem);
@@ -91,7 +103,9 @@ public class OrderItemServiceImpl implements OrderItemService {
                 if (productOptional.isPresent()) {
                     Product product = productOptional.get();
                     existingOrderItem.setProduct(product);
-                    existingOrderItem.setPrice(product.getPrice()); // Update the price from Product
+                    BigDecimal productPrice = BigDecimal.valueOf(product.getPrice());
+                    logger.debug("Updating price for OrderItem: {}", productPrice); // Log the price
+                    existingOrderItem.setPrice(productPrice); // Update the price from Product
                 } else {
                     throw new RuntimeException("Product not found for the given ID.");
                 }

@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Setter
@@ -31,8 +32,8 @@ public class Cart {
     @JoinColumn(name = "user_id", nullable = false, unique = true)  // Ensures unique association
     private User user;
 
-    @OneToMany(mappedBy = "cart", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<CartItem> cartItems;
+    @OneToMany(mappedBy = "cart", cascade = CascadeType.MERGE, orphanRemoval = true)
+    private List<CartItem> cartItems = new ArrayList<>();  // Initialize with an empty list
 
     @PrePersist
     protected void onCreate() {
@@ -44,5 +45,17 @@ public class Cart {
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
+    }
+
+    // Method to add a CartItem to the Cart
+    public void addCartItem(CartItem cartItem) {
+        cartItems.add(cartItem);
+        cartItem.setCart(this);  // Ensure the bidirectional relationship is maintained
+    }
+
+    // Method to remove a CartItem from the Cart
+    public void removeCartItem(CartItem cartItem) {
+        cartItems.remove(cartItem);
+        cartItem.setCart(null);
     }
 }

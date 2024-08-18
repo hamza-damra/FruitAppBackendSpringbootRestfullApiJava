@@ -2,6 +2,7 @@ package com.hamza.fruitsappbackend.dto;
 
 import com.hamza.fruitsappbackend.constant.OrderStatus;
 import com.hamza.fruitsappbackend.constant.PaymentMethod;
+import com.hamza.fruitsappbackend.validators.ValidTotalPrice;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PastOrPresent;
 import jakarta.validation.constraints.Positive;
@@ -10,6 +11,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -17,13 +19,14 @@ import java.util.List;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@ValidTotalPrice
 public class OrderDTO {
 
     private Long id;
 
     @Positive(message = "Total price must be a positive value")
     @NotNull(message = "Total price is required")
-    private Double totalPrice;
+    private BigDecimal totalPrice;
 
     @NotNull(message = "Order status cannot be null")
     private OrderStatus status;

@@ -1,54 +1,106 @@
 package com.hamza.fruitsappbackend.exception;
 
-import com.hamza.fruitsappbackend.dto.ErrorDetails;
-import lombok.NonNull;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.FieldError;
+import org.springframework.http.HttpStatusCode;
+import org.springframework.lang.NonNull;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.servlet.NoHandlerFoundException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
-import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.Objects;
+import java.util.stream.Collectors;
 
 @ControllerAdvice
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(ResourceNotFoundException.class)
-    protected ResponseEntity<ErrorDetails> handleResourceNotFound(ResourceNotFoundException exception, WebRequest request) {
-        ErrorDetails errorDetails = new ErrorDetails(LocalDateTime.now(), exception.getMessage(), request.getDescription(false));
-        return new ResponseEntity<>(errorDetails, HttpStatus.NOT_FOUND);
+    protected ResponseEntity<CustomErrorResponse> handleResourceNotFound(ResourceNotFoundException exception) {
+        CustomErrorResponse errorResponse = new CustomErrorResponse(
+                exception.getMessage(),
+                HttpStatus.NOT_FOUND.value()
+        );
+        return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
     }
 
     @ExceptionHandler(FruitsApiException.class)
-    protected ResponseEntity<ErrorDetails> handleBlogApiException(FruitsApiException exception, WebRequest request) {
-        ErrorDetails errorDetails = new ErrorDetails(LocalDateTime.now(), exception.getMessage(), request.getDescription(false));
-        return new ResponseEntity<>(errorDetails, HttpStatus.BAD_REQUEST);
+    protected ResponseEntity<CustomErrorResponse> handleFruitsApiException(FruitsApiException exception) {
+        CustomErrorResponse errorResponse = new CustomErrorResponse(
+                exception.getErrorMessage(),
+                exception.getHttpStatus().value()
+        );
+        return new ResponseEntity<>(errorResponse, exception.getHttpStatus());
     }
 
+    @ExceptionHandler(InvalidTotalPriceException.class)
+    protected ResponseEntity<CustomErrorResponse> handleInvalidTotalPriceException(InvalidTotalPriceException exception) {
+        CustomErrorResponse errorResponse = new CustomErrorResponse(
+                exception.getMessage(),
+                HttpStatus.BAD_REQUEST.value()
+        );
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+    }
+
+
     @ExceptionHandler(Exception.class)
-    protected ResponseEntity<ErrorDetails> handleGlobalApiException(Exception exception, WebRequest request) {
-        ErrorDetails errorDetails = new ErrorDetails(LocalDateTime.now(), exception.getMessage(), request.getDescription(false));
-        return new ResponseEntity<>(errorDetails, HttpStatus.INTERNAL_SERVER_ERROR);
+    protected ResponseEntity<CustomErrorResponse> handleGlobalException(Exception exception) {
+        CustomErrorResponse errorResponse = new CustomErrorResponse(
+                "An unexpected error occurred: " + exception.getMessage(),
+                HttpStatus.INTERNAL_SERVER_ERROR.value()
+        );
+        return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @Override
-    protected ResponseEntity<Object> handleMethodArgumentNotValid(@NonNull MethodArgumentNotValidException exception, @NonNull HttpHeaders headers, @NonNull HttpStatusCode status, @NonNull WebRequest request) {
-        Map<String, String> errors = new HashMap<>();
+    protected ResponseEntity<Object> handleNoHandlerFoundException(NoHandlerFoundException ex,
+                                                                   @NonNull HttpHeaders headers,
+                                                                   @NonNull HttpStatusCode status,
+                                                                   @NonNull WebRequest request) {
+        String errorMessage = String.format("The URL %s does not exist", ex.getRequestURL());
+        CustomErrorResponse errorResponse = new CustomErrorResponse(
+                errorMessage,
+                HttpStatus.NOT_FOUND.value()
+        );
+        Map<String, Object> responseBody = new HashMap<>();
+        responseBody.put("error", errorResponse.getError());
+        responseBody.put("code", errorResponse.getCode());
+        return new ResponseEntity<>(responseBody, HttpStatus.NOT_FOUND);
+    }
 
-        exception.getBindingResult().getAllErrors().forEach(error -> {
-            String fieldName = ((FieldError) error).getField();
-            String errorMessage = error.getDefaultMessage();
-            errors.put(fieldName, errorMessage);
-        });
+    @Override
+    protected ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException ex,
+                                                                  HttpHeaders headers,
+                                                                  HttpStatusCode status,
+                                                                  WebRequest request) {
+        List<Map<String, String>> errorsList = ex.getBindingResult().getFieldErrors().stream()
+                .map(error -> {
+                    Map<String, String> errorMap = new HashMap<>();
+                    errorMap.put("field", error.getField());
+                    errorMap.put("message", error.getDefaultMessage());
+                    return errorMap;
+                })
+                .collect(Collectors.toList());
 
-        return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
+        String errorMessage = "Validation failed: " + errorsList.size() + " error(s) found";
+
+        CustomErrorResponse errorResponse = new CustomErrorResponse(
+                errorMessage,
+                HttpStatus.BAD_REQUEST.value()
+        );
+
+        Map<String, Object> responseBody = new HashMap<>();
+        responseBody.put("errors", errorsList);
+        responseBody.put("code", errorResponse.getCode());
+        responseBody.put("message", errorResponse.getError());
+
+        return new ResponseEntity<>(responseBody, HttpStatus.BAD_REQUEST);
     }
 }
+

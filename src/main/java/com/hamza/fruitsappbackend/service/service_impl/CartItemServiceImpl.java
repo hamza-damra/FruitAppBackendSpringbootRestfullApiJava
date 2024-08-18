@@ -7,15 +7,20 @@ import com.hamza.fruitsappbackend.repository.CartItemRepository;
 import com.hamza.fruitsappbackend.repository.ProductRepository;
 import com.hamza.fruitsappbackend.service.CartItemService;
 import org.modelmapper.ModelMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
 public class CartItemServiceImpl implements CartItemService {
+
+    private static final Logger logger = LoggerFactory.getLogger(CartItemServiceImpl.class);
 
     private final CartItemRepository cartItemRepository;
     private final ProductRepository productRepository;
@@ -37,8 +42,16 @@ public class CartItemServiceImpl implements CartItemService {
         if (productOptional.isPresent()) {
             Product product = productOptional.get();
             cartItem.setProduct(product); // Set the product in CartItem
+            BigDecimal productPrice = BigDecimal.valueOf(product.getPrice());
+            logger.debug("Setting price for CartItem: {}", productPrice); // Log the price
+            cartItem.setPrice(productPrice); // Set the price from the product
         } else {
             throw new RuntimeException("Product not found for the given ID.");
+        }
+
+        // Ensure that the Cart is set before saving the CartItem
+        if (cartItem.getCart() == null) {
+            throw new RuntimeException("Cart not set in CartItem.");
         }
 
         CartItem savedCartItem = cartItemRepository.save(cartItem);
@@ -50,7 +63,7 @@ public class CartItemServiceImpl implements CartItemService {
         return cartItemRepository.findById(id)
                 .map(cartItem -> {
                     CartItemDTO cartItemDTO = modelMapper.map(cartItem, CartItemDTO.class);
-                    cartItemDTO.setPrice(cartItem.getProduct().getPrice()); // Set the price from Product
+                    cartItemDTO.setPrice(BigDecimal.valueOf(cartItem.getProduct().getPrice())); // Set the price from Product
                     return cartItemDTO;
                 });
     }
@@ -67,7 +80,7 @@ public class CartItemServiceImpl implements CartItemService {
         return cartItemRepository.findAll().stream()
                 .map(cartItem -> {
                     CartItemDTO cartItemDTO = modelMapper.map(cartItem, CartItemDTO.class);
-                    cartItemDTO.setPrice(cartItem.getProduct().getPrice()); // Set the price from Product
+                    cartItemDTO.setPrice(BigDecimal.valueOf(cartItem.getProduct().getPrice())); // Set the price from Product
                     return cartItemDTO;
                 })
                 .collect(Collectors.toList());
@@ -90,6 +103,9 @@ public class CartItemServiceImpl implements CartItemService {
                 if (productOptional.isPresent()) {
                     Product product = productOptional.get();
                     existingCartItem.setProduct(product);
+                    BigDecimal productPrice = BigDecimal.valueOf(product.getPrice());
+                    logger.debug("Updating price for CartItem: {}", productPrice); // Log the price
+                    existingCartItem.setPrice(productPrice); // Update the price from Product
                 } else {
                     throw new RuntimeException("Product not found for the given ID.");
                 }

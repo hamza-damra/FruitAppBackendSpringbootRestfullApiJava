@@ -3,14 +3,18 @@ package com.hamza.fruitsappbackend.controller;
 import com.hamza.fruitsappbackend.dto.CartDTO;
 import com.hamza.fruitsappbackend.service.CartService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.validation.Valid;
 import java.util.List;
 import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/carts")
+@Validated
 public class CartController {
 
     private final CartService cartService;
@@ -20,10 +24,11 @@ public class CartController {
         this.cartService = cartService;
     }
 
-    @PostMapping
-    public ResponseEntity<CartDTO> createCart(@RequestBody CartDTO cartDTO) {
+    @PostMapping("/add")
+    @ResponseStatus(HttpStatus.CREATED)
+    public ResponseEntity<CartDTO> createCart(@Valid @RequestBody CartDTO cartDTO) {
         CartDTO savedCart = cartService.saveCart(cartDTO);
-        return ResponseEntity.ok(savedCart);
+        return ResponseEntity.status(HttpStatus.CREATED).body(savedCart);
     }
 
     @GetMapping("/{id}")
@@ -46,13 +51,14 @@ public class CartController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<CartDTO> updateCart(@PathVariable Long id, @RequestBody CartDTO cartDTO) {
+    public ResponseEntity<CartDTO> updateCart(@PathVariable Long id, @Valid @RequestBody CartDTO cartDTO) {
         cartDTO.setId(id);  // Ensure the cart ID matches the one in the path
         CartDTO updatedCart = cartService.updateCart(cartDTO);
         return updatedCart != null ? ResponseEntity.ok(updatedCart) : ResponseEntity.notFound().build();
     }
 
     @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)  // Set the response status for DELETE method
     public ResponseEntity<Void> deleteCartById(@PathVariable Long id) {
         cartService.deleteCartById(id);
         return ResponseEntity.noContent().build();

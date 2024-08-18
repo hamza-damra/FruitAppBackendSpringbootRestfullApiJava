@@ -8,13 +8,14 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.math.BigDecimal;
+
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class CartItemDTO {
 
-    @NotNull(message = "Cart Item ID cannot be null")
     private Long id;
 
     @NotNull(message = "Product cannot be null")
@@ -25,7 +26,7 @@ public class CartItemDTO {
     private int quantity;
 
     @Min(value = 0, message = "Price cannot be negative")
-    private double price;
+    private BigDecimal price;
 
     @NotNull(message = "Cart ID cannot be null")
     private Long cartId;

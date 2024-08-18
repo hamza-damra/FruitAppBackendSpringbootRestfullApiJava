@@ -18,4 +18,6 @@ public interface CartService {
     CartDTO updateCart(CartDTO cartDTO);
 
     void deleteCartById(Long id);
+
+    void deleteCartsByUserId(Long userId);
 }

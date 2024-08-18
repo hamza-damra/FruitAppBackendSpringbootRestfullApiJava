@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter
 @Setter
@@ -14,7 +15,6 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class CartDTO {
 
-    @NotNull(message = "Cart ID cannot be null")
     private Long id;
 
     @NotNull(message = "User ID cannot be null")
@@ -23,4 +23,7 @@ public class CartDTO {
     private LocalDateTime createdAt;
 
     private LocalDateTime updatedAt;
+
+    @NotNull(message = "Cart items cannot be null")
+    private List<CartItemDTO> cartItems;
 }

@@ -9,6 +9,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.List;
+
 @Getter
 @Setter
 @NoArgsConstructor
@@ -25,9 +27,13 @@ public class ReviewDTO {
     @Max(value = 5, message = "Rating must be at most 5")
     private int rating;
 
+    private int likeCount;
+
     @NotNull(message = "User ID cannot be null")
     private Long userId;
 
     @NotNull(message = "Product ID cannot be null")
     private Long productId;
+
+    private List<String> imageUrls;  
 }
