@@ -30,6 +30,9 @@ public class ProductDTO {
     @DecimalMin(value = "0.0", inclusive = false, message = "Price must be greater than 0")
     private double price;
 
+    @Min(value = 0, message = "Stock quantity must be a non-negative number")
+    private int stockQuantity;
+
     @NotBlank(message = "Image URL is required")
     private String imageUrl;
 

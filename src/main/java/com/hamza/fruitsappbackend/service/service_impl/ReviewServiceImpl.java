@@ -3,6 +3,7 @@ package com.hamza.fruitsappbackend.service.service_impl;
 import com.hamza.fruitsappbackend.dto.ReviewDTO;
 import com.hamza.fruitsappbackend.entity.Review;
 import com.hamza.fruitsappbackend.entity.ReviewImage;
+import com.hamza.fruitsappbackend.exception.ReviewNotFoundException;
 import com.hamza.fruitsappbackend.repository.ReviewRepository;
 import com.hamza.fruitsappbackend.service.ReviewService;
 import org.modelmapper.ModelMapper;
@@ -42,7 +43,10 @@ public class ReviewServiceImpl implements ReviewService {
     @Override
     public Optional<ReviewDTO> getReviewById(Long id) {
         return reviewRepository.findById(id)
-                .map(review -> modelMapper.map(review, ReviewDTO.class));
+                .map(review -> modelMapper.map(review, ReviewDTO.class))
+                .or(() -> {
+                    throw new ReviewNotFoundException("id", id.toString());
+                });
     }
 
     @Override
@@ -68,20 +72,31 @@ public class ReviewServiceImpl implements ReviewService {
 
     @Override
     public ReviewDTO updateReview(ReviewDTO reviewDTO) {
-        Review review = modelMapper.map(reviewDTO, Review.class);
-        Review updatedReview = reviewRepository.save(review);
+        Review existingReview = reviewRepository.findById(reviewDTO.getId())
+                .orElseThrow(() -> new ReviewNotFoundException("id", reviewDTO.getId().toString()));
+
+        existingReview.setRating(reviewDTO.getRating());
+        existingReview.setComment(reviewDTO.getComment());
+        existingReview.setReviewImages(reviewDTO.getImageUrls().stream()
+                .map(url -> new ReviewImage(null, url, existingReview))
+                .collect(Collectors.toList()));
+
+        Review updatedReview = reviewRepository.save(existingReview);
         return modelMapper.map(updatedReview, ReviewDTO.class);
     }
 
     @Override
     public void deleteReviewById(Long id) {
+        if (!reviewRepository.existsById(id)) {
+            throw new ReviewNotFoundException("id", id.toString());
+        }
         reviewRepository.deleteById(id);
     }
 
     @Override
     public ReviewDTO likeReview(Long reviewId) {
         Review review = reviewRepository.findById(reviewId)
-                .orElseThrow(() -> new RuntimeException("Review not found"));
+                .orElseThrow(() -> new ReviewNotFoundException("id", reviewId.toString()));
         review.setLikeCount(review.getLikeCount() + 1);
         Review updatedReview = reviewRepository.save(review);
         return modelMapper.map(updatedReview, ReviewDTO.class);

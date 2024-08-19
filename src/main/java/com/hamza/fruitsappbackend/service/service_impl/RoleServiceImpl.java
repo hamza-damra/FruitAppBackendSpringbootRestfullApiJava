@@ -2,6 +2,8 @@ package com.hamza.fruitsappbackend.service.service_impl;
 
 import com.hamza.fruitsappbackend.dto.RoleDto;
 import com.hamza.fruitsappbackend.entity.Role;
+import com.hamza.fruitsappbackend.exception.RoleNotFoundException;
+import com.hamza.fruitsappbackend.exception.RoleDeletionException;
 import com.hamza.fruitsappbackend.repository.RoleRepository;
 import com.hamza.fruitsappbackend.service.RoleService;
 import jakarta.transaction.Transactional;
@@ -31,8 +33,7 @@ public class RoleServiceImpl implements RoleService {
     @Transactional
     public RoleDto updateRole(Long id, RoleDto roleDto) {
         Role existingRole = roleRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Role not found with id: " + id));
-
+                .orElseThrow(() -> new RoleNotFoundException("id", id.toString()));
 
         existingRole.setName("ROLE_" + roleDto.getName().toUpperCase());
 
@@ -44,26 +45,27 @@ public class RoleServiceImpl implements RoleService {
     @Transactional
     public void deleteRole(Long id) {
         Role role = roleRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Role not found with id: " + id));
+                .orElseThrow(() -> new RoleNotFoundException("id", id.toString()));
 
         if (!role.getUsers().isEmpty()) {
-            throw new RuntimeException("Role cannot be deleted as it is associated with users.");
+            throw new RoleDeletionException("Role cannot be deleted as it is associated with users.");
         }
 
         roleRepository.delete(role);
     }
 
-
     @Override
     @Transactional
     public RoleDto getRoleById(Long id) {
         Role role = roleRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Role not found with id: " + id));
+                .orElseThrow(() -> new RoleNotFoundException("id", id.toString()));
         return modelMapper.map(role, RoleDto.class);
     }
 
     @Override
     public List<RoleDto> getAllRoles() {
-        return roleRepository.findAll().stream().map(role -> modelMapper.map(role, RoleDto.class)).toList();
+        return roleRepository.findAll().stream()
+                .map(role -> modelMapper.map(role, RoleDto.class))
+                .toList();
     }
 }

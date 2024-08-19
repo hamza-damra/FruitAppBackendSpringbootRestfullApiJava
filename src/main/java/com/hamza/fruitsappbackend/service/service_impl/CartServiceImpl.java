@@ -5,6 +5,10 @@ import com.hamza.fruitsappbackend.dto.CartItemDTO;
 import com.hamza.fruitsappbackend.entity.Cart;
 import com.hamza.fruitsappbackend.entity.CartItem;
 import com.hamza.fruitsappbackend.entity.User;
+import com.hamza.fruitsappbackend.exception.CartItemNotFoundException;
+import com.hamza.fruitsappbackend.exception.CartNotFoundException;
+import com.hamza.fruitsappbackend.exception.ProductNotFoundException;
+import com.hamza.fruitsappbackend.exception.UserNotFoundException;
 import com.hamza.fruitsappbackend.repository.CartItemRepository;
 import com.hamza.fruitsappbackend.repository.CartRepository;
 import com.hamza.fruitsappbackend.repository.ProductRepository;
@@ -14,7 +18,6 @@ import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 
 import java.math.BigDecimal;
@@ -46,78 +49,51 @@ public class CartServiceImpl implements CartService {
     @Override
     @Transactional
     public CartDTO saveCart(CartDTO cartDTO) {
-        Cart cart = modelMapper.map(cartDTO, Cart.class);
-
-        User user = userRepository.findById(cartDTO.getUserId())
-                .orElseThrow(() -> new RuntimeException("User not found with ID: " + cartDTO.getUserId()));
-        cart.setUser(user);
-
+        Cart cart = createOrUpdateCart(cartDTO);
         Cart savedCart = cartRepository.save(cart);
-
-        Map<Long, Integer> productQuantities = cartDTO.getCartItems().stream()
-                .collect(Collectors.toMap(
-                        CartItemDTO::getProductId,
-                        CartItemDTO::getQuantity,
-                        Integer::sum
-                ));
-
-        List<CartItemDTO> savedCartItems = productQuantities.entrySet().stream()
-                .map(entry -> {
-                    CartItem cartItem = new CartItem();
-                    cartItem.setProduct(productRepository.findById(entry.getKey())
-                            .orElseThrow(() -> new RuntimeException("Product not found with ID: " + entry.getKey())));
-                    cartItem.setQuantity(entry.getValue());
-                    cartItem.setPrice(BigDecimal.valueOf(cartItem.getProduct().getPrice()));
-                    cartItem.setCart(savedCart);
-
-                    CartItem savedCartItem = cartItemRepository.save(cartItem);
-                    return modelMapper.map(savedCartItem, CartItemDTO.class);
-                })
-                .collect(Collectors.toList());
-
-        CartDTO savedCartDTO = modelMapper.map(savedCart, CartDTO.class);
-        savedCartDTO.setCartItems(savedCartItems);
-
-        return savedCartDTO;
+        List<CartItemDTO> savedCartItems = processCartItems(cartDTO, savedCart);
+        return mapCartToDTO(savedCart, savedCartItems);
     }
 
     @Override
     public CartDTO updateCart(CartDTO cartDTO) {
         Cart cart = cartRepository.findById(cartDTO.getId())
-                .orElseThrow(() -> new RuntimeException("Cart not found with ID: " + cartDTO.getId()));
+                .orElseThrow(() -> new CartNotFoundException("id", cartDTO.getId().toString()));
 
-        User user = userRepository.findById(cartDTO.getUserId())
-                .orElseThrow(() -> new RuntimeException("User not found with ID: " + cartDTO.getUserId()));
-        cart.setUser(user);
-
+        setUser(cartDTO, cart);
         cart.getCartItems().clear();
 
-        List<CartItemDTO> savedCartItems = cartDTO.getCartItems().stream()
-                .map(cartItemDTO -> {
-                    CartItem cartItem = new CartItem();
-                    cartItem.setProduct(productRepository.findById(cartItemDTO.getProductId())
-                            .orElseThrow(() -> new RuntimeException("Product not found with ID: " + cartItemDTO.getProductId())));
-                    cartItem.setQuantity(cartItemDTO.getQuantity());
-                    cartItem.setPrice(BigDecimal.valueOf(cartItem.getProduct().getPrice()));
-                    cartItem.setCart(cart);  // Set the reference to the existing cart
-
-                    CartItem savedCartItem = cartItemRepository.save(cartItem);
-                    return modelMapper.map(savedCartItem, CartItemDTO.class);
-                })
-                .collect(Collectors.toList());
-
+        List<CartItemDTO> savedCartItems = processCartItems(cartDTO, cart);
         Cart updatedCart = cartRepository.save(cart);
-        CartDTO updatedCartDTO = modelMapper.map(updatedCart, CartDTO.class);
-        updatedCartDTO.setCartItems(savedCartItems);
 
-        return updatedCartDTO;
+        return mapCartToDTO(updatedCart, savedCartItems);
     }
 
+    @Override
+    public CartItemDTO addCartItemToCart(Long cartId, CartItemDTO cartItemDTO) {
+        Cart cart = cartRepository.findById(cartId)
+                .orElseThrow(() -> new CartNotFoundException("id", cartId.toString()));
 
-    private void setUser(CartDTO cartDTO, Cart cart) {
-        User user = userRepository.findById(cartDTO.getUserId())
-                .orElseThrow(() -> new EntityNotFoundException("User not found with ID: " + cartDTO.getUserId()));
-        cart.setUser(user);
+        CartItem cartItem = createCartItem(cartItemDTO, cart);
+        CartItem savedCartItem = cartItemRepository.save(cartItem);
+
+        return modelMapper.map(savedCartItem, CartItemDTO.class);
+    }
+
+    @Override
+    public void removeCartItemFromCart(Long cartId, Long cartItemId) {
+        Cart cart = cartRepository.findById(cartId)
+                .orElseThrow(() -> new CartNotFoundException("id", cartId.toString()));
+
+        CartItem cartItem = cartItemRepository.findById(cartItemId)
+                .orElseThrow(() -> new CartItemNotFoundException("id", cartItemId.toString()));
+
+        if (!cart.getCartItems().contains(cartItem)) {
+            throw new RuntimeException("CartItem does not belong to the specified cart");
+        }
+
+        cart.removeCartItem(cartItem);
+        cartItemRepository.delete(cartItem);
     }
 
     @Override
@@ -142,6 +118,9 @@ public class CartServiceImpl implements CartService {
 
     @Override
     public void deleteCartById(Long id) {
+        if (!cartRepository.existsById(id)) {
+            throw new CartNotFoundException("id", id.toString());
+        }
         cartRepository.deleteById(id);
     }
 
@@ -151,39 +130,62 @@ public class CartServiceImpl implements CartService {
         if (userRepository.existsById(userId)) {
             cartRepository.deleteByUserId(userId);
         } else {
-            throw new RuntimeException("User not found");
+            throw new UserNotFoundException("id", userId.toString());
         }
     }
 
-    @Override
-    public CartItemDTO addCartItemToCart(Long cartId, CartItemDTO cartItemDTO) {
-        Cart cart = cartRepository.findById(cartId)
-                .orElseThrow(() -> new EntityNotFoundException("Cart not found with ID: " + cartId));
+    private Cart createOrUpdateCart(CartDTO cartDTO) {
+        Cart cart = modelMapper.map(cartDTO, Cart.class);
+        setUser(cartDTO, cart);
+        return cart;
+    }
 
+    private List<CartItemDTO> processCartItems(CartDTO cartDTO, Cart cart) {
+        Map<Long, Integer> productQuantities = cartDTO.getCartItems().stream()
+                .collect(Collectors.toMap(
+                        CartItemDTO::getProductId,
+                        CartItemDTO::getQuantity,
+                        Integer::sum
+                ));
+
+        return productQuantities.entrySet().stream()
+                .map(entry -> {
+                    CartItem cartItem = createCartItem(entry, cart);
+                    CartItem savedCartItem = cartItemRepository.save(cartItem);
+                    return modelMapper.map(savedCartItem, CartItemDTO.class);
+                })
+                .collect(Collectors.toList());
+    }
+
+    private CartItem createCartItem(Map.Entry<Long, Integer> entry, Cart cart) {
+        CartItem cartItem = new CartItem();
+        cartItem.setProduct(productRepository.findById(entry.getKey())
+                .orElseThrow(() -> new ProductNotFoundException("id", entry.getKey().toString())));
+        cartItem.setQuantity(entry.getValue());
+        cartItem.setPrice(BigDecimal.valueOf(cartItem.getProduct().getPrice()));
+        cartItem.setCart(cart);
+        return cartItem;
+    }
+
+    private CartItem createCartItem(CartItemDTO cartItemDTO, Cart cart) {
         CartItem cartItem = new CartItem();
         cartItem.setProduct(productRepository.findById(cartItemDTO.getProductId())
-                .orElseThrow(() -> new RuntimeException("Product not found with ID: " + cartItemDTO.getProductId())));
+                .orElseThrow(() -> new ProductNotFoundException("id", cartItemDTO.getProductId().toString())));
         cartItem.setQuantity(cartItemDTO.getQuantity());
         cartItem.setPrice(BigDecimal.valueOf(cartItem.getProduct().getPrice()));
         cartItem.setCart(cart);
-
-        CartItem savedCartItem = cartItemRepository.save(cartItem);
-        return modelMapper.map(savedCartItem, CartItemDTO.class);
+        return cartItem;
     }
 
-    @Override
-    public void removeCartItemFromCart(Long cartId, Long cartItemId) {
-        Cart cart = cartRepository.findById(cartId)
-                .orElseThrow(() -> new EntityNotFoundException("Cart not found with ID: " + cartId));
+    private void setUser(CartDTO cartDTO, Cart cart) {
+        User user = userRepository.findById(cartDTO.getUserId())
+                .orElseThrow(() -> new UserNotFoundException("id", cartDTO.getUserId().toString()));
+        cart.setUser(user);
+    }
 
-        CartItem cartItem = cartItemRepository.findById(cartItemId)
-                .orElseThrow(() -> new EntityNotFoundException("CartItem not found with ID: " + cartItemId));
-
-        if (!cart.getCartItems().contains(cartItem)) {
-            throw new RuntimeException("CartItem does not belong to the specified cart");
-        }
-
-        cart.removeCartItem(cartItem);
-        cartItemRepository.delete(cartItem);
+    private CartDTO mapCartToDTO(Cart cart, List<CartItemDTO> savedCartItems) {
+        CartDTO cartDTO = modelMapper.map(cart, CartDTO.class);
+        cartDTO.setCartItems(savedCartItems);
+        return cartDTO;
     }
 }

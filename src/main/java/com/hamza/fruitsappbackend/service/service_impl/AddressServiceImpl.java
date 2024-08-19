@@ -3,17 +3,16 @@ package com.hamza.fruitsappbackend.service.service_impl;
 import com.hamza.fruitsappbackend.dto.AddressDTO;
 import com.hamza.fruitsappbackend.entity.Address;
 import com.hamza.fruitsappbackend.entity.User;
+import com.hamza.fruitsappbackend.exception.AddressNotFoundException;
+import com.hamza.fruitsappbackend.exception.UserNotFoundException;
 import com.hamza.fruitsappbackend.repository.AddressRepository;
 import com.hamza.fruitsappbackend.repository.UserRepository;
 import com.hamza.fruitsappbackend.service.AddressService;
-import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -35,11 +34,9 @@ public class AddressServiceImpl implements AddressService {
     @Override
     public AddressDTO saveAddress(AddressDTO addressDTO) {
         Address address = modelMapper.map(addressDTO, Address.class);
-        Optional<User> user = userRepository.findUserById(address.getUser().getId());
-        if(user.isEmpty())
-        {
-            throw new RuntimeException("User not found");
-        }
+        User user = userRepository.findById(address.getUser().getId())
+                .orElseThrow(() -> new UserNotFoundException("id", address.getUser().getId().toString()));
+        address.setUser(user);
         Address savedAddress = addressRepository.save(address);
         return modelMapper.map(savedAddress, AddressDTO.class);
     }
@@ -47,11 +44,17 @@ public class AddressServiceImpl implements AddressService {
     @Override
     public Optional<AddressDTO> getAddressById(Long id) {
         return addressRepository.findById(id)
-                .map(address -> modelMapper.map(address, AddressDTO.class));
+                .map(address -> modelMapper.map(address, AddressDTO.class))
+                .or(() -> {
+                    throw new AddressNotFoundException("id", id.toString());
+                });
     }
 
     @Override
     public List<AddressDTO> getAddressesByUserId(Long userId) {
+        if (!userRepository.existsById(userId)) {
+            throw new UserNotFoundException("id", userId.toString());
+        }
         return addressRepository.findByUserId(userId).stream()
                 .map(address -> modelMapper.map(address, AddressDTO.class))
                 .collect(Collectors.toList());
@@ -67,49 +70,45 @@ public class AddressServiceImpl implements AddressService {
     @Override
     public AddressDTO updateAddress(AddressDTO addressDTO) {
         Address address = modelMapper.map(addressDTO, Address.class);
-        Address addressToUpdate = addressRepository.getReferenceById(address.getId());
+        Address addressToUpdate = addressRepository.findById(address.getId())
+                .orElseThrow(() -> new AddressNotFoundException("id", address.getId().toString()));
         address.setCreatedAt(addressToUpdate.getCreatedAt());
+        address.setUser(addressToUpdate.getUser());
         Address updatedAddress = addressRepository.save(address);
         return modelMapper.map(updatedAddress, AddressDTO.class);
     }
 
     @Override
     public void deleteAddressById(Long id) {
+        if (!addressRepository.existsById(id)) {
+            throw new AddressNotFoundException("id", id.toString());
+        }
         addressRepository.deleteById(id);
     }
 
     @Override
     @Transactional
     public void deleteAddressByUserId(Long userId) {
-        Optional<User> userOptional = userRepository.findUserById(userId);
-        if(userOptional.isPresent())
-        {
-            addressRepository.deleteAddressByUser(userOptional.get());
-        }else{
-            throw new RuntimeException("User not found");
-        }
-
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException("id", userId.toString()));
+        addressRepository.deleteAddressByUser(user);
     }
 
     @Override
     @Transactional
     public AddressDTO updateAddressByUserId(AddressDTO addressDTO) {
         Address newAddress = modelMapper.map(addressDTO, Address.class);
+        User user = userRepository.findById(newAddress.getUser().getId())
+                .orElseThrow(() -> new UserNotFoundException("id", newAddress.getUser().getId().toString()));
+        newAddress.setUser(user);
 
-        Optional<Object> existingAddressOpt = addressRepository.findByUserId(newAddress.getUser().getId());
+        Address existingAddress = (Address) addressRepository.findByUserId(newAddress.getUser().getId())
+                .orElseThrow(() -> new AddressNotFoundException("userId", newAddress.getUser().getId().toString()));
 
-        if (existingAddressOpt.isPresent()) {
-            Address existingAddress = (Address) existingAddressOpt.get();
+        newAddress.setId(existingAddress.getId());
+        newAddress.setCreatedAt(existingAddress.getCreatedAt());
 
-            newAddress.setId(existingAddress.getId());
-            newAddress.setCreatedAt(existingAddress.getCreatedAt());
-
-            Address updatedAddress = addressRepository.save(newAddress);
-
-            return modelMapper.map(updatedAddress, AddressDTO.class);
-        } else {
-            throw new EntityNotFoundException("Address not found for user ID: " + newAddress.getUser().getId());
-        }
+        Address updatedAddress = addressRepository.save(newAddress);
+        return modelMapper.map(updatedAddress, AddressDTO.class);
     }
-
 }

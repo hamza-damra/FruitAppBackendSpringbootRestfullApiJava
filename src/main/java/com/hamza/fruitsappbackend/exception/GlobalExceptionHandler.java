@@ -12,7 +12,6 @@ import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.NoHandlerFoundException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,6 +20,7 @@ import java.util.stream.Collectors;
 @ControllerAdvice
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
+    // Handle specific not found exceptions
     @ExceptionHandler(ResourceNotFoundException.class)
     protected ResponseEntity<CustomErrorResponse> handleResourceNotFound(ResourceNotFoundException exception) {
         CustomErrorResponse errorResponse = new CustomErrorResponse(
@@ -30,6 +30,97 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
     }
 
+    @ExceptionHandler(ProductNotFoundException.class)
+    protected ResponseEntity<CustomErrorResponse> handleProductNotFound(ProductNotFoundException exception) {
+        CustomErrorResponse errorResponse = new CustomErrorResponse(
+                exception.getMessage(),
+                HttpStatus.NOT_FOUND.value()
+        );
+        return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(CartNotFoundException.class)
+    protected ResponseEntity<CustomErrorResponse> handleCartNotFound(CartNotFoundException exception) {
+        CustomErrorResponse errorResponse = new CustomErrorResponse(
+                exception.getMessage(),
+                HttpStatus.NOT_FOUND.value()
+        );
+        return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(CartItemNotFoundException.class)
+    protected ResponseEntity<CustomErrorResponse> handleCartItemNotFound(CartItemNotFoundException exception) {
+        CustomErrorResponse errorResponse = new CustomErrorResponse(
+                exception.getMessage(),
+                HttpStatus.NOT_FOUND.value()
+        );
+        return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(CategoryNotFoundException.class)
+    protected ResponseEntity<CustomErrorResponse> handleCategoryNotFound(CategoryNotFoundException exception) {
+        CustomErrorResponse errorResponse = new CustomErrorResponse(
+                exception.getMessage(),
+                HttpStatus.NOT_FOUND.value()
+        );
+        return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(OrderNotFoundException.class)
+    protected ResponseEntity<CustomErrorResponse> handleOrderNotFound(OrderNotFoundException exception) {
+        CustomErrorResponse errorResponse = new CustomErrorResponse(
+                exception.getMessage(),
+                HttpStatus.NOT_FOUND.value()
+        );
+        return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(OrderItemNotFoundException.class)
+    protected ResponseEntity<CustomErrorResponse> handleOrderItemNotFound(OrderItemNotFoundException exception) {
+        CustomErrorResponse errorResponse = new CustomErrorResponse(
+                exception.getMessage(),
+                HttpStatus.NOT_FOUND.value()
+        );
+        return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(ReviewNotFoundException.class)
+    protected ResponseEntity<CustomErrorResponse> handleReviewNotFound(ReviewNotFoundException exception) {
+        CustomErrorResponse errorResponse = new CustomErrorResponse(
+                exception.getMessage(),
+                HttpStatus.NOT_FOUND.value()
+        );
+        return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(ReviewImageNotFoundException.class)
+    protected ResponseEntity<CustomErrorResponse> handleReviewImageNotFound(ReviewImageNotFoundException exception) {
+        CustomErrorResponse errorResponse = new CustomErrorResponse(
+                exception.getMessage(),
+                HttpStatus.NOT_FOUND.value()
+        );
+        return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(RoleNotFoundException.class)
+    protected ResponseEntity<CustomErrorResponse> handleRoleNotFound(RoleNotFoundException exception) {
+        CustomErrorResponse errorResponse = new CustomErrorResponse(
+                exception.getMessage(),
+                HttpStatus.NOT_FOUND.value()
+        );
+        return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(UserNotFoundException.class)
+    protected ResponseEntity<CustomErrorResponse> handleUserNotFound(UserNotFoundException exception) {
+        CustomErrorResponse errorResponse = new CustomErrorResponse(
+                exception.getMessage(),
+                HttpStatus.NOT_FOUND.value()
+        );
+        return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
+    }
+
+    // Handle generic API exceptions
     @ExceptionHandler(FruitsApiException.class)
     protected ResponseEntity<CustomErrorResponse> handleFruitsApiException(FruitsApiException exception) {
         CustomErrorResponse errorResponse = new CustomErrorResponse(
@@ -39,6 +130,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return new ResponseEntity<>(errorResponse, exception.getHttpStatus());
     }
 
+    // Handle invalid total price exception
     @ExceptionHandler(InvalidTotalPriceException.class)
     protected ResponseEntity<CustomErrorResponse> handleInvalidTotalPriceException(InvalidTotalPriceException exception) {
         CustomErrorResponse errorResponse = new CustomErrorResponse(
@@ -48,9 +140,11 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
 
-
+    // Handle all other exceptions (catch-all)
     @ExceptionHandler(Exception.class)
     protected ResponseEntity<CustomErrorResponse> handleGlobalException(Exception exception) {
+        // Log the exception (consider using a logger for this)
+        exception.printStackTrace();  // Simple logging; replace with a logger in production
         CustomErrorResponse errorResponse = new CustomErrorResponse(
                 "An unexpected error occurred: " + exception.getMessage(),
                 HttpStatus.INTERNAL_SERVER_ERROR.value()
@@ -58,6 +152,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
+    // Handle 404 errors for non-existing endpoints
     @Override
     protected ResponseEntity<Object> handleNoHandlerFoundException(NoHandlerFoundException ex,
                                                                    @NonNull HttpHeaders headers,
@@ -74,6 +169,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return new ResponseEntity<>(responseBody, HttpStatus.NOT_FOUND);
     }
 
+    // Handle validation errors
     @Override
     protected ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException ex,
                                                                   HttpHeaders headers,
@@ -103,4 +199,3 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return new ResponseEntity<>(responseBody, HttpStatus.BAD_REQUEST);
     }
 }
-

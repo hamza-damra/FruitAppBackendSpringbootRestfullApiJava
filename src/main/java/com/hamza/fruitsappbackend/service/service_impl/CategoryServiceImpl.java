@@ -2,6 +2,7 @@ package com.hamza.fruitsappbackend.service.service_impl;
 
 import com.hamza.fruitsappbackend.dto.CategoryDTO;
 import com.hamza.fruitsappbackend.entity.Category;
+import com.hamza.fruitsappbackend.exception.CategoryNotFoundException;
 import com.hamza.fruitsappbackend.repository.CategoryRepository;
 import com.hamza.fruitsappbackend.service.CategoryService;
 import org.modelmapper.ModelMapper;
@@ -34,7 +35,10 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     public Optional<CategoryDTO> getCategoryById(Long id) {
         return categoryRepository.findById(id)
-                .map(category -> modelMapper.map(category, CategoryDTO.class));
+                .map(category -> modelMapper.map(category, CategoryDTO.class))
+                .or(() -> {
+                    throw new CategoryNotFoundException("id", id.toString());
+                });
     }
 
     @Override
@@ -46,13 +50,19 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     public CategoryDTO updateCategory(CategoryDTO categoryDTO) {
-        Category category = modelMapper.map(categoryDTO, Category.class);
+        Category category = categoryRepository.findById(categoryDTO.getId())
+                .orElseThrow(() -> new CategoryNotFoundException("id", categoryDTO.getId().toString()));
+
+        modelMapper.map(categoryDTO, category); // Update existing entity
         Category updatedCategory = categoryRepository.save(category);
         return modelMapper.map(updatedCategory, CategoryDTO.class);
     }
 
     @Override
     public void deleteCategoryById(Long id) {
+        if (!categoryRepository.existsById(id)) {
+            throw new CategoryNotFoundException("id", id.toString());
+        }
         categoryRepository.deleteById(id);
     }
 }

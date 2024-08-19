@@ -3,6 +3,8 @@ package com.hamza.fruitsappbackend.service.service_impl;
 import com.hamza.fruitsappbackend.dto.CartItemDTO;
 import com.hamza.fruitsappbackend.entity.CartItem;
 import com.hamza.fruitsappbackend.entity.Product;
+import com.hamza.fruitsappbackend.exception.CartItemNotFoundException;
+import com.hamza.fruitsappbackend.exception.ProductNotFoundException;
 import com.hamza.fruitsappbackend.repository.CartItemRepository;
 import com.hamza.fruitsappbackend.repository.ProductRepository;
 import com.hamza.fruitsappbackend.service.CartItemService;
@@ -32,7 +34,7 @@ public class CartItemServiceImpl implements CartItemService {
     @Override
     public CartItemDTO saveCartItem(CartItemDTO cartItemDTO) {
         Product product = productRepository.findById(cartItemDTO.getProductId())
-                .orElseThrow(() -> new RuntimeException("Product not found for the given ID: " + cartItemDTO.getProductId()));
+                .orElseThrow(() -> new ProductNotFoundException("id", cartItemDTO.getProductId().toString()));
 
         CartItem cartItem = new CartItem();
         cartItem.setProduct(product);
@@ -55,6 +57,9 @@ public class CartItemServiceImpl implements CartItemService {
                     CartItemDTO cartItemDTO = modelMapper.map(cartItem, CartItemDTO.class);
                     cartItemDTO.setProductId(cartItem.getProduct().getId());
                     return cartItemDTO;
+                })
+                .or(() -> {
+                    throw new CartItemNotFoundException("id", id.toString());
                 });
     }
 
@@ -82,30 +87,29 @@ public class CartItemServiceImpl implements CartItemService {
 
     @Override
     public CartItemDTO updateCartItem(CartItemDTO cartItemDTO) {
-        Optional<CartItem> existingCartItemOptional = cartItemRepository.findById(cartItemDTO.getId());
-        if (existingCartItemOptional.isPresent()) {
-            CartItem existingCartItem = existingCartItemOptional.get();
+        CartItem existingCartItem = cartItemRepository.findById(cartItemDTO.getId())
+                .orElseThrow(() -> new CartItemNotFoundException("id", cartItemDTO.getId().toString()));
 
-            if (cartItemDTO.getQuantity() > 0) {
-                existingCartItem.setQuantity(cartItemDTO.getQuantity());
-            }
-
-            if (cartItemDTO.getProductId() != null) {
-                Product product = productRepository.findById(cartItemDTO.getProductId())
-                        .orElseThrow(() -> new RuntimeException("Product not found for the given ID: " + cartItemDTO.getProductId()));
-                existingCartItem.setProduct(product);
-                existingCartItem.setPrice(BigDecimal.valueOf(product.getPrice()));
-            }
-
-            CartItem updatedCartItem = cartItemRepository.save(existingCartItem);
-            return modelMapper.map(updatedCartItem, CartItemDTO.class);
-        } else {
-            throw new RuntimeException("CartItem not found with ID: " + cartItemDTO.getId());
+        if (cartItemDTO.getQuantity() > 0) {
+            existingCartItem.setQuantity(cartItemDTO.getQuantity());
         }
+
+        if (cartItemDTO.getProductId() != null) {
+            Product product = productRepository.findById(cartItemDTO.getProductId())
+                    .orElseThrow(() -> new ProductNotFoundException("id", cartItemDTO.getProductId().toString()));
+            existingCartItem.setProduct(product);
+            existingCartItem.setPrice(BigDecimal.valueOf(product.getPrice()));
+        }
+
+        CartItem updatedCartItem = cartItemRepository.save(existingCartItem);
+        return modelMapper.map(updatedCartItem, CartItemDTO.class);
     }
 
     @Override
     public void deleteCartItemById(Long id) {
+        if (!cartItemRepository.existsById(id)) {
+            throw new CartItemNotFoundException("id", id.toString());
+        }
         cartItemRepository.deleteById(id);
     }
 }
