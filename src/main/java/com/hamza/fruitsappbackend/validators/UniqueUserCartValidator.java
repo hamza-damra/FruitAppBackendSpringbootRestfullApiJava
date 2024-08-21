@@ -12,14 +12,7 @@ public class UniqueUserCartValidator implements ConstraintValidator<UniqueUserCa
     private CartRepository cartRepository;
 
     @Override
-    public void initialize(UniqueUserCart constraintAnnotation) {
-    }
-
-    @Override
     public boolean isValid(Long userId, ConstraintValidatorContext context) {
-        if (userId == null) {
-            return true;
-        }
-        return cartRepository.findByUserId(userId).isEmpty();
+        return userId != null && !cartRepository.existsByUserId(userId);
     }
 }

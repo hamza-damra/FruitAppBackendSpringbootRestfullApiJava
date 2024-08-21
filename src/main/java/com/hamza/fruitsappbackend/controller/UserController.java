@@ -67,38 +67,33 @@ public class UserController {
 
     @GetMapping("/{id}")
     public ResponseEntity<UserDTO> getUserById(@RequestHeader("Authorization") String token, @PathVariable Long id) {
-        String jwtToken = token.replace("Bearer ", "");
-        Optional<UserDTO> userDTO = userService.getUserById(id, jwtToken);
+        Optional<UserDTO> userDTO = userService.getUserById(id, token);
         return userDTO.map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
     @GetMapping
     public ResponseEntity<List<UserDTO>> getAllUsers(@RequestHeader("Authorization") String token) {
-        String jwtToken = token.replace("Bearer ", "");
-        List<UserDTO> users = userService.getAllUsers(jwtToken);
+        List<UserDTO> users = userService.getAllUsers(token);
         return ResponseEntity.ok(users);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<UserDTO> updateUser(@RequestHeader("Authorization") String token, @PathVariable Long id, @RequestBody UserDTO userDTO) {
-        String jwtToken = token.replace("Bearer ", "");
         userDTO.setId(id);
-        UserDTO updatedUser = userService.updateUser(userDTO, jwtToken);
+        UserDTO updatedUser = userService.updateUser(userDTO, token);
         return ResponseEntity.ok(updatedUser);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteUserById(@RequestHeader("Authorization") String token, @PathVariable Long id) {
-        String jwtToken = token.replace("Bearer ", "");
-        userService.deleteUserById(id, jwtToken);
+        userService.deleteUserById(id, token);
         return ResponseEntity.ok("User deleted successfully!");
     }
 
     @DeleteMapping("/email/{email}")
     public ResponseEntity<String> deleteUserByEmail(@RequestHeader("Authorization") String token, @PathVariable String email) {
-        String jwtToken = token.replace("Bearer ", "");
-        userService.deleteUserByEmail(email, jwtToken);
+        userService.deleteUserByEmail(email, token);
         return ResponseEntity.ok("User deleted successfully!");
     }
 }

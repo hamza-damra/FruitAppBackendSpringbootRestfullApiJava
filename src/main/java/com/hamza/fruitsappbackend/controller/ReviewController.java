@@ -21,8 +21,7 @@ public class ReviewController {
 
     @PostMapping("/add")
     public ResponseEntity<ReviewDTO> createReview(@RequestHeader("Authorization") String token, @RequestBody ReviewDTO reviewDTO) {
-        String jwtToken = token.replace("Bearer ", "");
-        ReviewDTO savedReview = reviewService.saveReview(reviewDTO, jwtToken);
+        ReviewDTO savedReview = reviewService.saveReview(reviewDTO, token);
         return ResponseEntity.ok(savedReview);
     }
 
@@ -52,23 +51,20 @@ public class ReviewController {
 
     @PutMapping("/{id}")
     public ResponseEntity<ReviewDTO> updateReview(@RequestHeader("Authorization") String token, @PathVariable Long id, @RequestBody ReviewDTO reviewDTO) {
-        String jwtToken = token.replace("Bearer ", "");
         reviewDTO.setId(id);
-        ReviewDTO updatedReview = reviewService.updateReview(reviewDTO, jwtToken);
+        ReviewDTO updatedReview = reviewService.updateReview(reviewDTO, token);
         return ResponseEntity.ok(updatedReview);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteReviewById(@RequestHeader("Authorization") String token, @PathVariable Long id) {
-        String jwtToken = token.replace("Bearer ", "");
-        reviewService.deleteReviewById(id, jwtToken);
+        reviewService.deleteReviewById(id, token);
         return ResponseEntity.noContent().build();
     }
 
     @PutMapping("/{id}/like")
     public ResponseEntity<ReviewDTO> likeReview(@RequestHeader("Authorization") String token, @PathVariable Long id) {
-        String jwtToken = token.replace("Bearer ", "");
-        ReviewDTO reviewDTO = reviewService.likeReview(id, jwtToken);
+        ReviewDTO reviewDTO = reviewService.likeReview(id, token);
         return ResponseEntity.ok(reviewDTO);
     }
 

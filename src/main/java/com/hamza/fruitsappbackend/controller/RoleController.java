@@ -19,20 +19,20 @@ public class RoleController {
     private final RoleService roleService;
 
     @PostMapping("/create")
-    public ResponseEntity<RoleDto> createRole(@Valid @RequestBody RoleDto roleDto) {
-        RoleDto createdRole = roleService.createRole(roleDto);
+    public ResponseEntity<RoleDto> createRole(@RequestHeader("Authorization") String token, @Valid @RequestBody RoleDto roleDto) {
+        RoleDto createdRole = roleService.createRole(roleDto, token);
         return new ResponseEntity<>(createdRole, HttpStatus.CREATED);
     }
 
     @PutMapping("/update/{id}")
-    public ResponseEntity<RoleDto> updateRole(@PathVariable Long id, @Valid @RequestBody RoleDto roleDto) {
-        RoleDto updatedRole = roleService.updateRole(id, roleDto);
+    public ResponseEntity<RoleDto> updateRole(@RequestHeader("Authorization") String token, @PathVariable Long id, @Valid @RequestBody RoleDto roleDto) {
+        RoleDto updatedRole = roleService.updateRole(id, roleDto, token);
         return new ResponseEntity<>(updatedRole, HttpStatus.OK);
     }
 
     @DeleteMapping("/delete/{id}")
-    public ResponseEntity<Void> deleteRole(@PathVariable Long id) {
-        roleService.deleteRole(id);
+    public ResponseEntity<Void> deleteRole(@RequestHeader("Authorization") String token, @PathVariable Long id) {
+        roleService.deleteRole(id, token);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 

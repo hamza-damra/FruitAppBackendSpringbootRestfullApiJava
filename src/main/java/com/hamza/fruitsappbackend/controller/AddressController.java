@@ -23,60 +23,52 @@ public class AddressController {
 
     @PostMapping("/create")
     public ResponseEntity<AddressDTO> createAddress(@RequestHeader("Authorization") String token, @RequestBody @Valid AddressDTO addressDTO) {
-        String jwtToken = token.replace("Bearer ", "");
-        AddressDTO savedAddress = addressService.saveAddress(addressDTO, jwtToken);
+        AddressDTO savedAddress = addressService.saveAddress(addressDTO, token);
         return ResponseEntity.ok(savedAddress);
     }
 
     @GetMapping("/get-by-id/{id}")
     public ResponseEntity<AddressDTO> getAddressById(@RequestHeader("Authorization") String token, @PathVariable Long id) {
-        String jwtToken = token.replace("Bearer ", "");
-        Optional<AddressDTO> addressDTO = addressService.getAddressById(id, jwtToken);
+        Optional<AddressDTO> addressDTO = addressService.getAddressById(id, token);
         return addressDTO.map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
     @GetMapping("/user/{userId}")
     public ResponseEntity<List<AddressDTO>> getAddressesByUserId(@RequestHeader("Authorization") String token, @PathVariable Long userId) {
-        String jwtToken = token.replace("Bearer ", "");
-        List<AddressDTO> addresses = addressService.getAddressesByUserId(userId, jwtToken);
+        List<AddressDTO> addresses = addressService.getAddressesByUserId(userId, token);
         return ResponseEntity.ok(addresses);
     }
 
     @GetMapping("/all")
     public ResponseEntity<List<AddressDTO>> getAllAddresses(@RequestHeader("Authorization") String token) {
-        String jwtToken = token.replace("Bearer ", "");
-        List<AddressDTO> addresses = addressService.getAllAddresses(jwtToken);
+        List<AddressDTO> addresses = addressService.getAllAddresses(token);
         return ResponseEntity.ok(addresses);
     }
 
     @PutMapping("/update-by-id/{id}")
     public ResponseEntity<AddressDTO> updateAddress(@RequestHeader("Authorization") String token, @PathVariable Long id, @RequestBody @Valid AddressDTO addressDTO) {
-        String jwtToken = token.replace("Bearer ", "");
         addressDTO.setId(id);
-        AddressDTO updatedAddress = addressService.updateAddress(addressDTO, jwtToken);
+        AddressDTO updatedAddress = addressService.updateAddress(addressDTO, token);
         return ResponseEntity.ok(updatedAddress);
     }
 
     @PutMapping("/update-by-user-id/{userId}")
     public ResponseEntity<AddressDTO> updateAddressByUserId(@RequestHeader("Authorization") String token, @PathVariable Long userId, @RequestBody @Valid AddressDTO addressDTO) {
-        String jwtToken = token.replace("Bearer ", "");
         addressDTO.setUserId(userId);
-        AddressDTO updatedAddress = addressService.updateAddressByUserId(addressDTO, jwtToken);
+        AddressDTO updatedAddress = addressService.updateAddressByUserId(addressDTO, token);
         return ResponseEntity.ok(updatedAddress);
     }
 
     @DeleteMapping("/delete-by-id/{id}")
     public ResponseEntity<Void> deleteAddressById(@RequestHeader("Authorization") String token, @PathVariable Long id) {
-        String jwtToken = token.replace("Bearer ", "");
-        addressService.deleteAddressById(id, jwtToken);
+        addressService.deleteAddressById(id, token);
         return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/delete-by-user-id/{userId}")
     public ResponseEntity<String> deleteAddressesByUserId(@RequestHeader("Authorization") String token, @PathVariable Long userId) {
-        String jwtToken = token.replace("Bearer ", "");
-        addressService.deleteAddressByUserId(userId, jwtToken);
+        addressService.deleteAddressByUserId(userId, token);
         return ResponseEntity.ok("Address has been deleted successfully");
     }
 }

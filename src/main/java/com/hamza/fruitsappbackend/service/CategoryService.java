@@ -9,7 +9,7 @@ public interface CategoryService {
 
     CategoryDTO saveCategory(CategoryDTO categoryDTO, String token);
 
-    Optional<CategoryDTO> getCategoryById(Long id);
+    CategoryDTO getCategoryById(Long id);
 
     List<CategoryDTO> getAllCategories();
 

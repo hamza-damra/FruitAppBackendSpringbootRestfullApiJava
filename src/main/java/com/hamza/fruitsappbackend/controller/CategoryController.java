@@ -22,16 +22,14 @@ public class CategoryController {
 
     @PostMapping
     public ResponseEntity<CategoryDTO> createCategory(@RequestHeader("Authorization") String token, @RequestBody CategoryDTO categoryDTO) {
-        String jwtToken = token.replace("Bearer ", "");
-        CategoryDTO savedCategory = categoryService.saveCategory(categoryDTO, jwtToken);
+        CategoryDTO savedCategory = categoryService.saveCategory(categoryDTO, token);
         return ResponseEntity.ok(savedCategory);
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<CategoryDTO> getCategoryById(@PathVariable Long id) {
-        Optional<CategoryDTO> categoryDTO = categoryService.getCategoryById(id);
-        return categoryDTO.map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        CategoryDTO categoryDTO = categoryService.getCategoryById(id);
+        return ResponseEntity.ok(categoryDTO);
     }
 
     @GetMapping
@@ -42,16 +40,14 @@ public class CategoryController {
 
     @PutMapping("/{id}")
     public ResponseEntity<CategoryDTO> updateCategory(@RequestHeader("Authorization") String token, @PathVariable Long id, @RequestBody CategoryDTO categoryDTO) {
-        String jwtToken = token.replace("Bearer ", "");
         categoryDTO.setId(id);
-        CategoryDTO updatedCategory = categoryService.updateCategory(categoryDTO, jwtToken);
+        CategoryDTO updatedCategory = categoryService.updateCategory(categoryDTO, token);
         return ResponseEntity.ok(updatedCategory);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteCategoryById(@RequestHeader("Authorization") String token, @PathVariable Long id) {
-        String jwtToken = token.replace("Bearer ", "");
-        categoryService.deleteCategoryById(id, jwtToken);
+        categoryService.deleteCategoryById(id, token);
         return ResponseEntity.noContent().build();
     }
 }

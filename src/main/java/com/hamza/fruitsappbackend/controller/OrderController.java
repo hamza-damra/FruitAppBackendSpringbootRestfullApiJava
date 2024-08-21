@@ -23,30 +23,26 @@ public class OrderController {
 
     @PostMapping("/create")
     public ResponseEntity<OrderDTO> createOrder(@RequestHeader("Authorization") String token, @Valid @RequestBody OrderDTO orderDTO) {
-        String jwtToken = token.replace("Bearer ", "");
-        OrderDTO savedOrder = orderService.saveOrder(orderDTO, jwtToken);
+        OrderDTO savedOrder = orderService.saveOrder(orderDTO, token);
         return ResponseEntity.ok(savedOrder);
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<OrderDTO> getOrderById(@RequestHeader("Authorization") String token, @PathVariable Long id) {
-        String jwtToken = token.replace("Bearer ", "");
-        Optional<OrderDTO> orderDTO = orderService.getOrderById(id, jwtToken);
+        Optional<OrderDTO> orderDTO = orderService.getOrderById(id, token);
         return orderDTO.map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
     @GetMapping("/user/{userId}")
     public ResponseEntity<List<OrderDTO>> getOrdersByUserId(@RequestHeader("Authorization") String token, @PathVariable Long userId) {
-        String jwtToken = token.replace("Bearer ", "");
-        List<OrderDTO> orders = orderService.getOrdersByUserId(userId, jwtToken);
+        List<OrderDTO> orders = orderService.getOrdersByUserId(userId, token);
         return ResponseEntity.ok(orders);
     }
 
     @GetMapping
     public ResponseEntity<List<OrderDTO>> getAllOrders(@RequestHeader("Authorization") String token) {
-        String jwtToken = token.replace("Bearer ", "");
-        List<OrderDTO> orders = orderService.getAllOrders(jwtToken);
+        List<OrderDTO> orders = orderService.getAllOrders(token);
         return ResponseEntity.ok(orders);
     }
 
@@ -56,22 +52,19 @@ public class OrderController {
             @PathVariable Long orderId,
             @PathVariable Long userId,
             @Valid @RequestBody OrderDTO orderDTO) {
-        String jwtToken = token.replace("Bearer ", "");
-        OrderDTO updatedOrder = orderService.updateOrderByUserIdAndOrderId(orderId, userId, orderDTO, jwtToken);
+        OrderDTO updatedOrder = orderService.updateOrderByUserIdAndOrderId(orderId, userId, orderDTO, token);
         return ResponseEntity.ok(updatedOrder);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteOrderById(@RequestHeader("Authorization") String token, @PathVariable Long id) {
-        String jwtToken = token.replace("Bearer ", "");
-        orderService.deleteOrderById(id, jwtToken);
+        orderService.deleteOrderById(id, token);
         return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/user/{userId}")
     public ResponseEntity<Void> deleteOrdersByUserId(@RequestHeader("Authorization") String token, @PathVariable Long userId) {
-        String jwtToken = token.replace("Bearer ", "");
-        orderService.deleteOrdersByUserId(userId, jwtToken);
+        orderService.deleteOrdersByUserId(userId, token);
         return ResponseEntity.noContent().build();
     }
 
@@ -80,8 +73,7 @@ public class OrderController {
             @RequestHeader("Authorization") String token,
             @PathVariable Long orderId,
             @PathVariable Long userId) {
-        String jwtToken = token.replace("Bearer ", "");
-        orderService.deleteOrderByIdAndUserId(orderId, userId, jwtToken);
+        orderService.deleteOrderByIdAndUserId(orderId, userId, token);
         return ResponseEntity.noContent().build();
     }
 }

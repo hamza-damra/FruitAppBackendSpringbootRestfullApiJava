@@ -29,15 +29,15 @@ public class JwtTokenProvider {
         this.key = Keys.secretKeyFor(SignatureAlgorithm.HS512);
     }
 
-    // generate token
+    // Generate token
     public String generateToken(Authentication authentication) {
-        String imageUrl = "https://images.inc.com/uploaded_files/image/1920x1080/getty_481292845_77896.jpg"; // replace with actual
-        Map<String, Object> additionalClaims = Map.of("imageUrl", imageUrl); // replace with actual claims
+        String imageUrl = "https://images.inc.com/uploaded_files/image/1920x1080/getty_481292845_77896.jpg"; // Replace with actual
+        Map<String, Object> additionalClaims = Map.of("imageUrl", imageUrl); // Replace with actual claims
         String userName = authentication.getName();
         Date currentDate = new Date();
         Date expirationDate = new Date(currentDate.getTime() + validityInMilliseconds);
         JwtBuilder tokenBuilder = Jwts.builder();
-        return  tokenBuilder
+        return tokenBuilder
                 .setSubject(userName)
                 .setIssuedAt(currentDate)
                 .setExpiration(expirationDate)
@@ -46,15 +46,17 @@ public class JwtTokenProvider {
                 .compact();
     }
 
-    // retrieve user name from token
+    // Retrieve user name from token
     public String getUserNameFromToken(String token) {
+        token = token.trim();  // Ensure the token is trimmed of spaces
         JwtParser jwtValidatorParser = Jwts.parserBuilder().setSigningKey(key).build();
         Claims claims = jwtValidatorParser.parseClaimsJws(token).getBody();
         return claims.getSubject();
     }
 
-    // retrieve all claims from token
+    // Retrieve all claims from token
     public Claims getAllClaimsFromToken(String token) {
+        token = token.trim();  // Ensure the token is trimmed of spaces
         return Jwts.parserBuilder()
                 .setSigningKey(key)
                 .build()
@@ -62,10 +64,10 @@ public class JwtTokenProvider {
                 .getBody();
     }
 
-
-    // validate token
+    // Validate token
     public boolean validateToken(String token) {
         try {
+            token = token.trim();  // Ensure the token is trimmed of spaces
             Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token);
             return true;
         } catch (SignatureException e) {

@@ -8,9 +8,11 @@ import com.hamza.fruitsappbackend.exception.RoleDeletionException;
 import com.hamza.fruitsappbackend.repository.RoleRepository;
 import com.hamza.fruitsappbackend.repository.UserRepository;
 import com.hamza.fruitsappbackend.service.RoleService;
+import com.hamza.fruitsappbackend.utils.AuthorizationUtils;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -21,12 +23,15 @@ import java.util.Set;
 public class RoleServiceImpl implements RoleService {
 
     private final RoleRepository roleRepository;
-    private final UserRepository userRepository;  // Inject UserRepository
+    private final UserRepository userRepository;
     private final ModelMapper modelMapper;
+    private final AuthorizationUtils authorizationUtils;
 
     @Override
     @Transactional
-    public RoleDto createRole(RoleDto roleDto) {
+    public RoleDto createRole(RoleDto roleDto, String token) {
+        authorizationUtils.checkAdminRole(token);
+
         Role role = modelMapper.map(roleDto, Role.class);
         role.setName("ROLE_" + role.getName().toUpperCase());
         role = roleRepository.save(role);
@@ -35,7 +40,9 @@ public class RoleServiceImpl implements RoleService {
 
     @Override
     @Transactional
-    public RoleDto updateRole(Long id, RoleDto roleDto) {
+    public RoleDto updateRole(Long id, RoleDto roleDto, String token) {
+        authorizationUtils.checkAdminRole(token);
+
         Role existingRole = roleRepository.findById(id)
                 .orElseThrow(() -> new RoleNotFoundException("id", id.toString()));
 
@@ -47,7 +54,9 @@ public class RoleServiceImpl implements RoleService {
 
     @Override
     @Transactional
-    public void deleteRole(Long id) {
+    public void deleteRole(Long id, String token) {
+        authorizationUtils.checkAdminRole(token);
+
         Role role = roleRepository.findById(id)
                 .orElseThrow(() -> new RoleNotFoundException("id", id.toString()));
 
@@ -77,7 +86,7 @@ public class RoleServiceImpl implements RoleService {
     @Transactional
     public List<RoleDto> getRolesByUserId(Long userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RoleNotFoundException("id", userId.toString()));  // You might want to create a custom exception for User not found
+                .orElseThrow(() -> new RoleNotFoundException("id", userId.toString()));
 
         Set<Role> roles = user.getRoles();
         return roles.stream()

@@ -6,15 +6,15 @@ import com.hamza.fruitsappbackend.exception.UserNotFoundException;
 import com.hamza.fruitsappbackend.exception.RoleNotFoundException;
 import com.hamza.fruitsappbackend.repository.UserRepository;
 import com.hamza.fruitsappbackend.repository.RoleRepository;
-import com.hamza.fruitsappbackend.security.JwtTokenProvider;
 import com.hamza.fruitsappbackend.service.UserService;
+import com.hamza.fruitsappbackend.utils.AuthorizationUtils;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.security.access.AccessDeniedException;
 
 import java.util.HashSet;
 import java.util.List;
@@ -29,38 +29,16 @@ public class UserServiceImpl implements UserService {
     private final RoleRepository roleRepository;
     private final ModelMapper modelMapper;
     private final PasswordEncoder passwordEncoder;
-    private final JwtTokenProvider jwtTokenProvider;
+    private final AuthorizationUtils authorizationUtils;
 
     @Autowired
     public UserServiceImpl(UserRepository userRepository, RoleRepository roleRepository,
-                           ModelMapper modelMapper, PasswordEncoder passwordEncoder, JwtTokenProvider jwtTokenProvider) {
+                           ModelMapper modelMapper, PasswordEncoder passwordEncoder, AuthorizationUtils authorizationUtils) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.modelMapper = modelMapper;
         this.passwordEncoder = passwordEncoder;
-        this.jwtTokenProvider = jwtTokenProvider;
-    }
-
-    private void checkUserOrAdminRole(String token, Long userId) {
-        String username = jwtTokenProvider.getUserNameFromToken(token);
-        User user = userRepository.findByEmail(username)
-                .orElseThrow(() -> new AccessDeniedException("User not found"));
-
-        if (!user.getId().equals(userId) && user.getRoles().stream()
-                .noneMatch(role -> role.getName().equals("ROLE_ADMIN"))) {
-            throw new AccessDeniedException("You do not have the necessary permissions to perform this operation");
-        }
-    }
-
-    private void checkAdminRole(String token) {
-        String username = jwtTokenProvider.getUserNameFromToken(token);
-        User user = userRepository.findByEmail(username)
-                .orElseThrow(() -> new AccessDeniedException("User not found"));
-
-        if (user.getRoles().stream()
-                .noneMatch(role -> role.getName().equals("ROLE_ADMIN"))) {
-            throw new AccessDeniedException("You do not have the necessary permissions to perform this operation");
-        }
+        this.authorizationUtils = authorizationUtils;
     }
 
     @Override
@@ -87,7 +65,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Optional<UserDTO> getUserById(Long id, String token) {
-        checkUserOrAdminRole(token, id);
+        authorizationUtils.checkUserOrAdminRole(token, id);
 
         return userRepository.findById(id)
                 .map(user -> modelMapper.map(user, UserDTO.class))
@@ -98,24 +76,17 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Optional<UserDTO> getUserByEmail(String email, String token) {
-        String username = jwtTokenProvider.getUserNameFromToken(token);
-        User requestingUser = userRepository.findByEmail(username)
-                .orElseThrow(() -> new AccessDeniedException("User not found"));
+        authorizationUtils.checkUserOrAdminRoleByEmail(token, email);
 
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UserNotFoundException("email", email));
-
-        if (!requestingUser.getEmail().equals(email) && requestingUser.getRoles().stream()
-                .noneMatch(role -> role.getName().equals("ROLE_ADMIN"))) {
-            throw new AccessDeniedException("You do not have the necessary permissions to perform this operation");
-        }
 
         return Optional.of(modelMapper.map(user, UserDTO.class));
     }
 
     @Override
     public List<UserDTO> getAllUsers(String token) {
-        checkAdminRole(token);
+        authorizationUtils.checkAdminRole(token);
 
         return userRepository.findAll().stream()
                 .map(user -> modelMapper.map(user, UserDTO.class))
@@ -124,7 +95,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDTO updateUser(UserDTO userDTO, String token) {
-        checkUserOrAdminRole(token, userDTO.getId());
+        authorizationUtils.checkUserOrAdminRole(token, userDTO.getId());
 
         User existingUser = userRepository.findById(userDTO.getId())
                 .orElseThrow(() -> new UserNotFoundException("id", userDTO.getId().toString()));
@@ -155,7 +126,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void deleteUserById(Long id, String token) {
-        checkUserOrAdminRole(token, id);
+        authorizationUtils.checkUserOrAdminRole(token, id);
 
         if (!userRepository.existsById(id)) {
             throw new UserNotFoundException("id", id.toString());
@@ -165,17 +136,10 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void deleteUserByEmail(String email, String token) {
-        String username = jwtTokenProvider.getUserNameFromToken(token);
-        User requestingUser = userRepository.findByEmail(username)
-                .orElseThrow(() -> new AccessDeniedException("User not found"));
+        authorizationUtils.checkUserOrAdminRoleByEmail(token, email);
 
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UserNotFoundException("email", email));
-
-        if (!requestingUser.getEmail().equals(email) && requestingUser.getRoles().stream()
-                .noneMatch(role -> role.getName().equals("ROLE_ADMIN"))) {
-            throw new AccessDeniedException("You do not have the necessary permissions to perform this operation");
-        }
 
         userRepository.delete(user);
     }

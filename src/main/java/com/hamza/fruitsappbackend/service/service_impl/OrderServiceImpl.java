@@ -6,11 +6,10 @@ import com.hamza.fruitsappbackend.entity.User;
 import com.hamza.fruitsappbackend.exception.OrderNotFoundException;
 import com.hamza.fruitsappbackend.repository.OrderRepository;
 import com.hamza.fruitsappbackend.repository.UserRepository;
-import com.hamza.fruitsappbackend.security.JwtTokenProvider;
 import com.hamza.fruitsappbackend.service.OrderService;
+import com.hamza.fruitsappbackend.utils.AuthorizationUtils;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -23,43 +22,20 @@ public class OrderServiceImpl implements OrderService {
     private final OrderRepository orderRepository;
     private final UserRepository userRepository;
     private final ModelMapper modelMapper;
-    private final JwtTokenProvider jwtTokenProvider;
+    private final AuthorizationUtils authorizationUtils;
 
     @Autowired
     public OrderServiceImpl(OrderRepository orderRepository, UserRepository userRepository,
-                            ModelMapper modelMapper, JwtTokenProvider jwtTokenProvider) {
+                            ModelMapper modelMapper, AuthorizationUtils authorizationUtils) {
         this.orderRepository = orderRepository;
         this.userRepository = userRepository;
         this.modelMapper = modelMapper;
-        this.jwtTokenProvider = jwtTokenProvider;
-    }
-
-    private void checkUserOrAdminRole(String token, Long userId) {
-        String username = jwtTokenProvider.getUserNameFromToken(token);
-        User user = userRepository.findByEmail(username)
-                .orElseThrow(() -> new AccessDeniedException("User not found"));
-
-        if (!user.getId().equals(userId) && user.getRoles().stream()
-                .noneMatch(role -> role.getName().equals("ROLE_ADMIN"))) {
-            throw new AccessDeniedException("You do not have the necessary permissions to perform this operation");
-        }
-    }
-
-    private void checkAdminRole(String token) {
-        String username = jwtTokenProvider.getUserNameFromToken(token);
-        User user = userRepository.findByEmail(username)
-                .orElseThrow(() -> new AccessDeniedException("User not found"));
-
-        if (user.getRoles().stream()
-                .noneMatch(role -> role.getName().equals("ROLE_ADMIN"))) {
-            throw new AccessDeniedException("You do not have the necessary permissions to perform this operation");
-        }
+        this.authorizationUtils = authorizationUtils;
     }
 
     @Override
     public OrderDTO saveOrder(OrderDTO orderDTO, String token) {
-        checkUserOrAdminRole(token, orderDTO.getUserId());
-
+        authorizationUtils.checkUserOrAdminRole(token, orderDTO.getUserId());
         Order order = modelMapper.map(orderDTO, Order.class);
         Order savedOrder = orderRepository.save(order);
         return modelMapper.map(savedOrder, OrderDTO.class);
@@ -70,15 +46,14 @@ public class OrderServiceImpl implements OrderService {
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new OrderNotFoundException("id", id.toString()));
 
-        checkUserOrAdminRole(token, order.getUser().getId());
+        authorizationUtils.checkUserOrAdminRole(token, order.getUser().getId());
 
         return Optional.of(modelMapper.map(order, OrderDTO.class));
     }
 
     @Override
     public List<OrderDTO> getOrdersByUserId(Long userId, String token) {
-        checkUserOrAdminRole(token, userId);
-
+        authorizationUtils.checkUserOrAdminRole(token, userId);
         return orderRepository.findByUserId(userId).stream()
                 .map(order -> modelMapper.map(order, OrderDTO.class))
                 .collect(Collectors.toList());
@@ -86,8 +61,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public List<OrderDTO> getAllOrders(String token) {
-        checkAdminRole(token);
-
+        authorizationUtils.checkAdminRole(token);
         return orderRepository.findAll().stream()
                 .map(order -> modelMapper.map(order, OrderDTO.class))
                 .collect(Collectors.toList());
@@ -95,7 +69,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public OrderDTO updateOrderByUserIdAndOrderId(Long orderId, Long userId, OrderDTO orderDTO, String token) {
-        checkUserOrAdminRole(token, userId);
+        authorizationUtils.checkUserOrAdminRole(token, userId);
 
         Order existingOrder = orderRepository.findById(orderId)
                 .orElseThrow(() -> new OrderNotFoundException("id", orderId.toString()));
@@ -110,14 +84,14 @@ public class OrderServiceImpl implements OrderService {
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new OrderNotFoundException("id", id.toString()));
 
-        checkUserOrAdminRole(token, order.getUser().getId());
+        authorizationUtils.checkUserOrAdminRole(token, order.getUser().getId());
 
         orderRepository.deleteById(id);
     }
 
     @Override
     public void deleteOrdersByUserId(Long userId, String token) {
-        checkAdminRole(token);
+        authorizationUtils.checkAdminRole(token);
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new OrderNotFoundException("User", userId.toString()));
@@ -127,7 +101,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public void deleteOrderByIdAndUserId(Long orderId, Long userId, String token) {
-        checkUserOrAdminRole(token, userId);
+        authorizationUtils.checkUserOrAdminRole(token, userId);
 
         if (orderRepository.existsByIdAndUserId(orderId, userId)) {
             orderRepository.deleteByIdAndUserId(orderId, userId);

@@ -7,13 +7,13 @@ import com.hamza.fruitsappbackend.exception.AddressNotFoundException;
 import com.hamza.fruitsappbackend.exception.UserNotFoundException;
 import com.hamza.fruitsappbackend.repository.AddressRepository;
 import com.hamza.fruitsappbackend.repository.UserRepository;
-import com.hamza.fruitsappbackend.security.JwtTokenProvider;
 import com.hamza.fruitsappbackend.service.AddressService;
+import com.hamza.fruitsappbackend.utils.AuthorizationUtils;
 import jakarta.transaction.Transactional;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -23,127 +23,104 @@ public class AddressServiceImpl implements AddressService {
 
     private final AddressRepository addressRepository;
     private final UserRepository userRepository;
-    private final JwtTokenProvider jwtTokenProvider;
     private final ModelMapper modelMapper;
+    private final AuthorizationUtils authorizationUtils;
 
     @Autowired
-    public AddressServiceImpl(AddressRepository addressRepository, UserRepository userRepository, JwtTokenProvider jwtTokenProvider, ModelMapper modelMapper) {
+    public AddressServiceImpl(AddressRepository addressRepository, UserRepository userRepository,
+                              ModelMapper modelMapper, AuthorizationUtils authorizationUtils) {
         this.addressRepository = addressRepository;
         this.userRepository = userRepository;
-        this.jwtTokenProvider = jwtTokenProvider;
         this.modelMapper = modelMapper;
-    }
-
-    private void checkUserRole(User user) {
-        if (user.getRoles().stream()
-                .noneMatch(role -> role.getName().equals("ROLE_USER") || role.getName().equals("ROLE_ADMIN"))) {
-            throw new AccessDeniedException("You do not have the necessary permissions to perform this operation");
-        }
-    }
-
-    private void verifyUserOrAdmin(String token, Long userId) {
-        String username = jwtTokenProvider.getUserNameFromToken(token);
-        User user = userRepository.findByEmail(username)
-                .orElseThrow(() -> new AccessDeniedException("User not found"));
-
-        checkUserRole(user);
-
-        if (!user.getId().equals(userId) && user.getRoles().stream()
-                .noneMatch(role -> role.getName().equals("ROLE_ADMIN"))) {
-            throw new AccessDeniedException("You do not have permission to perform this operation");
-        }
+        this.authorizationUtils = authorizationUtils;
     }
 
     @Override
     public AddressDTO saveAddress(AddressDTO addressDTO, String token) {
-        verifyUserOrAdmin(token, addressDTO.getUserId());
-
-        Address address = modelMapper.map(addressDTO, Address.class);
-        User user = userRepository.findById(address.getUser().getId())
-                .orElseThrow(() -> new UserNotFoundException("id", address.getUser().getId().toString()));
-        address.setUser(user);
-        Address savedAddress = addressRepository.save(address);
-        return modelMapper.map(savedAddress, AddressDTO.class);
+        authorizationUtils.checkUserOrAdminRole(token, addressDTO.getUserId());
+        Address address = convertToEntity(addressDTO);
+        address.setUser(findUserById(addressDTO.getUserId()));
+        return convertToDto(addressRepository.save(address));
     }
 
     @Override
     public Optional<AddressDTO> getAddressById(Long id, String token) {
-        Address address = addressRepository.findById(id)
-                .orElseThrow(() -> new AddressNotFoundException("id", id.toString()));
-        verifyUserOrAdmin(token, address.getUser().getId());
-        return Optional.of(modelMapper.map(address, AddressDTO.class));
+        Address address = findAddressById(id);
+        authorizationUtils.checkUserOrAdminRole(token, address.getUser().getId());
+        return Optional.of(convertToDto(address));
     }
 
     @Override
     public List<AddressDTO> getAddressesByUserId(Long userId, String token) {
-        verifyUserOrAdmin(token, userId);
+        authorizationUtils.checkUserOrAdminRole(token, userId);
         return addressRepository.findByUserId(userId).stream()
-                .map(address -> modelMapper.map(address, AddressDTO.class))
+                .map(this::convertToDto)
                 .collect(Collectors.toList());
     }
 
     @Override
     public List<AddressDTO> getAllAddresses(String token) {
-        String username = jwtTokenProvider.getUserNameFromToken(token);
-        User user = userRepository.findByEmail(username)
-                .orElseThrow(() -> new AccessDeniedException("User not found"));
-
-        if (user.getRoles().stream().noneMatch(role -> role.getName().equals("ROLE_ADMIN"))) {
-            throw new AccessDeniedException("You do not have the necessary permissions to perform this operation");
-        }
-
+        authorizationUtils.checkAdminRole(token);
         return addressRepository.findAll().stream()
-                .map(address -> modelMapper.map(address, AddressDTO.class))
+                .map(this::convertToDto)
                 .collect(Collectors.toList());
     }
 
     @Override
     public AddressDTO updateAddress(AddressDTO addressDTO, String token) {
-        verifyUserOrAdmin(token, addressDTO.getUserId());
-
-        Address address = modelMapper.map(addressDTO, Address.class);
-        Address addressToUpdate = addressRepository.findById(address.getId())
-                .orElseThrow(() -> new AddressNotFoundException("id", address.getId().toString()));
-        address.setCreatedAt(addressToUpdate.getCreatedAt());
+        authorizationUtils.checkUserOrAdminRole(token, addressDTO.getUserId());
+        Address addressToUpdate = findAddressById(addressDTO.getId());
+        Address address = convertToEntity(addressDTO);
         address.setUser(addressToUpdate.getUser());
-        Address updatedAddress = addressRepository.save(address);
-        return modelMapper.map(updatedAddress, AddressDTO.class);
+        address.setCreatedAt(addressToUpdate.getCreatedAt());
+        return convertToDto(addressRepository.save(address));
     }
 
     @Override
     public void deleteAddressById(Long id, String token) {
-        Address address = addressRepository.findById(id)
-                .orElseThrow(() -> new AddressNotFoundException("id", id.toString()));
-        verifyUserOrAdmin(token, address.getUser().getId());
+        Address address = findAddressById(id);
+        authorizationUtils.checkUserOrAdminRole(token, address.getUser().getId());
         addressRepository.deleteById(id);
     }
 
     @Override
     @Transactional
     public void deleteAddressByUserId(Long userId, String token) {
-        verifyUserOrAdmin(token, userId);
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new UserNotFoundException("id", userId.toString()));
-        addressRepository.deleteAddressByUser(user);
+        authorizationUtils.checkUserOrAdminRole(token, userId);
+        addressRepository.deleteAddressByUser(findUserById(userId));
     }
 
     @Override
     @Transactional
     public AddressDTO updateAddressByUserId(AddressDTO addressDTO, String token) {
-        verifyUserOrAdmin(token, addressDTO.getUserId());
-
-        Address newAddress = modelMapper.map(addressDTO, Address.class);
-        User user = userRepository.findById(newAddress.getUser().getId())
-                .orElseThrow(() -> new UserNotFoundException("id", newAddress.getUser().getId().toString()));
-        newAddress.setUser(user);
-
-        Address existingAddress = addressRepository.findByUserId(newAddress.getUser().getId())
-                .orElseThrow(() -> new AddressNotFoundException("userId", newAddress.getUser().getId().toString()));
-
+        authorizationUtils.checkUserOrAdminRole(token, addressDTO.getUserId());
+        Address newAddress = convertToEntity(addressDTO);
+        Address existingAddress = findAddressByUserId(addressDTO.getUserId());
         newAddress.setId(existingAddress.getId());
         newAddress.setCreatedAt(existingAddress.getCreatedAt());
+        return convertToDto(addressRepository.save(newAddress));
+    }
 
-        Address updatedAddress = addressRepository.save(newAddress);
-        return modelMapper.map(updatedAddress, AddressDTO.class);
+    private Address findAddressById(Long id) {
+        return addressRepository.findById(id)
+                .orElseThrow(() -> new AddressNotFoundException("id", id.toString()));
+    }
+
+    private User findUserById(Long id) {
+        return userRepository.findById(id)
+                .orElseThrow(() -> new UserNotFoundException("id", id.toString()));
+    }
+
+    private Address findAddressByUserId(Long userId) {
+        return addressRepository.findByUserId(userId)
+                .orElseThrow(() -> new AddressNotFoundException("userId", userId.toString()));
+    }
+
+    private AddressDTO convertToDto(Address address) {
+        return modelMapper.map(address, AddressDTO.class);
+    }
+
+    private Address convertToEntity(AddressDTO addressDTO) {
+        return modelMapper.map(addressDTO, Address.class);
     }
 }

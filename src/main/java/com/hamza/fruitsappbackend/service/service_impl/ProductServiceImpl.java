@@ -3,17 +3,14 @@ package com.hamza.fruitsappbackend.service.service_impl;
 import com.hamza.fruitsappbackend.dto.ProductDTO;
 import com.hamza.fruitsappbackend.entity.Category;
 import com.hamza.fruitsappbackend.entity.Product;
-import com.hamza.fruitsappbackend.entity.User;
 import com.hamza.fruitsappbackend.exception.ProductNotFoundException;
 import com.hamza.fruitsappbackend.exception.CategoryNotFoundException;
 import com.hamza.fruitsappbackend.repository.ProductRepository;
 import com.hamza.fruitsappbackend.repository.CategoryRepository;
-import com.hamza.fruitsappbackend.repository.UserRepository;
-import com.hamza.fruitsappbackend.security.JwtTokenProvider;
 import com.hamza.fruitsappbackend.service.ProductService;
+import com.hamza.fruitsappbackend.utils.AuthorizationUtils;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -26,117 +23,91 @@ public class ProductServiceImpl implements ProductService {
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
     private final ModelMapper modelMapper;
-    private final UserRepository userRepository;
-    private final JwtTokenProvider jwtTokenProvider;
+    private final AuthorizationUtils authorizationUtils;
 
     @Autowired
     public ProductServiceImpl(ProductRepository productRepository, CategoryRepository categoryRepository,
-                              ModelMapper modelMapper, UserRepository userRepository, JwtTokenProvider jwtTokenProvider) {
+                              ModelMapper modelMapper, AuthorizationUtils authorizationUtils) {
         this.productRepository = productRepository;
         this.categoryRepository = categoryRepository;
         this.modelMapper = modelMapper;
-        this.userRepository = userRepository;
-        this.jwtTokenProvider = jwtTokenProvider;
-    }
-
-    private void checkAdminRole(User user) {
-        if (user.getRoles().stream()
-                .noneMatch(role -> role.getName().equals("ROLE_ADMIN"))) {
-            throw new AccessDeniedException("You do not have the necessary permissions to perform this operation");
-        }
+        this.authorizationUtils = authorizationUtils;
     }
 
     @Override
     public ProductDTO saveProduct(ProductDTO productDTO, String token) {
-        String username = jwtTokenProvider.getUserNameFromToken(token);
-        User user = userRepository.findByEmail(username)
-                .orElseThrow(() -> new AccessDeniedException("User not found"));
-
-        checkAdminRole(user);
-
-        Product product = modelMapper.map(productDTO, Product.class);
-
-        // If category ID is present, fetch the category and set it
-        if (productDTO.getCategoryId() != null) {
-            Category category = categoryRepository.findById(productDTO.getCategoryId())
-                    .orElseThrow(() -> new CategoryNotFoundException("id", productDTO.getCategoryId().toString()));
-            product.setCategory(category);
-        }
-
+        authorizationUtils.checkAdminRole(token);
+        Product product = convertToEntity(productDTO);
+        setCategory(productDTO, product);
         Product savedProduct = productRepository.save(product);
-        return modelMapper.map(savedProduct, ProductDTO.class);
+        return convertToDto(savedProduct);
     }
 
     @Override
     public Optional<ProductDTO> getProductById(Long id) {
         return productRepository.findById(id)
-                .map(product -> modelMapper.map(product, ProductDTO.class));
+                .map(this::convertToDto);
     }
 
     @Override
     public List<ProductDTO> getProductsByCategoryId(Long categoryId) {
         return productRepository.findByCategoryId(categoryId).stream()
-                .map(product -> modelMapper.map(product, ProductDTO.class))
+                .map(this::convertToDto)
                 .collect(Collectors.toList());
     }
 
     @Override
     public List<ProductDTO> getAllProducts() {
         return productRepository.findAll().stream()
-                .map(product -> modelMapper.map(product, ProductDTO.class))
+                .map(this::convertToDto)
                 .collect(Collectors.toList());
     }
 
     @Override
     public ProductDTO updateProduct(ProductDTO productDTO, String token) {
-        String username = jwtTokenProvider.getUserNameFromToken(token);
-        User user = userRepository.findByEmail(username)
-                .orElseThrow(() -> new AccessDeniedException("User not found"));
-
-        checkAdminRole(user);
-
-        // Fetch the existing product from the database
-        Product existingProduct = productRepository.findById(productDTO.getId())
-                .orElseThrow(() -> new ProductNotFoundException("id", productDTO.getId().toString()));
-
-        // Update the fields of the existing product
-        existingProduct.setName(productDTO.getName());
-        existingProduct.setDescription(productDTO.getDescription());
-        existingProduct.setPrice(productDTO.getPrice());
-        existingProduct.setImageUrl(productDTO.getImageUrl());
-        existingProduct.setStockQuantity(productDTO.getStockQuantity());
-
-        // Refactored category update
-        updateCategory(productDTO, existingProduct);
-
-        // Save the updated product
+        authorizationUtils.checkAdminRole(token);
+        Product existingProduct = findProductById(productDTO.getId());
+        updateProductDetails(productDTO, existingProduct);
+        setCategory(productDTO, existingProduct);
         Product updatedProduct = productRepository.save(existingProduct);
-
-        // Map the updated product back to the DTO
-        return modelMapper.map(updatedProduct, ProductDTO.class);
-    }
-
-    private void updateCategory(ProductDTO productDTO, Product existingProduct) {
-        if (productDTO.getCategoryId() != null) {
-            Category category = categoryRepository.findById(productDTO.getCategoryId())
-                    .orElseThrow(() -> new CategoryNotFoundException("id", productDTO.getCategoryId().toString()));
-            existingProduct.setCategory(category);
-        } else {
-            existingProduct.setCategory(null); // Handle the case where category might be set to null
-        }
+        return convertToDto(updatedProduct);
     }
 
     @Override
     public void deleteProductById(Long id, String token) {
-        String username = jwtTokenProvider.getUserNameFromToken(token);
-        User user = userRepository.findByEmail(username)
-                .orElseThrow(() -> new AccessDeniedException("User not found"));
+        authorizationUtils.checkAdminRole(token);
+        Product product = findProductById(id);
+        productRepository.delete(product);
+    }
 
-        checkAdminRole(user);
-
-        if (!productRepository.existsById(id)) {
-            throw new ProductNotFoundException("id", id.toString());
+    private void setCategory(ProductDTO productDTO, Product product) {
+        if (productDTO.getCategoryId() != null) {
+            Category category = categoryRepository.findById(productDTO.getCategoryId())
+                    .orElseThrow(() -> new CategoryNotFoundException("id", productDTO.getCategoryId().toString()));
+            product.setCategory(category);
+        } else {
+            product.setCategory(null); // Allow setting category to null
         }
-        productRepository.deleteById(id);
+    }
+
+    private Product findProductById(Long id) {
+        return productRepository.findById(id)
+                .orElseThrow(() -> new ProductNotFoundException("id", id.toString()));
+    }
+
+    private void updateProductDetails(ProductDTO productDTO, Product product) {
+        product.setName(productDTO.getName());
+        product.setDescription(productDTO.getDescription());
+        product.setPrice(productDTO.getPrice());
+        product.setImageUrl(productDTO.getImageUrl());
+        product.setStockQuantity(productDTO.getStockQuantity());
+    }
+
+    private ProductDTO convertToDto(Product product) {
+        return modelMapper.map(product, ProductDTO.class);
+    }
+
+    private Product convertToEntity(ProductDTO productDTO) {
+        return modelMapper.map(productDTO, Product.class);
     }
 }

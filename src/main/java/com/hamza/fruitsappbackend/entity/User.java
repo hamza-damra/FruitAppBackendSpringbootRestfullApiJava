@@ -62,7 +62,7 @@ public class User {
             joinColumns = @JoinColumn(name = "user_id"),
             inverseJoinColumns = @JoinColumn(name = "role_id"),
             uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "role_id"}))
-    private Set<Role> roles = new HashSet<>();
+            private Set<Role> roles = new HashSet<>();
 
     @PrePersist
     protected void onCreate() {
@@ -74,5 +74,11 @@ public class User {
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
+    }
+
+
+    public boolean hasRole(String roleName) {
+        return roles.stream()
+                .noneMatch(role -> role.getName().equals(roleName));
     }
 }
