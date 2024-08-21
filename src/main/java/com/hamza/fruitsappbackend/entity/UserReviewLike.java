@@ -11,21 +11,18 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
-@Table(name = "review_images")
-public class ReviewImage {
+@Table(name = "user_review_likes", uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "review_id"}))
+public class UserReviewLike {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "image_url", nullable = false)
-    private String imageUrl;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "review_id", nullable = false)
     private Review review;
-
-    @PrePersist
-    protected void onCreate() {
-    }
 }

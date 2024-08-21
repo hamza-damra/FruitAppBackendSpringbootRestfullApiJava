@@ -21,8 +21,9 @@ public class ProductController {
     }
 
     @PostMapping("/add")
-    public ResponseEntity<ProductDTO> createProduct(@RequestBody ProductDTO productDTO) {
-        ProductDTO savedProduct = productService.saveProduct(productDTO);
+    public ResponseEntity<ProductDTO> createProduct(@RequestHeader("Authorization") String token, @RequestBody ProductDTO productDTO) {
+        String jwtToken = token.replace("Bearer ", "");
+        ProductDTO savedProduct = productService.saveProduct(productDTO, jwtToken);
         return ResponseEntity.ok(savedProduct);
     }
 
@@ -46,15 +47,17 @@ public class ProductController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ProductDTO> updateProduct(@PathVariable Long id, @RequestBody ProductDTO productDTO) {
+    public ResponseEntity<ProductDTO> updateProduct(@RequestHeader("Authorization") String token, @PathVariable Long id, @RequestBody ProductDTO productDTO) {
+        String jwtToken = token.replace("Bearer ", "");
         productDTO.setId(id);
-        ProductDTO updatedProduct = productService.updateProduct(productDTO);
+        ProductDTO updatedProduct = productService.updateProduct(productDTO, jwtToken);
         return ResponseEntity.ok(updatedProduct);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteProductById(@PathVariable Long id) {
-        productService.deleteProductById(id);
+    public ResponseEntity<Void> deleteProductById(@RequestHeader("Authorization") String token, @PathVariable Long id) {
+        String jwtToken = token.replace("Bearer ", "");
+        productService.deleteProductById(id, jwtToken);
         return ResponseEntity.noContent().build();
     }
 }

@@ -26,55 +26,61 @@ public class CartController {
 
     @PostMapping("/add")
     @ResponseStatus(HttpStatus.CREATED)
-    public ResponseEntity<CartDTO> createCart(@Valid @RequestBody CartDTO cartDTO) {
-        CartDTO savedCart = cartService.saveCart(cartDTO);
+    public ResponseEntity<CartDTO> createCart(@RequestHeader("Authorization") String token, @Valid @RequestBody CartDTO cartDTO) {
+        String jwtToken = token.replace("Bearer ", "");
+        CartDTO savedCart = cartService.saveCart(cartDTO, jwtToken);
         return ResponseEntity.status(HttpStatus.CREATED).body(savedCart);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<CartDTO> getCartById(@PathVariable Long id) {
-        Optional<CartDTO> cartDTO = cartService.getCartById(id);
+    public ResponseEntity<CartDTO> getCartById(@RequestHeader("Authorization") String token, @PathVariable Long id) {
+        String jwtToken = token.replace("Bearer ", "");
+        Optional<CartDTO> cartDTO = cartService.getCartById(id, jwtToken);
         return cartDTO.map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @GetMapping("/user/{userId}")
-    public ResponseEntity<List<CartDTO>> getCartsByUserId(@PathVariable Long userId) {
-        List<CartDTO> carts = cartService.getCartsByUserId(userId);
+    public ResponseEntity<List<CartDTO>> getCartsByUserId(@RequestHeader("Authorization") String token, @PathVariable Long userId) {
+        String jwtToken = token.replace("Bearer ", "");
+        List<CartDTO> carts = cartService.getCartsByUserId(userId, jwtToken);
         return ResponseEntity.ok(carts);
     }
 
     @GetMapping
-    public ResponseEntity<List<CartDTO>> getAllCarts() {
-        List<CartDTO> carts = cartService.getAllCarts();
+    public ResponseEntity<List<CartDTO>> getAllCarts(@RequestHeader("Authorization") String token) {
+        String jwtToken = token.replace("Bearer ", "");
+        List<CartDTO> carts = cartService.getAllCarts(jwtToken);
         return ResponseEntity.ok(carts);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<CartDTO> updateCart(@PathVariable Long id, @Valid @RequestBody CartDTO cartDTO) {
-        cartDTO.setId(id);  // Ensure the cart ID matches the one in the path
-        CartDTO updatedCart = cartService.updateCart(cartDTO);
+    public ResponseEntity<CartDTO> updateCart(@RequestHeader("Authorization") String token, @PathVariable Long id, @Valid @RequestBody CartDTO cartDTO) {
+        String jwtToken = token.replace("Bearer ", "");
+        cartDTO.setId(id);
+        CartDTO updatedCart = cartService.updateCart(cartDTO, jwtToken);
         return updatedCart != null ? ResponseEntity.ok(updatedCart) : ResponseEntity.notFound().build();
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public ResponseEntity<Void> deleteCartById(@PathVariable Long id) {
-        cartService.deleteCartById(id);
+    public ResponseEntity<Void> deleteCartById(@RequestHeader("Authorization") String token, @PathVariable Long id) {
+        String jwtToken = token.replace("Bearer ", "");
+        cartService.deleteCartById(id, jwtToken);
         return ResponseEntity.noContent().build();
     }
 
-
     @PostMapping("/{cartId}/items")
-    public ResponseEntity<CartItemDTO> addCartItemToCart(@PathVariable Long cartId, @Valid @RequestBody CartItemDTO cartItemDTO) {
-        CartItemDTO addedCartItem = cartService.addCartItemToCart(cartId, cartItemDTO);
+    public ResponseEntity<CartItemDTO> addCartItemToCart(@RequestHeader("Authorization") String token, @PathVariable Long cartId, @Valid @RequestBody CartItemDTO cartItemDTO) {
+        String jwtToken = token.replace("Bearer ", "");
+        CartItemDTO addedCartItem = cartService.addCartItemToCart(cartId, cartItemDTO, jwtToken);
         return ResponseEntity.status(HttpStatus.CREATED).body(addedCartItem);
     }
 
-
     @DeleteMapping("/{cartId}/items/{cartItemId}")
-    public ResponseEntity<Void> removeCartItemFromCart(@PathVariable Long cartId, @PathVariable Long cartItemId) {
-        cartService.removeCartItemFromCart(cartId, cartItemId);
+    public ResponseEntity<Void> removeCartItemFromCart(@RequestHeader("Authorization") String token, @PathVariable Long cartId, @PathVariable Long cartItemId) {
+        String jwtToken = token.replace("Bearer ", "");
+        cartService.removeCartItemFromCart(cartId, cartItemId, jwtToken);
         return ResponseEntity.noContent().build();
     }
 }

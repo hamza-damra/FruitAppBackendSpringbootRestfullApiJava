@@ -7,21 +7,18 @@ import java.util.Optional;
 
 public interface OrderService {
 
-    OrderDTO saveOrder(OrderDTO orderDTO);
+    OrderDTO saveOrder(OrderDTO orderDTO, String token);
+    Optional<OrderDTO> getOrderById(Long id, String token);
 
-    Optional<OrderDTO> getOrderById(Long id);
+    List<OrderDTO> getOrdersByUserId(Long userId, String token);
 
-    List<OrderDTO> getOrdersByUserId(Long userId);
+    List<OrderDTO> getAllOrders(String token);
 
-    List<OrderDTO> getAllOrders();
+    OrderDTO updateOrderByUserIdAndOrderId(Long orderId, Long userId, OrderDTO orderDTO, String token); // User or Admin
 
-    OrderDTO updateOrder(OrderDTO orderDTO);
+    void deleteOrderById(Long id, String token);
 
-    void deleteOrderById(Long id);
+    void deleteOrdersByUserId(Long userId, String token);
 
-    void deleteOrdersByUserId(Long userId);
-
-    void deleteOrderByIdAndUserId(Long orderId, Long userId);
-
-    OrderDTO updateOrderByUserIdAndOrderId(Long orderId, Long userId, OrderDTO orderDTO);
+    void deleteOrderByIdAndUserId(Long orderId, Long userId, String token);
 }

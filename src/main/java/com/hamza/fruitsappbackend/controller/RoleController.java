@@ -49,4 +49,11 @@ public class RoleController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
+
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<List<RoleDto>> getRolesByUserId(@PathVariable Long userId) {
+        List<RoleDto> roles = roleService.getRolesByUserId(userId);
+        return new ResponseEntity<>(roles, HttpStatus.OK);
+    }
+
 }

@@ -7,7 +7,7 @@ import java.util.Optional;
 
 public interface ProductService {
 
-    ProductDTO saveProduct(ProductDTO productDTO);
+    ProductDTO saveProduct(ProductDTO productDTO, String token);
 
     Optional<ProductDTO> getProductById(Long id);
 
@@ -15,7 +15,7 @@ public interface ProductService {
 
     List<ProductDTO> getAllProducts();
 
-    ProductDTO updateProduct(ProductDTO productDTO);
+    ProductDTO updateProduct(ProductDTO productDTO, String token);
 
-    void deleteProductById(Long id);
+    void deleteProductById(Long id, String token);
 }

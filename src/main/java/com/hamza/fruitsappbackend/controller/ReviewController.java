@@ -7,7 +7,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/v1/reviews")
@@ -20,17 +19,17 @@ public class ReviewController {
         this.reviewService = reviewService;
     }
 
-    @PostMapping
-    public ResponseEntity<ReviewDTO> createReview(@RequestBody ReviewDTO reviewDTO) {
-        ReviewDTO savedReview = reviewService.saveReview(reviewDTO);
+    @PostMapping("/add")
+    public ResponseEntity<ReviewDTO> createReview(@RequestHeader("Authorization") String token, @RequestBody ReviewDTO reviewDTO) {
+        String jwtToken = token.replace("Bearer ", "");
+        ReviewDTO savedReview = reviewService.saveReview(reviewDTO, jwtToken);
         return ResponseEntity.ok(savedReview);
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<ReviewDTO> getReviewById(@PathVariable Long id) {
-        Optional<ReviewDTO> reviewDTO = reviewService.getReviewById(id);
-        return reviewDTO.map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        ReviewDTO reviewDTO = reviewService.getReviewById(id);
+        return ResponseEntity.ok(reviewDTO);
     }
 
     @GetMapping("/product/{productId}")
@@ -52,21 +51,25 @@ public class ReviewController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ReviewDTO> updateReview(@PathVariable Long id, @RequestBody ReviewDTO reviewDTO) {
+    public ResponseEntity<ReviewDTO> updateReview(@RequestHeader("Authorization") String token, @PathVariable Long id, @RequestBody ReviewDTO reviewDTO) {
+        String jwtToken = token.replace("Bearer ", "");
         reviewDTO.setId(id);
-        ReviewDTO updatedReview = reviewService.updateReview(reviewDTO);
+        ReviewDTO updatedReview = reviewService.updateReview(reviewDTO, jwtToken);
         return ResponseEntity.ok(updatedReview);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteReviewById(@PathVariable Long id) {
-        reviewService.deleteReviewById(id);
+    public ResponseEntity<Void> deleteReviewById(@RequestHeader("Authorization") String token, @PathVariable Long id) {
+        String jwtToken = token.replace("Bearer ", "");
+        reviewService.deleteReviewById(id, jwtToken);
         return ResponseEntity.noContent().build();
     }
 
     @PutMapping("/{id}/like")
-    public ResponseEntity<ReviewDTO> likeReview(@PathVariable Long id) {
-        ReviewDTO reviewDTO = reviewService.likeReview(id);
+    public ResponseEntity<ReviewDTO> likeReview(@RequestHeader("Authorization") String token, @PathVariable Long id) {
+        String jwtToken = token.replace("Bearer ", "");
+        ReviewDTO reviewDTO = reviewService.likeReview(id, jwtToken);
         return ResponseEntity.ok(reviewDTO);
     }
+
 }

@@ -2,9 +2,11 @@ package com.hamza.fruitsappbackend.service.service_impl;
 
 import com.hamza.fruitsappbackend.dto.RoleDto;
 import com.hamza.fruitsappbackend.entity.Role;
+import com.hamza.fruitsappbackend.entity.User;
 import com.hamza.fruitsappbackend.exception.RoleNotFoundException;
 import com.hamza.fruitsappbackend.exception.RoleDeletionException;
 import com.hamza.fruitsappbackend.repository.RoleRepository;
+import com.hamza.fruitsappbackend.repository.UserRepository;
 import com.hamza.fruitsappbackend.service.RoleService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -12,12 +14,14 @@ import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
 public class RoleServiceImpl implements RoleService {
 
     private final RoleRepository roleRepository;
+    private final UserRepository userRepository;  // Inject UserRepository
     private final ModelMapper modelMapper;
 
     @Override
@@ -65,6 +69,18 @@ public class RoleServiceImpl implements RoleService {
     @Override
     public List<RoleDto> getAllRoles() {
         return roleRepository.findAll().stream()
+                .map(role -> modelMapper.map(role, RoleDto.class))
+                .toList();
+    }
+
+    @Override
+    @Transactional
+    public List<RoleDto> getRolesByUserId(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RoleNotFoundException("id", userId.toString()));  // You might want to create a custom exception for User not found
+
+        Set<Role> roles = user.getRoles();
+        return roles.stream()
                 .map(role -> modelMapper.map(role, RoleDto.class))
                 .toList();
     }

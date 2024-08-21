@@ -13,9 +13,11 @@ import com.hamza.fruitsappbackend.repository.CartItemRepository;
 import com.hamza.fruitsappbackend.repository.CartRepository;
 import com.hamza.fruitsappbackend.repository.ProductRepository;
 import com.hamza.fruitsappbackend.repository.UserRepository;
+import com.hamza.fruitsappbackend.security.JwtTokenProvider;
 import com.hamza.fruitsappbackend.service.CartService;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
 import jakarta.transaction.Transactional;
@@ -34,21 +36,47 @@ public class CartServiceImpl implements CartService {
     private final ProductRepository productRepository;
     private final CartItemRepository cartItemRepository;
     private final ModelMapper modelMapper;
+    private final JwtTokenProvider jwtTokenProvider;
 
     @Autowired
     public CartServiceImpl(CartRepository cartRepository, UserRepository userRepository,
                            ProductRepository productRepository, CartItemRepository cartItemRepository,
-                           ModelMapper modelMapper) {
+                           ModelMapper modelMapper, JwtTokenProvider jwtTokenProvider) {
         this.cartRepository = cartRepository;
         this.userRepository = userRepository;
         this.productRepository = productRepository;
         this.cartItemRepository = cartItemRepository;
         this.modelMapper = modelMapper;
+        this.jwtTokenProvider = jwtTokenProvider;
+    }
+
+    private void checkUserOrAdminRole(String token, Long userId) {
+        String username = jwtTokenProvider.getUserNameFromToken(token);
+        User user = userRepository.findByEmail(username)
+                .orElseThrow(() -> new AccessDeniedException("User not found"));
+
+        if (!user.getId().equals(userId) && user.getRoles().stream()
+                .noneMatch(role -> role.getName().equals("ROLE_ADMIN"))) {
+            throw new AccessDeniedException("You do not have the necessary permissions to perform this operation");
+        }
+    }
+
+    private void checkAdminRole(String token) {
+        String username = jwtTokenProvider.getUserNameFromToken(token);
+        User user = userRepository.findByEmail(username)
+                .orElseThrow(() -> new AccessDeniedException("User not found"));
+
+        if (user.getRoles().stream()
+                .noneMatch(role -> role.getName().equals("ROLE_ADMIN"))) {
+            throw new AccessDeniedException("You do not have the necessary permissions to perform this operation");
+        }
     }
 
     @Override
     @Transactional
-    public CartDTO saveCart(CartDTO cartDTO) {
+    public CartDTO saveCart(CartDTO cartDTO, String token) {
+        checkUserOrAdminRole(token, cartDTO.getUserId());
+
         Cart cart = createOrUpdateCart(cartDTO);
         Cart savedCart = cartRepository.save(cart);
         List<CartItemDTO> savedCartItems = processCartItems(cartDTO, savedCart);
@@ -56,9 +84,11 @@ public class CartServiceImpl implements CartService {
     }
 
     @Override
-    public CartDTO updateCart(CartDTO cartDTO) {
+    public CartDTO updateCart(CartDTO cartDTO, String token) {
         Cart cart = cartRepository.findById(cartDTO.getId())
                 .orElseThrow(() -> new CartNotFoundException("id", cartDTO.getId().toString()));
+
+        checkUserOrAdminRole(token, cart.getUser().getId());
 
         setUser(cartDTO, cart);
         cart.getCartItems().clear();
@@ -70,9 +100,11 @@ public class CartServiceImpl implements CartService {
     }
 
     @Override
-    public CartItemDTO addCartItemToCart(Long cartId, CartItemDTO cartItemDTO) {
+    public CartItemDTO addCartItemToCart(Long cartId, CartItemDTO cartItemDTO, String token) {
         Cart cart = cartRepository.findById(cartId)
                 .orElseThrow(() -> new CartNotFoundException("id", cartId.toString()));
+
+        checkUserOrAdminRole(token, cart.getUser().getId());
 
         CartItem cartItem = createCartItem(cartItemDTO, cart);
         CartItem savedCartItem = cartItemRepository.save(cartItem);
@@ -81,9 +113,11 @@ public class CartServiceImpl implements CartService {
     }
 
     @Override
-    public void removeCartItemFromCart(Long cartId, Long cartItemId) {
+    public void removeCartItemFromCart(Long cartId, Long cartItemId, String token) {
         Cart cart = cartRepository.findById(cartId)
                 .orElseThrow(() -> new CartNotFoundException("id", cartId.toString()));
+
+        checkUserOrAdminRole(token, cart.getUser().getId());
 
         CartItem cartItem = cartItemRepository.findById(cartItemId)
                 .orElseThrow(() -> new CartItemNotFoundException("id", cartItemId.toString()));
@@ -97,36 +131,48 @@ public class CartServiceImpl implements CartService {
     }
 
     @Override
-    public Optional<CartDTO> getCartById(Long id) {
-        return cartRepository.findById(id)
-                .map(cart -> modelMapper.map(cart, CartDTO.class));
+    public Optional<CartDTO> getCartById(Long id, String token) {
+        Cart cart = cartRepository.findById(id)
+                .orElseThrow(() -> new CartNotFoundException("id", id.toString()));
+
+        checkUserOrAdminRole(token, cart.getUser().getId());
+
+        return Optional.of(modelMapper.map(cart, CartDTO.class));
     }
 
     @Override
-    public List<CartDTO> getCartsByUserId(Long userId) {
+    public List<CartDTO> getCartsByUserId(Long userId, String token) {
+        checkUserOrAdminRole(token, userId);
+
         return cartRepository.findByUserId(userId).stream()
                 .map(cart -> modelMapper.map(cart, CartDTO.class))
                 .collect(Collectors.toList());
     }
 
     @Override
-    public List<CartDTO> getAllCarts() {
+    public List<CartDTO> getAllCarts(String token) {
+        checkAdminRole(token);
+
         return cartRepository.findAll().stream()
                 .map(cart -> modelMapper.map(cart, CartDTO.class))
                 .collect(Collectors.toList());
     }
 
     @Override
-    public void deleteCartById(Long id) {
-        if (!cartRepository.existsById(id)) {
-            throw new CartNotFoundException("id", id.toString());
-        }
+    public void deleteCartById(Long id, String token) {
+        Cart cart = cartRepository.findById(id)
+                .orElseThrow(() -> new CartNotFoundException("id", id.toString()));
+
+        checkUserOrAdminRole(token, cart.getUser().getId());
+
         cartRepository.deleteById(id);
     }
 
     @Override
     @Transactional
-    public void deleteCartsByUserId(Long userId) {
+    public void deleteCartsByUserId(Long userId, String token) {
+        checkAdminRole(token);
+
         if (userRepository.existsById(userId)) {
             cartRepository.deleteByUserId(userId);
         } else {

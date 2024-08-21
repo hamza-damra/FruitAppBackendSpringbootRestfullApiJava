@@ -19,11 +19,7 @@ import java.util.List;
 @AllArgsConstructor
 public class ReviewDTO {
 
-    @NotNull(message = "Review ID cannot be null")
     private Long id;
-
-    @NotBlank(message = "Review content is required")
-    private String content;
 
     @Min(value = 1, message = "Rating must be at least 1")
     @Max(value = 5, message = "Rating must be at most 5")
@@ -43,7 +39,7 @@ public class ReviewDTO {
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime updatedAt;
 
-    private List<String> imageUrls;
+    private List<ReviewImageDto> imageDtos;
 
     @NotBlank(message = "Comment is required")
     private String comment;

@@ -21,8 +21,9 @@ public class CategoryController {
     }
 
     @PostMapping
-    public ResponseEntity<CategoryDTO> createCategory(@RequestBody CategoryDTO categoryDTO) {
-        CategoryDTO savedCategory = categoryService.saveCategory(categoryDTO);
+    public ResponseEntity<CategoryDTO> createCategory(@RequestHeader("Authorization") String token, @RequestBody CategoryDTO categoryDTO) {
+        String jwtToken = token.replace("Bearer ", "");
+        CategoryDTO savedCategory = categoryService.saveCategory(categoryDTO, jwtToken);
         return ResponseEntity.ok(savedCategory);
     }
 
@@ -40,15 +41,17 @@ public class CategoryController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<CategoryDTO> updateCategory(@PathVariable Long id, @RequestBody CategoryDTO categoryDTO) {
+    public ResponseEntity<CategoryDTO> updateCategory(@RequestHeader("Authorization") String token, @PathVariable Long id, @RequestBody CategoryDTO categoryDTO) {
+        String jwtToken = token.replace("Bearer ", "");
         categoryDTO.setId(id);
-        CategoryDTO updatedCategory = categoryService.updateCategory(categoryDTO);
+        CategoryDTO updatedCategory = categoryService.updateCategory(categoryDTO, jwtToken);
         return ResponseEntity.ok(updatedCategory);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteCategoryById(@PathVariable Long id) {
-        categoryService.deleteCategoryById(id);
+    public ResponseEntity<Void> deleteCategoryById(@RequestHeader("Authorization") String token, @PathVariable Long id) {
+        String jwtToken = token.replace("Bearer ", "");
+        categoryService.deleteCategoryById(id, jwtToken);
         return ResponseEntity.noContent().build();
     }
 }

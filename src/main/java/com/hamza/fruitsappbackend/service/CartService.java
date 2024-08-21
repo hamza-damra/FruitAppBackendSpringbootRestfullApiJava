@@ -8,21 +8,21 @@ import java.util.Optional;
 
 public interface CartService {
 
-    CartDTO saveCart(CartDTO cartDTO);
+    CartDTO saveCart(CartDTO cartDTO, String token);
 
-    Optional<CartDTO> getCartById(Long id);
+    Optional<CartDTO> getCartById(Long id, String token);
 
-    List<CartDTO> getCartsByUserId(Long userId);
+    List<CartDTO> getCartsByUserId(Long userId, String token);
 
-    List<CartDTO> getAllCarts();
+    List<CartDTO> getAllCarts(String token);
 
-    CartDTO updateCart(CartDTO cartDTO);
+    CartDTO updateCart(CartDTO cartDTO, String token);
 
-    void deleteCartById(Long id);
+    void deleteCartById(Long id, String token);
 
-    void deleteCartsByUserId(Long userId);
+    void deleteCartsByUserId(Long userId, String token);
 
-    CartItemDTO addCartItemToCart(Long cartId, CartItemDTO cartItemDTO);
+    CartItemDTO addCartItemToCart(Long cartId, CartItemDTO cartItemDTO, String token);
 
-    void removeCartItemFromCart(Long cartId, Long cartItemId);
+    void removeCartItemFromCart(Long cartId, Long cartItemId, String token);
 }

@@ -3,13 +3,17 @@ package com.hamza.fruitsappbackend.service.service_impl;
 import com.hamza.fruitsappbackend.dto.ProductDTO;
 import com.hamza.fruitsappbackend.entity.Category;
 import com.hamza.fruitsappbackend.entity.Product;
+import com.hamza.fruitsappbackend.entity.User;
 import com.hamza.fruitsappbackend.exception.ProductNotFoundException;
 import com.hamza.fruitsappbackend.exception.CategoryNotFoundException;
 import com.hamza.fruitsappbackend.repository.ProductRepository;
 import com.hamza.fruitsappbackend.repository.CategoryRepository;
+import com.hamza.fruitsappbackend.repository.UserRepository;
+import com.hamza.fruitsappbackend.security.JwtTokenProvider;
 import com.hamza.fruitsappbackend.service.ProductService;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -22,16 +26,34 @@ public class ProductServiceImpl implements ProductService {
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
     private final ModelMapper modelMapper;
+    private final UserRepository userRepository;
+    private final JwtTokenProvider jwtTokenProvider;
 
     @Autowired
-    public ProductServiceImpl(ProductRepository productRepository, CategoryRepository categoryRepository, ModelMapper modelMapper) {
+    public ProductServiceImpl(ProductRepository productRepository, CategoryRepository categoryRepository,
+                              ModelMapper modelMapper, UserRepository userRepository, JwtTokenProvider jwtTokenProvider) {
         this.productRepository = productRepository;
         this.categoryRepository = categoryRepository;
         this.modelMapper = modelMapper;
+        this.userRepository = userRepository;
+        this.jwtTokenProvider = jwtTokenProvider;
+    }
+
+    private void checkAdminRole(User user) {
+        if (user.getRoles().stream()
+                .noneMatch(role -> role.getName().equals("ROLE_ADMIN"))) {
+            throw new AccessDeniedException("You do not have the necessary permissions to perform this operation");
+        }
     }
 
     @Override
-    public ProductDTO saveProduct(ProductDTO productDTO) {
+    public ProductDTO saveProduct(ProductDTO productDTO, String token) {
+        String username = jwtTokenProvider.getUserNameFromToken(token);
+        User user = userRepository.findByEmail(username)
+                .orElseThrow(() -> new AccessDeniedException("User not found"));
+
+        checkAdminRole(user);
+
         Product product = modelMapper.map(productDTO, Product.class);
 
         // If category ID is present, fetch the category and set it
@@ -66,7 +88,13 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public ProductDTO updateProduct(ProductDTO productDTO) {
+    public ProductDTO updateProduct(ProductDTO productDTO, String token) {
+        String username = jwtTokenProvider.getUserNameFromToken(token);
+        User user = userRepository.findByEmail(username)
+                .orElseThrow(() -> new AccessDeniedException("User not found"));
+
+        checkAdminRole(user);
+
         // Fetch the existing product from the database
         Product existingProduct = productRepository.findById(productDTO.getId())
                 .orElseThrow(() -> new ProductNotFoundException("id", productDTO.getId().toString()));
@@ -99,7 +127,13 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public void deleteProductById(Long id) {
+    public void deleteProductById(Long id, String token) {
+        String username = jwtTokenProvider.getUserNameFromToken(token);
+        User user = userRepository.findByEmail(username)
+                .orElseThrow(() -> new AccessDeniedException("User not found"));
+
+        checkAdminRole(user);
+
         if (!productRepository.existsById(id)) {
             throw new ProductNotFoundException("id", id.toString());
         }

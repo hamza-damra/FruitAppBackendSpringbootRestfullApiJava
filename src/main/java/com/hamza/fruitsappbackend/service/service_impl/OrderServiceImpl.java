@@ -1,23 +1,18 @@
 package com.hamza.fruitsappbackend.service.service_impl;
 
 import com.hamza.fruitsappbackend.dto.OrderDTO;
-import com.hamza.fruitsappbackend.dto.OrderItemDTO;
 import com.hamza.fruitsappbackend.entity.Order;
-import com.hamza.fruitsappbackend.entity.OrderItem;
 import com.hamza.fruitsappbackend.entity.User;
-import com.hamza.fruitsappbackend.entity.Address;
 import com.hamza.fruitsappbackend.exception.OrderNotFoundException;
-import com.hamza.fruitsappbackend.exception.ProductNotFoundException;
-import com.hamza.fruitsappbackend.exception.UserNotFoundException;
-import com.hamza.fruitsappbackend.exception.AddressNotFoundException;
-import com.hamza.fruitsappbackend.repository.*;
+import com.hamza.fruitsappbackend.repository.OrderRepository;
+import com.hamza.fruitsappbackend.repository.UserRepository;
+import com.hamza.fruitsappbackend.security.JwtTokenProvider;
 import com.hamza.fruitsappbackend.service.OrderService;
-import jakarta.transaction.Transactional;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -27,136 +22,117 @@ public class OrderServiceImpl implements OrderService {
 
     private final OrderRepository orderRepository;
     private final UserRepository userRepository;
-    private final OrderItemRepository orderItemRepository;
-    private final AddressRepository addressRepository;
-    private final ProductRepository productRepository;
     private final ModelMapper modelMapper;
+    private final JwtTokenProvider jwtTokenProvider;
 
     @Autowired
-    public OrderServiceImpl(OrderRepository orderRepository, UserRepository userRepository, OrderItemRepository orderItemRepository,
-                            AddressRepository addressRepository, ProductRepository productRepository,
-                            ModelMapper modelMapper) {
+    public OrderServiceImpl(OrderRepository orderRepository, UserRepository userRepository,
+                            ModelMapper modelMapper, JwtTokenProvider jwtTokenProvider) {
         this.orderRepository = orderRepository;
         this.userRepository = userRepository;
-        this.orderItemRepository = orderItemRepository;
-        this.addressRepository = addressRepository;
-        this.productRepository = productRepository;
         this.modelMapper = modelMapper;
+        this.jwtTokenProvider = jwtTokenProvider;
+    }
+
+    private void checkUserOrAdminRole(String token, Long userId) {
+        String username = jwtTokenProvider.getUserNameFromToken(token);
+        User user = userRepository.findByEmail(username)
+                .orElseThrow(() -> new AccessDeniedException("User not found"));
+
+        if (!user.getId().equals(userId) && user.getRoles().stream()
+                .noneMatch(role -> role.getName().equals("ROLE_ADMIN"))) {
+            throw new AccessDeniedException("You do not have the necessary permissions to perform this operation");
+        }
+    }
+
+    private void checkAdminRole(String token) {
+        String username = jwtTokenProvider.getUserNameFromToken(token);
+        User user = userRepository.findByEmail(username)
+                .orElseThrow(() -> new AccessDeniedException("User not found"));
+
+        if (user.getRoles().stream()
+                .noneMatch(role -> role.getName().equals("ROLE_ADMIN"))) {
+            throw new AccessDeniedException("You do not have the necessary permissions to perform this operation");
+        }
     }
 
     @Override
-    @Transactional
-    public OrderDTO saveOrder(OrderDTO orderDTO) {
+    public OrderDTO saveOrder(OrderDTO orderDTO, String token) {
+        checkUserOrAdminRole(token, orderDTO.getUserId());
+
         Order order = modelMapper.map(orderDTO, Order.class);
-        setUserAndAddress(orderDTO, order);
         Order savedOrder = orderRepository.save(order);
-        List<OrderItemDTO> savedOrderItems = saveOrderItems(orderDTO, savedOrder);
-        return mapOrderToDTO(savedOrder, savedOrderItems);
+        return modelMapper.map(savedOrder, OrderDTO.class);
     }
 
     @Override
-    public OrderDTO updateOrder(OrderDTO orderDTO) {
-        Order order = orderRepository.findById(orderDTO.getId())
-                .orElseThrow(() -> new OrderNotFoundException("id", orderDTO.getId().toString(), "userId", orderDTO.getUserId().toString()));
-        setUserAndAddress(orderDTO, order);
-        order.getOrderItems().clear();
-        List<OrderItemDTO> savedOrderItems = saveOrderItems(orderDTO, order);
-        Order updatedOrder = orderRepository.save(order);
-        return mapOrderToDTO(updatedOrder, savedOrderItems);
-    }
+    public Optional<OrderDTO> getOrderById(Long id, String token) {
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() -> new OrderNotFoundException("id", id.toString()));
 
-    private List<OrderItemDTO> saveOrderItems(OrderDTO orderDTO, Order order) {
-        return orderDTO.getOrderItems().stream()
-                .map(orderItemDTO -> saveOrderItem(orderItemDTO, order))
-                .collect(Collectors.toList());
-    }
+        checkUserOrAdminRole(token, order.getUser().getId());
 
-    private OrderItemDTO saveOrderItem(OrderItemDTO orderItemDTO, Order order) {
-        OrderItem orderItem = new OrderItem();
-        orderItem.setOrder(order);
-        orderItem.setProduct(productRepository.findById(orderItemDTO.getProductId())
-                .orElseThrow(() -> new ProductNotFoundException("id", orderItemDTO.getProductId().toString())));
-        orderItem.setQuantity(orderItemDTO.getQuantity());
-        orderItem.setPrice(BigDecimal.valueOf(orderItem.getProduct().getPrice()));
-        return modelMapper.map(orderItemRepository.save(orderItem), OrderItemDTO.class);
-    }
-
-    private void setUserAndAddress(OrderDTO orderDTO, Order order) {
-        order.setUser(findUserById(orderDTO.getUserId()));
-        order.setAddress(findAddressById(orderDTO.getAddressId()));
-    }
-
-    private User findUserById(Long userId) {
-        return userRepository.findById(userId)
-                .orElseThrow(() -> new UserNotFoundException("id", userId.toString()));
-    }
-
-    private Address findAddressById(Long addressId) {
-        return addressRepository.findById(addressId)
-                .orElseThrow(() -> new AddressNotFoundException("id", addressId.toString()));
-    }
-
-    private OrderDTO mapOrderToDTO(Order order, List<OrderItemDTO> savedOrderItems) {
-        OrderDTO orderDTO = modelMapper.map(order, OrderDTO.class);
-        orderDTO.setOrderItems(savedOrderItems);
-        return orderDTO;
+        return Optional.of(modelMapper.map(order, OrderDTO.class));
     }
 
     @Override
-    public Optional<OrderDTO> getOrderById(Long id) {
-        return orderRepository.findById(id)
-                .map(order -> modelMapper.map(order, OrderDTO.class));
-    }
+    public List<OrderDTO> getOrdersByUserId(Long userId, String token) {
+        checkUserOrAdminRole(token, userId);
 
-    @Override
-    public List<OrderDTO> getOrdersByUserId(Long userId) {
         return orderRepository.findByUserId(userId).stream()
                 .map(order -> modelMapper.map(order, OrderDTO.class))
                 .collect(Collectors.toList());
     }
 
     @Override
-    public List<OrderDTO> getAllOrders() {
+    public List<OrderDTO> getAllOrders(String token) {
+        checkAdminRole(token);
+
         return orderRepository.findAll().stream()
                 .map(order -> modelMapper.map(order, OrderDTO.class))
                 .collect(Collectors.toList());
     }
 
     @Override
-    public void deleteOrderById(Long id) {
-        if (!orderRepository.existsById(id)) {
-            throw new OrderNotFoundException("id", id.toString());
-        }
+    public OrderDTO updateOrderByUserIdAndOrderId(Long orderId, Long userId, OrderDTO orderDTO, String token) {
+        checkUserOrAdminRole(token, userId);
+
+        Order existingOrder = orderRepository.findById(orderId)
+                .orElseThrow(() -> new OrderNotFoundException("id", orderId.toString()));
+
+        modelMapper.map(orderDTO, existingOrder);
+        Order updatedOrder = orderRepository.save(existingOrder);
+        return modelMapper.map(updatedOrder, OrderDTO.class);
+    }
+
+    @Override
+    public void deleteOrderById(Long id, String token) {
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() -> new OrderNotFoundException("id", id.toString()));
+
+        checkUserOrAdminRole(token, order.getUser().getId());
+
         orderRepository.deleteById(id);
     }
 
     @Override
-    @Transactional
-    public void deleteOrdersByUserId(Long userId) {
+    public void deleteOrdersByUserId(Long userId, String token) {
+        checkAdminRole(token);
+
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new UserNotFoundException("id", userId.toString()));
+                .orElseThrow(() -> new OrderNotFoundException("User", userId.toString()));
+
         orderRepository.deleteByUser(user);
     }
 
     @Override
-    @Transactional
-    public void deleteOrderByIdAndUserId(Long orderId, Long userId) {
-        orderRepository.findByIdAndUserId(orderId, userId)
-                .ifPresentOrElse(order -> orderRepository.deleteByIdAndUserId(orderId, userId),
-                        () -> { throw new OrderNotFoundException("orderId", orderId.toString(), "userId", userId.toString()); });
-    }
+    public void deleteOrderByIdAndUserId(Long orderId, Long userId, String token) {
+        checkUserOrAdminRole(token, userId);
 
-    @Override
-    @Transactional
-    public OrderDTO updateOrderByUserIdAndOrderId(Long orderId, Long userId, OrderDTO orderDTO) {
-        return orderRepository.findByIdAndUserId(orderId, userId)
-                .map(existingOrder -> {
-                    setUserAndAddress(orderDTO, existingOrder);
-                    existingOrder.getOrderItems().clear();
-                    List<OrderItemDTO> savedOrderItems = saveOrderItems(orderDTO, existingOrder);
-                    Order updatedOrder = orderRepository.save(existingOrder);
-                    return mapOrderToDTO(updatedOrder, savedOrderItems);
-                })
-                .orElseThrow(() -> new OrderNotFoundException("orderId", orderId.toString(), "userId", userId.toString()));
+        if (orderRepository.existsByIdAndUserId(orderId, userId)) {
+            orderRepository.deleteByIdAndUserId(orderId, userId);
+        } else {
+            throw new OrderNotFoundException("Order", orderId.toString());
+        }
     }
 }

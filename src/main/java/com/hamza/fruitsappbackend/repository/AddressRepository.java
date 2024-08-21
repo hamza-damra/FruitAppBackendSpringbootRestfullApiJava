@@ -9,7 +9,7 @@ import java.util.Optional;
 
 @Repository
 public interface AddressRepository extends JpaRepository<Address, Long> {
-    Optional<Object> findByUserId(Long userId);
+    Optional<Address> findByUserId(Long userId);
 
     void deleteAddressByUser(User user);
 }

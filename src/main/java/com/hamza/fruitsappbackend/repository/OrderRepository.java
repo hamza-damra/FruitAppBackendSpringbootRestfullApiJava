@@ -18,4 +18,6 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     void deleteByUser(User user);
 
     void deleteByIdAndUserId(Long id, Long userId);
+
+    boolean existsByIdAndUserId(Long id, Long userId); // Added method to check existence
 }

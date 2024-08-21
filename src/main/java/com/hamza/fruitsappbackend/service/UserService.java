@@ -10,15 +10,15 @@ public interface UserService extends UserDetailsService {
 
     UserDTO saveUser(UserDTO userDTO);
 
-    Optional<UserDTO> getUserById(Long id);
+    Optional<UserDTO> getUserById(Long id, String token);
 
-    Optional<UserDTO> getUserByEmail(String email);
+    Optional<UserDTO> getUserByEmail(String email, String token);
 
-    List<UserDTO> getAllUsers();
+    List<UserDTO> getAllUsers(String token);
 
-    UserDTO updateUser(UserDTO userDTO);
+    UserDTO updateUser(UserDTO userDTO, String token);
 
-    void deleteUserById(Long id);
+    void deleteUserById(Long id, String token);
 
-    void deleteUserByEmail(String email);
+    void deleteUserByEmail(String email, String token);
 }

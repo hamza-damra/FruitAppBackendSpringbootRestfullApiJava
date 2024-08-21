@@ -66,34 +66,39 @@ public class UserController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<UserDTO> getUserById(@PathVariable Long id) {
-        Optional<UserDTO> userDTO = userService.getUserById(id);
+    public ResponseEntity<UserDTO> getUserById(@RequestHeader("Authorization") String token, @PathVariable Long id) {
+        String jwtToken = token.replace("Bearer ", "");
+        Optional<UserDTO> userDTO = userService.getUserById(id, jwtToken);
         return userDTO.map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
     @GetMapping
-    public ResponseEntity<List<UserDTO>> getAllUsers() {
-        List<UserDTO> users = userService.getAllUsers();
+    public ResponseEntity<List<UserDTO>> getAllUsers(@RequestHeader("Authorization") String token) {
+        String jwtToken = token.replace("Bearer ", "");
+        List<UserDTO> users = userService.getAllUsers(jwtToken);
         return ResponseEntity.ok(users);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<UserDTO> updateUser(@PathVariable Long id, @RequestBody UserDTO userDTO) {
+    public ResponseEntity<UserDTO> updateUser(@RequestHeader("Authorization") String token, @PathVariable Long id, @RequestBody UserDTO userDTO) {
+        String jwtToken = token.replace("Bearer ", "");
         userDTO.setId(id);
-        UserDTO updatedUser = userService.updateUser(userDTO);
+        UserDTO updatedUser = userService.updateUser(userDTO, jwtToken);
         return ResponseEntity.ok(updatedUser);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<String> deleteUserById(@PathVariable Long id) {
-        userService.deleteUserById(id);
-        return ResponseEntity.ok("User deleted successfully !");
+    public ResponseEntity<String> deleteUserById(@RequestHeader("Authorization") String token, @PathVariable Long id) {
+        String jwtToken = token.replace("Bearer ", "");
+        userService.deleteUserById(id, jwtToken);
+        return ResponseEntity.ok("User deleted successfully!");
     }
 
     @DeleteMapping("/email/{email}")
-    public ResponseEntity<String> deleteUserByEmail(@PathVariable String email) {
-        userService.deleteUserByEmail(email);
-        return ResponseEntity.ok("User deleted successfully !");
+    public ResponseEntity<String> deleteUserByEmail(@RequestHeader("Authorization") String token, @PathVariable String email) {
+        String jwtToken = token.replace("Bearer ", "");
+        userService.deleteUserByEmail(email, jwtToken);
+        return ResponseEntity.ok("User deleted successfully!");
     }
 }

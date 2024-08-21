@@ -22,56 +22,66 @@ public class OrderController {
     }
 
     @PostMapping("/create")
-    public ResponseEntity<OrderDTO> createOrder(@Valid @RequestBody OrderDTO orderDTO) {
-        OrderDTO savedOrder = orderService.saveOrder(orderDTO);
+    public ResponseEntity<OrderDTO> createOrder(@RequestHeader("Authorization") String token, @Valid @RequestBody OrderDTO orderDTO) {
+        String jwtToken = token.replace("Bearer ", "");
+        OrderDTO savedOrder = orderService.saveOrder(orderDTO, jwtToken);
         return ResponseEntity.ok(savedOrder);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<OrderDTO> getOrderById(@PathVariable Long id) {
-        Optional<OrderDTO> orderDTO = orderService.getOrderById(id);
+    public ResponseEntity<OrderDTO> getOrderById(@RequestHeader("Authorization") String token, @PathVariable Long id) {
+        String jwtToken = token.replace("Bearer ", "");
+        Optional<OrderDTO> orderDTO = orderService.getOrderById(id, jwtToken);
         return orderDTO.map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
     @GetMapping("/user/{userId}")
-    public ResponseEntity<List<OrderDTO>> getOrdersByUserId(@PathVariable Long userId) {
-        List<OrderDTO> orders = orderService.getOrdersByUserId(userId);
+    public ResponseEntity<List<OrderDTO>> getOrdersByUserId(@RequestHeader("Authorization") String token, @PathVariable Long userId) {
+        String jwtToken = token.replace("Bearer ", "");
+        List<OrderDTO> orders = orderService.getOrdersByUserId(userId, jwtToken);
         return ResponseEntity.ok(orders);
     }
 
     @GetMapping
-    public ResponseEntity<List<OrderDTO>> getAllOrders() {
-        List<OrderDTO> orders = orderService.getAllOrders();
+    public ResponseEntity<List<OrderDTO>> getAllOrders(@RequestHeader("Authorization") String token) {
+        String jwtToken = token.replace("Bearer ", "");
+        List<OrderDTO> orders = orderService.getAllOrders(jwtToken);
         return ResponseEntity.ok(orders);
     }
 
     @PutMapping("/{orderId}/user/{userId}")
     public ResponseEntity<OrderDTO> updateOrderByUserIdAndOrderId(
+            @RequestHeader("Authorization") String token,
             @PathVariable Long orderId,
             @PathVariable Long userId,
             @Valid @RequestBody OrderDTO orderDTO) {
-        OrderDTO updatedOrder = orderService.updateOrderByUserIdAndOrderId(orderId, userId, orderDTO);
+        String jwtToken = token.replace("Bearer ", "");
+        OrderDTO updatedOrder = orderService.updateOrderByUserIdAndOrderId(orderId, userId, orderDTO, jwtToken);
         return ResponseEntity.ok(updatedOrder);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteOrderById(@PathVariable Long id) {
-        orderService.deleteOrderById(id);
+    public ResponseEntity<Void> deleteOrderById(@RequestHeader("Authorization") String token, @PathVariable Long id) {
+        String jwtToken = token.replace("Bearer ", "");
+        orderService.deleteOrderById(id, jwtToken);
         return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/user/{userId}")
-    public ResponseEntity<Void> deleteOrdersByUserId(@PathVariable Long userId) {
-        orderService.deleteOrdersByUserId(userId);
+    public ResponseEntity<Void> deleteOrdersByUserId(@RequestHeader("Authorization") String token, @PathVariable Long userId) {
+        String jwtToken = token.replace("Bearer ", "");
+        orderService.deleteOrdersByUserId(userId, jwtToken);
         return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/{orderId}/user/{userId}")
     public ResponseEntity<Void> deleteOrderByIdAndUserId(
+            @RequestHeader("Authorization") String token,
             @PathVariable Long orderId,
             @PathVariable Long userId) {
-        orderService.deleteOrderByIdAndUserId(orderId, userId);
+        String jwtToken = token.replace("Bearer ", "");
+        orderService.deleteOrderByIdAndUserId(orderId, userId, jwtToken);
         return ResponseEntity.noContent().build();
     }
 }

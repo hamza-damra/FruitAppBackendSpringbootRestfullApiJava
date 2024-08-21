@@ -7,19 +7,19 @@ import java.util.Optional;
 
 public interface AddressService {
 
-    AddressDTO saveAddress(AddressDTO addressDTO);
+    AddressDTO saveAddress(AddressDTO addressDTO, String token);
 
-    Optional<AddressDTO> getAddressById(Long id);
+    Optional<AddressDTO> getAddressById(Long id, String token);
 
-    List<AddressDTO> getAddressesByUserId(Long userId);
+    List<AddressDTO> getAddressesByUserId(Long userId, String token);
 
-    List<AddressDTO> getAllAddresses();
+    List<AddressDTO> getAllAddresses(String token);
 
-    AddressDTO updateAddress(AddressDTO addressDTO);
+    AddressDTO updateAddress(AddressDTO addressDTO, String token);
 
-    void deleteAddressById(Long id);
+    void deleteAddressById(Long id, String token);
 
-    void deleteAddressByUserId(Long userId);
+    void deleteAddressByUserId(Long userId, String token);
 
-    AddressDTO updateAddressByUserId(AddressDTO addressDTO);
+    AddressDTO updateAddressByUserId(AddressDTO addressDTO, String token);
 }
