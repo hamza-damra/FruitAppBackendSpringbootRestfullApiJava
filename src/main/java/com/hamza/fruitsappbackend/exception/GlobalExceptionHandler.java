@@ -1,5 +1,6 @@
 package com.hamza.fruitsappbackend.exception;
 
+import io.jsonwebtoken.security.SignatureException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -7,6 +8,7 @@ import org.springframework.http.HttpStatusCode;
 import org.springframework.lang.NonNull;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.WebRequest;
@@ -137,6 +139,38 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
 
+
+
+    @ExceptionHandler(BadRequestException.class)
+    protected ResponseEntity<CustomErrorResponse> handleBadRequestException(BadRequestException exception)
+    {
+        CustomErrorResponse errorResponse = new CustomErrorResponse(
+                exception.getMessage(),
+                HttpStatus.BAD_REQUEST.value()
+        );
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(MissingRequestHeaderException.class)
+    protected ResponseEntity<CustomErrorResponse> handleMissingRequestHeaderException(MissingRequestHeaderException ex) {
+        CustomErrorResponse errorResponse = new CustomErrorResponse(
+                "Missing required request header: " + ex.getHeaderName(),
+                HttpStatus.BAD_REQUEST.value()
+        );
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+    }
+
+    // Resolved [io.jsonwebtoken.security.SignatureException: JWT signature does not match locally computed signature. JWT validity cannot be asserted and should not be trusted.]
+    @ExceptionHandler(SignatureException.class)
+    protected ResponseEntity<CustomErrorResponse> handleSignatureException(SignatureException ex) {
+        CustomErrorResponse errorResponse = new CustomErrorResponse(
+                "Invalid JWT signature. JWT validity cannot be asserted and should not be trusted.",
+                HttpStatus.FORBIDDEN.value()
+        );
+        return new ResponseEntity<>(errorResponse, HttpStatus.FORBIDDEN);
+    }
+
+
     @ExceptionHandler(Exception.class)
     protected ResponseEntity<CustomErrorResponse> handleGlobalException(Exception exception) {
         CustomErrorResponse errorResponse = new CustomErrorResponse(
@@ -163,8 +197,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     }
 
     @ExceptionHandler(AccessDeniedException.class)
-    protected ResponseEntity<Map<String, Object>> handleAccessDeniedException(AccessDeniedException ex,
-                                                                              WebRequest request) {
+    protected ResponseEntity<Map<String, Object>> handleAccessDeniedException(AccessDeniedException ex) {
         Map<String, Object> responseBody = new HashMap<>();
         responseBody.put("error", ex.getMessage());
         responseBody.put("code", HttpStatus.FORBIDDEN.value());
@@ -175,9 +208,9 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     @Override
     protected ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException ex,
-                                                                  HttpHeaders headers,
-                                                                  HttpStatusCode status,
-                                                                  WebRequest request) {
+                                                                  @NonNull HttpHeaders headers,
+                                                                  @NonNull HttpStatusCode status,
+                                                                  @NonNull  WebRequest request) {
         List<Map<String, String>> errorsList = ex.getBindingResult().getFieldErrors().stream()
                 .map(error -> {
                     Map<String, String> errorMap = new HashMap<>();

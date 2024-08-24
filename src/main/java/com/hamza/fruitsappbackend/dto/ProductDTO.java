@@ -1,5 +1,7 @@
 package com.hamza.fruitsappbackend.dto;
 
+import com.hamza.fruitsappbackend.validators.annotation.DoubleMax;
+import com.hamza.fruitsappbackend.validators.annotation.DoubleMin;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -16,7 +18,6 @@ import lombok.Setter;
 @AllArgsConstructor
 public class ProductDTO {
 
-    @Min(value = 1, message = "ID must be a positive number")
     private Long id;
 
     @NotBlank(message = "Name is required")
@@ -39,4 +40,8 @@ public class ProductDTO {
     @NotNull(message = "Category ID cannot be null")
     @Min(value = 1, message = "Category ID must be a positive number")
     private Long categoryId;
+
+    @DoubleMin(value = 1.0, message = "Rating must be at least 1")
+    @DoubleMax(value = 5.0, message = "Rating must be at most 5")
+    private double totalRating;
 }

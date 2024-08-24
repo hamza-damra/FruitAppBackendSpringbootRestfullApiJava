@@ -11,13 +11,6 @@ public class FruitsApiException extends RuntimeException {
     private String errorMessage;
     private String errorMessageDetails;
 
-    public FruitsApiException(HttpStatus httpStatus, String errorMessage, String errorMessageDetails) {
-        super(errorMessage);
-        this.httpStatus = httpStatus;
-        this.errorMessage = errorMessage;
-        this.errorMessageDetails = errorMessageDetails;
-    }
-
     public FruitsApiException(HttpStatus httpStatus, String errorMessage) {
         super(errorMessage);
         this.httpStatus = httpStatus;

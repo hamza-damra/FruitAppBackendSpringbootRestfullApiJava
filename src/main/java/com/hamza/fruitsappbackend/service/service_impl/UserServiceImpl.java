@@ -7,6 +7,7 @@ import com.hamza.fruitsappbackend.exception.RoleNotFoundException;
 import com.hamza.fruitsappbackend.repository.UserRepository;
 import com.hamza.fruitsappbackend.repository.RoleRepository;
 import com.hamza.fruitsappbackend.service.UserService;
+import com.hamza.fruitsappbackend.service.AccountVerificationService;
 import com.hamza.fruitsappbackend.utils.AuthorizationUtils;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,21 +31,25 @@ public class UserServiceImpl implements UserService {
     private final ModelMapper modelMapper;
     private final PasswordEncoder passwordEncoder;
     private final AuthorizationUtils authorizationUtils;
+    private final AccountVerificationService accountVerificationService;
 
     @Autowired
     public UserServiceImpl(UserRepository userRepository, RoleRepository roleRepository,
-                           ModelMapper modelMapper, PasswordEncoder passwordEncoder, AuthorizationUtils authorizationUtils) {
+                           ModelMapper modelMapper, PasswordEncoder passwordEncoder,
+                           AuthorizationUtils authorizationUtils, AccountVerificationService accountVerificationService) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.modelMapper = modelMapper;
         this.passwordEncoder = passwordEncoder;
         this.authorizationUtils = authorizationUtils;
+        this.accountVerificationService = accountVerificationService;
     }
 
     @Override
     public UserDTO saveUser(UserDTO userDTO) {
         User user = modelMapper.map(userDTO, User.class);
         user.setPassword(passwordEncoder.encode(user.getPassword()));
+        user.setIsVerified(false);
 
         if (user.getRoles() == null) {
             throw new RuntimeException("Roles cannot be null");
@@ -109,6 +114,9 @@ public class UserServiceImpl implements UserService {
         if (userDTO.getPassword() != null) {
             existingUser.setPassword(passwordEncoder.encode(userDTO.getPassword()));
         }
+        if(userDTO.getIsVerified() != null) {
+            existingUser.setIsVerified(userDTO.getIsVerified());
+        }
 
         if (userDTO.getRoles() != null) {
             Set<Role> roles = userDTO.getRoles().stream()
@@ -131,6 +139,7 @@ public class UserServiceImpl implements UserService {
         if (!userRepository.existsById(id)) {
             throw new UserNotFoundException("id", id.toString());
         }
+
         userRepository.deleteById(id);
     }
 
@@ -143,6 +152,17 @@ public class UserServiceImpl implements UserService {
 
         userRepository.delete(user);
     }
+
+    @Override
+    public void sendVerificationEmail(String email) {
+        accountVerificationService.sendVerificationEmail(email);
+    }
+
+    @Override
+    public String verifyAccount(Integer otp) {
+        return accountVerificationService.verifyAccount(otp);
+    }
+
 
     private void mapAndSetRelatedEntities(UserDTO userDTO, User user) {
         if (userDTO.getAddresses() != null) {

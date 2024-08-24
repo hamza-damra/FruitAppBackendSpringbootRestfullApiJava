@@ -2,6 +2,7 @@ package com.hamza.fruitsappbackend.controller;
 
 import com.hamza.fruitsappbackend.dto.ReviewDTO;
 import com.hamza.fruitsappbackend.service.ReviewService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -20,7 +21,7 @@ public class ReviewController {
     }
 
     @PostMapping("/add")
-    public ResponseEntity<ReviewDTO> createReview(@RequestHeader("Authorization") String token, @RequestBody ReviewDTO reviewDTO) {
+    public ResponseEntity<ReviewDTO> createReview(@RequestHeader("Authorization") String token, @RequestBody @Valid ReviewDTO reviewDTO) {
         ReviewDTO savedReview = reviewService.saveReview(reviewDTO, token);
         return ResponseEntity.ok(savedReview);
     }
@@ -50,7 +51,7 @@ public class ReviewController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ReviewDTO> updateReview(@RequestHeader("Authorization") String token, @PathVariable Long id, @RequestBody ReviewDTO reviewDTO) {
+    public ResponseEntity<ReviewDTO> updateReview(@RequestHeader("Authorization") String token, @PathVariable Long id, @RequestBody @Valid ReviewDTO reviewDTO) {
         reviewDTO.setId(id);
         ReviewDTO updatedReview = reviewService.updateReview(reviewDTO, token);
         return ResponseEntity.ok(updatedReview);
@@ -59,6 +60,12 @@ public class ReviewController {
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteReviewById(@RequestHeader("Authorization") String token, @PathVariable Long id) {
         reviewService.deleteReviewById(id, token);
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/{userId}/{productId}")
+    public ResponseEntity<Void> deleteReviewsByUserIdAndProductId(@RequestHeader("Authorization") String token, @PathVariable Long userId, @PathVariable Long productId) {
+        reviewService.deleteReviewsByUserIdAndProductId(userId, productId, token);
         return ResponseEntity.noContent().build();
     }
 

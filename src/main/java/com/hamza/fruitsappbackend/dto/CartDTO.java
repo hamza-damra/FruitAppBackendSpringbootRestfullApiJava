@@ -22,7 +22,7 @@ public class CartDTO {
     private Long id;
 
     @NotNull(message = "User ID cannot be null", groups = {OnCreate.class, OnUpdate.class})
-    @UniqueUserCart(message = "User can have only one cart", groups = OnCreate.class)
+    @UniqueUserCart(groups = OnCreate.class)
     private Long userId;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")

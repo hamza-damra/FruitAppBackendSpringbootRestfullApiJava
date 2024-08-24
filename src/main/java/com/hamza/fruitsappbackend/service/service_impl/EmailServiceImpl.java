@@ -2,15 +2,17 @@ package com.hamza.fruitsappbackend.service.service_impl;
 
 import com.hamza.fruitsappbackend.dto.MailBody;
 import com.hamza.fruitsappbackend.service.EmailService;
-import org.springframework.mail.SimpleMailMessage;
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
+
 
 @Service
 public class EmailServiceImpl implements EmailService {
 
-   private final JavaMailSender mailSender;
-
+    private final JavaMailSender mailSender;
 
     public EmailServiceImpl(JavaMailSender mailSender) {
         this.mailSender = mailSender;
@@ -18,12 +20,21 @@ public class EmailServiceImpl implements EmailService {
 
     @Override
     public void sendEmail(MailBody mailBody) {
-        SimpleMailMessage message = new SimpleMailMessage();
-        message.setTo(mailBody.to());
-        message.setFrom("hamza.damra@students.alquds.edu");
-        message.setSubject(mailBody.subject());
-        message.setText(mailBody.body());
+        MimeMessage message = mailSender.createMimeMessage();
 
-        mailSender.send(message);
+        try {
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+            helper.setTo(mailBody.to());
+            helper.setFrom("hamza.damra@students.alquds.edu");
+            helper.setSubject(mailBody.subject());
+            helper.setText(mailBody.body(), true);
+
+            mailSender.send(message);
+            System.out.println("HTML email sent successfully!");
+
+        } catch (MessagingException e) {
+            e.printStackTrace();
+            System.out.println("Failed to send email due to an error.");
+        }
     }
 }

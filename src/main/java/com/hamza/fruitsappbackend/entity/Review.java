@@ -22,7 +22,7 @@ public class Review {
     private Long id;
 
     @Column(nullable = false)
-    private int rating;
+    private double rating;
 
     @Column(columnDefinition = "TEXT")
     private String comment;

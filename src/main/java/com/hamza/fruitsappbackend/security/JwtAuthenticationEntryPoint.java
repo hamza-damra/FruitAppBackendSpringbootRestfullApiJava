@@ -1,5 +1,6 @@
 package com.hamza.fruitsappbackend.security;
 
+import com.hamza.fruitsappbackend.exception.CustomErrorResponse;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -11,7 +12,8 @@ import java.io.IOException;
 @Component
 public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
     @Override
-    public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException) throws IOException, ServletException {
-        response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized: Invalid JWT token. Please log in again.");
+    public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException) throws IOException {
+        CustomErrorResponse customErrorResponse = new CustomErrorResponse("Unauthorized: Invalid JWT token. Please log in again.", 401);
+        response.sendError(HttpServletResponse.SC_UNAUTHORIZED, String.valueOf(customErrorResponse));
     }
 }

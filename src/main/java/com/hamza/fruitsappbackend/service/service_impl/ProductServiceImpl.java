@@ -3,10 +3,12 @@ package com.hamza.fruitsappbackend.service.service_impl;
 import com.hamza.fruitsappbackend.dto.ProductDTO;
 import com.hamza.fruitsappbackend.entity.Category;
 import com.hamza.fruitsappbackend.entity.Product;
+import com.hamza.fruitsappbackend.entity.Review;
 import com.hamza.fruitsappbackend.exception.ProductNotFoundException;
 import com.hamza.fruitsappbackend.exception.CategoryNotFoundException;
 import com.hamza.fruitsappbackend.repository.ProductRepository;
 import com.hamza.fruitsappbackend.repository.CategoryRepository;
+import com.hamza.fruitsappbackend.repository.ReviewRepository;
 import com.hamza.fruitsappbackend.service.ProductService;
 import com.hamza.fruitsappbackend.utils.AuthorizationUtils;
 import org.modelmapper.ModelMapper;
@@ -22,14 +24,17 @@ public class ProductServiceImpl implements ProductService {
 
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
+    private final ReviewRepository reviewRepository;
     private final ModelMapper modelMapper;
     private final AuthorizationUtils authorizationUtils;
 
     @Autowired
     public ProductServiceImpl(ProductRepository productRepository, CategoryRepository categoryRepository,
-                              ModelMapper modelMapper, AuthorizationUtils authorizationUtils) {
+                              ReviewRepository reviewRepository, ModelMapper modelMapper,
+                              AuthorizationUtils authorizationUtils) {
         this.productRepository = productRepository;
         this.categoryRepository = categoryRepository;
+        this.reviewRepository = reviewRepository;
         this.modelMapper = modelMapper;
         this.authorizationUtils = authorizationUtils;
     }
@@ -86,7 +91,7 @@ public class ProductServiceImpl implements ProductService {
                     .orElseThrow(() -> new CategoryNotFoundException("id", productDTO.getCategoryId().toString()));
             product.setCategory(category);
         } else {
-            product.setCategory(null); // Allow setting category to null
+            product.setCategory(null);
         }
     }
 
@@ -104,10 +109,25 @@ public class ProductServiceImpl implements ProductService {
     }
 
     private ProductDTO convertToDto(Product product) {
-        return modelMapper.map(product, ProductDTO.class);
+        ProductDTO productDTO = modelMapper.map(product, ProductDTO.class);
+        productDTO.setTotalRating(product.getTotalRating());
+        return productDTO;
     }
 
     private Product convertToEntity(ProductDTO productDTO) {
         return modelMapper.map(productDTO, Product.class);
+    }
+
+    public void updateProductTotalRating(Long productId) {
+        List<Review> reviews = reviewRepository.findByProductId(productId);
+        double totalRating = reviews.stream()
+                .mapToDouble(Review::getRating)
+                .average()
+                .orElse(0.0);
+
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new ProductNotFoundException("id", productId.toString()));
+        product.setTotalRating(totalRating);
+        productRepository.save(product);
     }
 }

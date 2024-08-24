@@ -12,5 +12,7 @@ public interface ReviewService {
     List<ReviewDTO> getReviewsByUserId(Long userId);
     List<ReviewDTO> getAllReviews();
     void deleteReviewById(Long id, String token);
-    ReviewDTO likeReview(Long reviewId, String token);  // Updated method signature
+    ReviewDTO likeReview(Long reviewId, String token);
+
+    void deleteReviewsByUserIdAndProductId(Long userId, Long productId, String token);
 }

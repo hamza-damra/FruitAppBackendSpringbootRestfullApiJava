@@ -3,6 +3,7 @@ package com.hamza.fruitsappbackend.service.service_impl;
 import com.hamza.fruitsappbackend.dto.RoleDto;
 import com.hamza.fruitsappbackend.entity.Role;
 import com.hamza.fruitsappbackend.entity.User;
+import com.hamza.fruitsappbackend.exception.BadRequestException;
 import com.hamza.fruitsappbackend.exception.RoleNotFoundException;
 import com.hamza.fruitsappbackend.exception.RoleDeletionException;
 import com.hamza.fruitsappbackend.repository.RoleRepository;
@@ -33,6 +34,10 @@ public class RoleServiceImpl implements RoleService {
         authorizationUtils.checkAdminRole(token);
 
         Role role = modelMapper.map(roleDto, Role.class);
+        if(roleRepository.existsById(role.getId()))
+        {
+            throw new BadRequestException("Role with id: " + role.getId() + " and name: " + role.getName() + " already exists");
+        }
         role.setName("ROLE_" + role.getName().toUpperCase());
         role = roleRepository.save(role);
         return modelMapper.map(role, RoleDto.class);

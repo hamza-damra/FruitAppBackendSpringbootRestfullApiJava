@@ -18,4 +18,6 @@ public interface ProductService {
     ProductDTO updateProduct(ProductDTO productDTO, String token);
 
     void deleteProductById(Long id, String token);
+
+    void updateProductTotalRating(Long productId);
 }

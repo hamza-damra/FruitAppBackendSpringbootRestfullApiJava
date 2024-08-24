@@ -50,11 +50,17 @@ public class User {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Review> reviews;
 
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private AccountVerification accountVerification;
+
     @OneToOne(mappedBy = "user")
     private ForgotPassword forgotPassword;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<UserReviewLike> likes;
+
+    @Column(nullable = false)
+    private Boolean isVerified = false;
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
@@ -62,7 +68,7 @@ public class User {
             joinColumns = @JoinColumn(name = "user_id"),
             inverseJoinColumns = @JoinColumn(name = "role_id"),
             uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "role_id"}))
-            private Set<Role> roles = new HashSet<>();
+    private Set<Role> roles = new HashSet<>();
 
     @PrePersist
     protected void onCreate() {
@@ -75,7 +81,6 @@ public class User {
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
     }
-
 
     public boolean hasRole(String roleName) {
         return roles.stream()

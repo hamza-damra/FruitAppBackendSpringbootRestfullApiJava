@@ -41,12 +41,9 @@ public class UserController {
         logger.info("Registering user");
         UserDTO createdUser = userService.saveUser(userDTO);
 
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(userDTO.getEmail(), userDTO.getPassword()));
+        userService.sendVerificationEmail(createdUser.getEmail());
 
-        String token = jwtTokenProvider.generateToken(authentication);
-
-        return new ResponseEntity<>(new JwtAuthResponseDtoSignup(createdUser, token), HttpStatus.CREATED);
+        return new ResponseEntity<>(new JwtAuthResponseDtoSignup(createdUser, null), HttpStatus.CREATED);
     }
 
     @PostMapping("/login")
@@ -65,6 +62,23 @@ public class UserController {
         }
     }
 
+    @PostMapping("/sendVerificationEmail/{email}")
+    public ResponseEntity<String> sendVerificationEmail(@PathVariable String email) {
+        userService.sendVerificationEmail(email);
+        return ResponseEntity.ok("Verification email sent successfully.");
+    }
+
+    @PostMapping("/verifyAccount/{otp}")
+    public ResponseEntity<String> verifyAccount(@PathVariable Integer otp) {
+        String result = userService.verifyAccount(otp);
+
+        if ("Account verified successfully.".equals(result)) {
+            return ResponseEntity.ok(result);
+        } else {
+            return new ResponseEntity<>(result, HttpStatus.EXPECTATION_FAILED);
+        }
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<UserDTO> getUserById(@RequestHeader("Authorization") String token, @PathVariable Long id) {
         Optional<UserDTO> userDTO = userService.getUserById(id, token);
@@ -72,20 +86,20 @@ public class UserController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    @GetMapping
+    @GetMapping("all")
     public ResponseEntity<List<UserDTO>> getAllUsers(@RequestHeader("Authorization") String token) {
         List<UserDTO> users = userService.getAllUsers(token);
         return ResponseEntity.ok(users);
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("/update/{id}")
     public ResponseEntity<UserDTO> updateUser(@RequestHeader("Authorization") String token, @PathVariable Long id, @RequestBody UserDTO userDTO) {
         userDTO.setId(id);
         UserDTO updatedUser = userService.updateUser(userDTO, token);
         return ResponseEntity.ok(updatedUser);
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/delete/{id}")
     public ResponseEntity<String> deleteUserById(@RequestHeader("Authorization") String token, @PathVariable Long id) {
         userService.deleteUserById(id, token);
         return ResponseEntity.ok("User deleted successfully!");

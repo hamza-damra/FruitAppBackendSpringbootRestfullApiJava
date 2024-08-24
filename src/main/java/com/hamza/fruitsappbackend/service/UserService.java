@@ -21,4 +21,9 @@ public interface UserService extends UserDetailsService {
     void deleteUserById(Long id, String token);
 
     void deleteUserByEmail(String email, String token);
+
+    void sendVerificationEmail(String email);
+
+    String verifyAccount(Integer otp);
+
 }

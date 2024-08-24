@@ -29,12 +29,15 @@ public class UserDTO {
 
     @NotBlank(message = "Email is required")
     @Email(message = "Email should be valid")
-    @UniqueEmail(message = "Email already in use")
+    @UniqueEmail
     private String email;
 
     @NotBlank(message = "Password is required")
     @Size(min = 8, message = "Password should have at least 8 characters")
     private String password;
+
+    private Boolean isVerified;
+
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime createdAt;
