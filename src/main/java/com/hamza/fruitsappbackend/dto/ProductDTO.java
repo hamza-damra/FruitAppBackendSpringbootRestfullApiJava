@@ -1,16 +1,12 @@
 package com.hamza.fruitsappbackend.dto;
 
-import com.hamza.fruitsappbackend.validators.annotation.DoubleMax;
-import com.hamza.fruitsappbackend.validators.annotation.DoubleMin;
-import jakarta.validation.constraints.DecimalMin;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+
+import java.time.LocalDateTime;
 
 @Getter
 @Setter
@@ -41,7 +37,18 @@ public class ProductDTO {
     @Min(value = 1, message = "Category ID must be a positive number")
     private Long categoryId;
 
-    @DoubleMin(value = 1.0, message = "Rating must be at least 1")
-    @DoubleMax(value = 5.0, message = "Rating must be at most 5")
-    private double totalRating;
+    @DecimalMin(value = "0.0", inclusive = false, message = "Product weight must be greater than 0")
+    private double productWeight;
+
+    @Min(value = 0, message = "Calories must be a non-negative number")
+    private int calories;
+
+    private LocalDateTime expirationDate;
+
+    private Double totalRating;
+    private int counterFiveStars;
+    private int counterFourStars;
+    private int counterThreeStars;
+    private int counterTwoStars;
+    private int counterOneStars;
 }

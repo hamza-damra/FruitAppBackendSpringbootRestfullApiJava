@@ -34,10 +34,12 @@ public class ReviewServiceImpl implements ReviewService {
     private final ProductService productService;
     private final ProductRepository productRepository;
     private final AuthorizationUtils authorizationUtils;
+
     @Autowired
     public ReviewServiceImpl(ReviewRepository reviewRepository, UserRepository userRepository,
                              ModelMapper modelMapper, JwtTokenProvider jwtTokenProvider,
-                             UserReviewLikeRepository userReviewLikeRepository, ProductService productService, ProductRepository productRepository, AuthorizationUtils authorizationUtils) {
+                             UserReviewLikeRepository userReviewLikeRepository, ProductService productService,
+                             ProductRepository productRepository, AuthorizationUtils authorizationUtils) {
         this.reviewRepository = reviewRepository;
         this.userRepository = userRepository;
         this.modelMapper = modelMapper;
@@ -47,7 +49,6 @@ public class ReviewServiceImpl implements ReviewService {
         this.productRepository = productRepository;
         this.authorizationUtils = authorizationUtils;
     }
-
 
     @Override
     public ReviewDTO saveReview(ReviewDTO reviewDTO, String token) {

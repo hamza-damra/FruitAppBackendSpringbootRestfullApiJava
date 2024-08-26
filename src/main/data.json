@@ -1,0 +1,347 @@
+[
+  {
+    "id": 1,
+    "name": "Cotton Shirt",
+    "description": "High-quality cotton shirt",
+    "price": 99.99,
+    "stockQuantity": 0,
+    "imageUrl": "https://example.com/images/tshirt1.png",
+    "categoryId": 1,
+    "totalRating": 0.0
+  },
+  {
+    "id": 2,
+    "name": "Running Shoes",
+    "description": "Comfortable running shoes",
+    "price": 59.99,
+    "stockQuantity": 80,
+    "imageUrl": "https://example.com/images/shoes1.png",
+    "categoryId": 2,
+    "totalRating": 0.0
+  },
+  {
+    "id": 3,
+    "name": "Leather Wristwatch",
+    "description": "Elegant wristwatch with leather strap",
+    "price": 99.99,
+    "stockQuantity": 60,
+    "imageUrl": "https://example.com/images/watch1.png",
+    "categoryId": 3,
+    "totalRating": 0.0
+  },
+  {
+    "id": 4,
+    "name": "Hiking Backpack",
+    "description": "Waterproof backpack for hiking",
+    "price": 45.0,
+    "stockQuantity": 40,
+    "imageUrl": "https://example.com/images/backpack1.png",
+    "categoryId": 4,
+    "totalRating": 0.0
+  },
+  {
+    "id": 5,
+    "name": "Wireless Headphones",
+    "description": "Noise-cancelling wireless headphones",
+    "price": 129.99,
+    "stockQuantity": 100,
+    "imageUrl": "https://example.com/images/headphones1.png",
+    "categoryId": 4,
+    "totalRating": 0.0
+  },
+  {
+    "id": 6,
+    "name": "Smart TV",
+    "description": "4K Ultra HD Smart TV",
+    "price": 399.99,
+    "stockQuantity": 30,
+    "imageUrl": "https://example.com/images/tv1.png",
+    "categoryId": 4,
+    "totalRating": 0.0
+  },
+  {
+    "id": 7,
+    "name": "Office Chair",
+    "description": "Ergonomic office chair",
+    "price": 199.99,
+    "stockQuantity": 45,
+    "imageUrl": "https://example.com/images/chair1.png",
+    "categoryId": 5,
+    "totalRating": 0.0
+  },
+  {
+    "id": 8,
+    "name": "Portable Speaker",
+    "description": "Bluetooth portable speaker",
+    "price": 39.99,
+    "stockQuantity": 120,
+    "imageUrl": "https://example.com/images/speaker1.png",
+    "categoryId": 4,
+    "totalRating": 0.0
+  },
+  {
+    "id": 9,
+    "name": "Kitchen Knife Set",
+    "description": "Stainless steel kitchen knife set",
+    "price": 59.99,
+    "stockQuantity": 70,
+    "imageUrl": "https://example.com/images/knifeset1.png",
+    "categoryId": 5,
+    "totalRating": 0.0
+  },
+  {
+    "id": 10,
+    "name": "Gaming Mouse",
+    "description": "Gaming mouse with RGB lighting",
+    "price": 29.99,
+    "stockQuantity": 90,
+    "imageUrl": "https://example.com/images/mouse1.png",
+    "categoryId": 4,
+    "totalRating": 4.25
+  },
+  {
+    "id": 11,
+    "name": "Mechanical Keyboard",
+    "description": "Wireless mechanical keyboard",
+    "price": 89.99,
+    "stockQuantity": 75,
+    "imageUrl": "https://example.com/images/keyboard1.png",
+    "categoryId": 4,
+    "totalRating": 0.0
+  },
+  {
+    "id": 12,
+    "name": "Leather Handbag",
+    "description": "Faux leather handbag",
+    "price": 49.99,
+    "stockQuantity": 55,
+    "imageUrl": "https://example.com/images/handbag1.png",
+    "categoryId": 3,
+    "totalRating": 0.0
+  },
+  {
+    "id": 13,
+    "name": "Smartphone",
+    "description": "Smartphone with 128GB storage",
+    "price": 699.99,
+    "stockQuantity": 20,
+    "imageUrl": "https://example.com/images/phone1.png",
+    "categoryId": 4,
+    "totalRating": 0.0
+  },
+  {
+    "id": 14,
+    "name": "Electric Toothbrush",
+    "description": "Electric toothbrush with multiple modes",
+    "price": 39.99,
+    "stockQuantity": 110,
+    "imageUrl": "https://example.com/images/toothbrush1.png",
+    "categoryId": 5,
+    "totalRating": 0.0
+  },
+  {
+    "id": 15,
+    "name": "Water Bottle",
+    "description": "Stainless steel water bottle",
+    "price": 14.99,
+    "stockQuantity": 200,
+    "imageUrl": "https://example.com/images/waterbottle1.png",
+    "categoryId": 5,
+    "totalRating": 0.0
+  },
+  {
+    "id": 16,
+    "name": "Slim-Fit Jeans",
+    "description": "Men's slim-fit jeans",
+    "price": 49.99,
+    "stockQuantity": 100,
+    "imageUrl": "https://example.com/images/jeans1.png",
+    "categoryId": 1,
+    "totalRating": 0.0
+  },
+  {
+    "id": 17,
+    "name": "Fitness Tracker",
+    "description": "Bluetooth fitness tracker",
+    "price": 79.99,
+    "stockQuantity": 85,
+    "imageUrl": "https://example.com/images/fitnesstracker1.png",
+    "categoryId": 6,
+    "totalRating": 0.0
+  },
+  {
+    "id": 18,
+    "name": "Wireless Charger",
+    "description": "Wireless charging pad",
+    "price": 29.99,
+    "stockQuantity": 95,
+    "imageUrl": "https://example.com/images/chargingpad1.png",
+    "categoryId": 4,
+    "totalRating": 2.5,
+    "counterFiveStars": 5,
+    "counterFourStars": 4,
+    "counterThreeStars": 2,
+    "counterTwoStars": 1,
+    "counterOneStars": 1
+  },
+  {
+    "id": 21,
+    "name": "T-shirt name",
+    "description": "T-shirt description",
+    "price": 50.0,
+    "stockQuantity": 12,
+    "imageUrl": "http://t-shirt_image.jpg",
+    "categoryId": 1,
+    "totalRating": 0.0
+  },
+  {
+    "id": 22,
+    "name": "T-shirt name1",
+    "description": "T-shirt description1",
+    "price": 50.0,
+    "stockQuantity": 12,
+    "imageUrl": "http://t-shirt_image.jpg",
+    "categoryId": 1,
+    "totalRating": 0.0
+  },
+  {
+    "id": 23,
+    "name": "T-shirt name12",
+    "description": "T-shirt description12",
+    "price": 50.0,
+    "stockQuantity": 12,
+    "imageUrl": "http://t-shirt_image.jpg",
+    "categoryId": 1,
+    "totalRating": 0.0
+  },
+  {
+    "id": 24,
+    "name": "1111111111",
+    "description": "T-shirt description12",
+    "price": 50.0,
+    "stockQuantity": 12,
+    "imageUrl": "http://t-shirt_image.jpg",
+    "categoryId": 1,
+    "totalRating": 0.0
+  },
+  {
+    "id": 25,
+    "name": "11111111112",
+    "description": "T-shirt description12",
+    "price": 50.0,
+    "stockQuantity": 12,
+    "imageUrl": "http://t-shirt_image.jpg",
+    "categoryId": 1,
+    "totalRating": 0.0
+  },
+  {
+    "id": 26,
+    "name": "111111111123",
+    "description": "T-shirt description12",
+    "price": 50.0,
+    "stockQuantity": 12,
+    "imageUrl": "http://t-shirt_image.jpg",
+    "categoryId": 1,
+    "totalRating": 0.0
+  },
+  {
+    "id": 27,
+    "name": "1111111111232",
+    "description": "T-shirt description12",
+    "price": 50.0,
+    "stockQuantity": 12,
+    "imageUrl": "http://t-shirt_image.jpg",
+    "categoryId": 1,
+    "totalRating": 0.0
+  },
+  {
+    "id": 28,
+    "name": "1111111111232",
+    "description": "T-shirt description12",
+    "price": 50.0,
+    "stockQuantity": 12,
+    "imageUrl": "http://t-shirt_image.jpg",
+    "categoryId": 1,
+    "totalRating": 0.0
+  },
+  {
+    "id": 29,
+    "name": "222222222222",
+    "description": "T-shirt description12",
+    "price": 50.0,
+    "stockQuantity": 12,
+    "imageUrl": "http://t-shirt_image.jpg",
+    "categoryId": 1,
+    "totalRating": 0.0
+  },
+  {
+    "id": 30,
+    "name": "222222222222",
+    "description": "T-shirt description12",
+    "price": 50.0,
+    "stockQuantity": 12,
+    "imageUrl": "http://t-shirt_image.jpg",
+    "categoryId": 1,
+    "totalRating": 0.0
+  },
+  {
+    "id": 31,
+    "name": "2222222222221",
+    "description": "T-shirt description12",
+    "price": 50.0,
+    "stockQuantity": 12,
+    "imageUrl": "http://t-shirt_image.jpg",
+    "categoryId": 1,
+    "totalRating": 0.0
+  },
+  {
+    "id": 32,
+    "name": "22222222222211",
+    "description": "T-shirt description12",
+    "price": 50.0,
+    "stockQuantity": 12,
+    "imageUrl": "http://t-shirt_image.jpg",
+    "categoryId": 1,
+    "totalRating": 0.0
+  },
+  {
+    "id": 33,
+    "name": "2222222222221111",
+    "description": "T-shirt description12",
+    "price": 50.0,
+    "stockQuantity": 12,
+    "imageUrl": "http://t-shirt_image.jpg",
+    "categoryId": 1,
+    "totalRating": 0.0
+  },
+  {
+    "id": 34,
+    "name": "22222222222211113",
+    "description": "T-shirt description12",
+    "price": 50.0,
+    "stockQuantity": 12,
+    "imageUrl": "http://t-shirt_image.jpg",
+    "categoryId": 1,
+    "totalRating": 0.0
+  },
+  {
+    "id": 35,
+    "name": "2222222222221111333",
+    "description": "T-shirt description12",
+    "price": 50.0,
+    "stockQuantity": 12,
+    "imageUrl": "http://t-shirt_image.jpg",
+    "categoryId": 1,
+    "totalRating": 0.0
+  },
+  {
+    "id": 36,
+    "name": "2222222222221111333",
+    "description": "T-shirt description12",
+    "price": 50.0,
+    "stockQuantity": 12,
+    "imageUrl": "http://t-shirt_image.jpg",
+    "categoryId": 1,
+    "totalRating": 0.0
+  }
+]

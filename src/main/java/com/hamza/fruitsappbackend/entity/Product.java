@@ -36,8 +36,32 @@ public class Product {
     @Column(name = "image_url")
     private String imageUrl;
 
+    @Column(name = "product_weight", nullable = false)
+    private double productWeight;
+
+    @Column(nullable = false)
+    private int calories;
+
+    @Column(name = "expiration_date", nullable = true)
+    private LocalDateTime expirationDate;
+
     @Column(name = "total_rating", nullable = false)
-    private double totalRating = 0.0;
+    private Double totalRating = 0.0;
+
+    @Column(name = "counter_five_stars", nullable = false)
+    private int counterFiveStars = 0;
+
+    @Column(name = "counter_four_stars", nullable = false)
+    private int counterFourStars = 0;
+
+    @Column(name = "counter_three_stars", nullable = false)
+    private int counterThreeStars = 0;
+
+    @Column(name = "counter_two_stars", nullable = false)
+    private int counterTwoStars = 0;
+
+    @Column(name = "counter_one_stars", nullable = false)
+    private int counterOneStars = 0;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;

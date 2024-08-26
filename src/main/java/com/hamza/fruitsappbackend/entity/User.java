@@ -1,5 +1,6 @@
 package com.hamza.fruitsappbackend.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -61,6 +62,10 @@ public class User {
 
     @Column(nullable = false)
     private Boolean isVerified = false;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Wishlist> wishlistItems;
+
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(

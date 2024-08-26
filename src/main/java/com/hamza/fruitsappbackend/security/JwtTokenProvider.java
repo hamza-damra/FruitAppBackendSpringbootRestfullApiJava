@@ -1,12 +1,17 @@
 package com.hamza.fruitsappbackend.security;
 
+import com.hamza.fruitsappbackend.entity.User;
 import com.hamza.fruitsappbackend.exception.JwtAuthenticationException;
+import com.hamza.fruitsappbackend.exception.UserNotFoundException;
+import com.hamza.fruitsappbackend.repository.UserRepository;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.SignatureException;
 import jakarta.annotation.PostConstruct;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
 import java.security.Key;
@@ -24,6 +29,13 @@ public class JwtTokenProvider {
 
     private Key key;
 
+    private final UserRepository userRepository;
+
+    @Autowired
+    public JwtTokenProvider(UserRepository userRepository) {
+        this.userRepository = userRepository;
+    }
+
     @PostConstruct
     public void init() {
         this.key = Keys.secretKeyFor(SignatureAlgorithm.HS512);
@@ -31,14 +43,25 @@ public class JwtTokenProvider {
 
     // Generate token
     public String generateToken(Authentication authentication) {
+        UserDetails userPrincipal = (UserDetails) authentication.getPrincipal();
+        String email = userPrincipal.getUsername();
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new UserNotFoundException("email", email));
+
+        String userId = user.getId().toString();
+
         String imageUrl = "https://images.inc.com/uploaded_files/image/1920x1080/getty_481292845_77896.jpg"; // Replace with actual
-        Map<String, Object> additionalClaims = Map.of("imageUrl", imageUrl); // Replace with actual claims
-        String userName = authentication.getName();
+        Map<String, Object> additionalClaims = Map.of(
+                "imageUrl", imageUrl, // Replace with actual claims
+                "userId", userId
+        );
+
         Date currentDate = new Date();
         Date expirationDate = new Date(currentDate.getTime() + validityInMilliseconds);
-        JwtBuilder tokenBuilder = Jwts.builder();
-        return tokenBuilder
-                .setSubject(userName)
+
+        return Jwts.builder()
+                .setSubject(email)
                 .setIssuedAt(currentDate)
                 .setExpiration(expirationDate)
                 .addClaims(additionalClaims)
@@ -48,7 +71,7 @@ public class JwtTokenProvider {
 
     public String getUserNameFromToken(String token) {
         token = token.trim();
-        if(token.startsWith("Bearer ")){
+        if (token.startsWith("Bearer ")) {
             token = token.substring(7);
         }
         JwtParser jwtValidatorParser = Jwts.parserBuilder().setSigningKey(key).build();
@@ -56,10 +79,9 @@ public class JwtTokenProvider {
         return claims.getSubject();
     }
 
-    // Retrieve all claims from token
     public Claims getAllClaimsFromToken(String token) {
         token = token.trim();
-        if(token.startsWith("Bearer ")){
+        if (token.startsWith("Bearer ")) {
             token = token.substring(7);
         }
         return Jwts.parserBuilder()
@@ -73,7 +95,7 @@ public class JwtTokenProvider {
     public boolean validateToken(String token) {
         try {
             token = token.trim();
-            if(token.startsWith("Bearer ")){
+            if (token.startsWith("Bearer ")) {
                 token = token.substring(7);
             }
             Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token);
@@ -91,5 +113,11 @@ public class JwtTokenProvider {
             logger.severe("JWT claims string is empty: " + e.getMessage());
             throw new JwtAuthenticationException("JWT claims string is empty", e);
         }
+    }
+
+
+    public String getUserIdFromToken(String token) {
+        Claims claims = getAllClaimsFromToken(token);
+        return claims.get("userId", String.class);
     }
 }

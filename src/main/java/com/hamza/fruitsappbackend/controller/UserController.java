@@ -43,7 +43,12 @@ public class UserController {
 
         userService.sendVerificationEmail(createdUser.getEmail());
 
-        return new ResponseEntity<>(new JwtAuthResponseDtoSignup(createdUser, null), HttpStatus.CREATED);
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(userDTO.getEmail(), userDTO.getPassword()));
+
+        String token = jwtTokenProvider.generateToken(authentication);
+
+        return new ResponseEntity<>(new JwtAuthResponseDtoSignup(createdUser, token), HttpStatus.CREATED);
     }
 
     @PostMapping("/login")

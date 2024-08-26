@@ -111,6 +111,11 @@ public class ProductServiceImpl implements ProductService {
     private ProductDTO convertToDto(Product product) {
         ProductDTO productDTO = modelMapper.map(product, ProductDTO.class);
         productDTO.setTotalRating(product.getTotalRating());
+        productDTO.setCounterFiveStars(product.getCounterFiveStars());
+        productDTO.setCounterFourStars(product.getCounterFourStars());
+        productDTO.setCounterThreeStars(product.getCounterThreeStars());
+        productDTO.setCounterTwoStars(product.getCounterTwoStars());
+        productDTO.setCounterOneStars(product.getCounterOneStars());
         return productDTO;
     }
 
@@ -120,14 +125,26 @@ public class ProductServiceImpl implements ProductService {
 
     public void updateProductTotalRating(Long productId) {
         List<Review> reviews = reviewRepository.findByProductId(productId);
+
         double totalRating = reviews.stream()
                 .mapToDouble(Review::getRating)
                 .average()
                 .orElse(0.0);
 
+        int fiveStars = (int) reviews.stream().filter(r -> r.getRating() == 5).count();
+        int fourStars = (int) reviews.stream().filter(r -> r.getRating() == 4).count();
+        int threeStars = (int) reviews.stream().filter(r -> r.getRating() == 3).count();
+        int twoStars = (int) reviews.stream().filter(r -> r.getRating() == 2).count();
+        int oneStar = (int) reviews.stream().filter(r -> r.getRating() == 1).count();
+
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new ProductNotFoundException("id", productId.toString()));
         product.setTotalRating(totalRating);
+        product.setCounterFiveStars(fiveStars);
+        product.setCounterFourStars(fourStars);
+        product.setCounterThreeStars(threeStars);
+        product.setCounterTwoStars(twoStars);
+        product.setCounterOneStars(oneStar);
         productRepository.save(product);
     }
 }

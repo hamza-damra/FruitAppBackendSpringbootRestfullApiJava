@@ -1,5 +1,6 @@
 package com.hamza.fruitsappbackend.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 

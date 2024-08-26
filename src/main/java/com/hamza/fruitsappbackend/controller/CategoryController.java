@@ -20,7 +20,7 @@ public class CategoryController {
         this.categoryService = categoryService;
     }
 
-    @PostMapping
+    @PostMapping("/add")
     public ResponseEntity<CategoryDTO> createCategory(@RequestHeader("Authorization") String token, @RequestBody CategoryDTO categoryDTO) {
         CategoryDTO savedCategory = categoryService.saveCategory(categoryDTO, token);
         return ResponseEntity.ok(savedCategory);
@@ -32,7 +32,7 @@ public class CategoryController {
         return ResponseEntity.ok(categoryDTO);
     }
 
-    @GetMapping
+    @GetMapping("/all")
     public ResponseEntity<List<CategoryDTO>> getAllCategories() {
         List<CategoryDTO> categories = categoryService.getAllCategories();
         return ResponseEntity.ok(categories);

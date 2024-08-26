@@ -1,8 +1,8 @@
 package com.hamza.fruitsappbackend.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import com.hamza.fruitsappbackend.validators.annotation.DoubleMax;
-import com.hamza.fruitsappbackend.validators.annotation.DoubleMin;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -21,9 +21,9 @@ public class ReviewDTO {
 
     private Long id;
 
-    @DoubleMin(value = 1.0, message = "Rating must be at least 1")
-    @DoubleMax(value = 5.0, message = "Rating must be at most 5")
-    private double rating;
+    @Min(value = 1, message = "Rating must be at least 1")
+    @Max(value = 5, message = "Rating must be at most 5")
+    private Integer rating;
 
     private int likeCount;
 

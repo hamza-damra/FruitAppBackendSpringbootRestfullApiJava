@@ -9,6 +9,7 @@ import com.hamza.fruitsappbackend.utils.AuthorizationUtils;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -55,7 +56,10 @@ public class CategoryServiceImpl implements CategoryService {
         Category category = categoryRepository.findById(categoryDTO.getId())
                 .orElseThrow(() -> new CategoryNotFoundException("id", categoryDTO.getId().toString()));
 
-        modelMapper.map(categoryDTO, category);
+
+        category.setName(categoryDTO.getName());
+        category.setDescription(categoryDTO.getDescription());
+
         Category updatedCategory = categoryRepository.save(category);
         return modelMapper.map(updatedCategory, CategoryDTO.class);
     }
