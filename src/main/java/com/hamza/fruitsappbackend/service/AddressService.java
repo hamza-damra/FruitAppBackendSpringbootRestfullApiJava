@@ -11,7 +11,7 @@ public interface AddressService {
 
     Optional<AddressDTO> getAddressById(Long id, String token);
 
-    List<AddressDTO> getAddressesByUserId(Long userId, String token);
+    List<AddressDTO> getAddressesByUserId(String token); // Removed userId parameter
 
     List<AddressDTO> getAllAddresses(String token);
 
@@ -19,7 +19,7 @@ public interface AddressService {
 
     void deleteAddressById(Long id, String token);
 
-    void deleteAddressByUserId(Long userId, String token);
+    void deleteAddressByUserId(String token); // Removed userId parameter
 
     AddressDTO updateAddressByUserId(AddressDTO addressDTO, String token);
 }

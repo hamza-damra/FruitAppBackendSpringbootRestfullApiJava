@@ -34,9 +34,9 @@ public class AddressController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    @GetMapping("/user/{userId}")
-    public ResponseEntity<List<AddressDTO>> getAddressesByUserId(@RequestHeader("Authorization") String token, @PathVariable Long userId) {
-        List<AddressDTO> addresses = addressService.getAddressesByUserId(userId, token);
+    @GetMapping("/user")
+    public ResponseEntity<List<AddressDTO>> getAddressesByUserId(@RequestHeader("Authorization") String token) {
+        List<AddressDTO> addresses = addressService.getAddressesByUserId(token); // No userId parameter needed
         return ResponseEntity.ok(addresses);
     }
 
@@ -53,9 +53,8 @@ public class AddressController {
         return ResponseEntity.ok(updatedAddress);
     }
 
-    @PutMapping("/update-by-user-id/{userId}")
-    public ResponseEntity<AddressDTO> updateAddressByUserId(@RequestHeader("Authorization") String token, @PathVariable Long userId, @RequestBody @Valid AddressDTO addressDTO) {
-        addressDTO.setUserId(userId);
+    @PutMapping("/update-by-user-id")
+    public ResponseEntity<AddressDTO> updateAddressByUserId(@RequestHeader("Authorization") String token, @RequestBody @Valid AddressDTO addressDTO) {
         AddressDTO updatedAddress = addressService.updateAddressByUserId(addressDTO, token);
         return ResponseEntity.ok(updatedAddress);
     }
@@ -66,9 +65,9 @@ public class AddressController {
         return ResponseEntity.noContent().build();
     }
 
-    @DeleteMapping("/delete-by-user-id/{userId}")
-    public ResponseEntity<String> deleteAddressesByUserId(@RequestHeader("Authorization") String token, @PathVariable Long userId) {
-        addressService.deleteAddressByUserId(userId, token);
+    @DeleteMapping("/delete-by-user-id")
+    public ResponseEntity<String> deleteAddressesByUserId(@RequestHeader("Authorization") String token) {
+        addressService.deleteAddressByUserId(token);
         return ResponseEntity.ok("Address has been deleted successfully");
     }
 }
