@@ -1,6 +1,7 @@
 package com.hamza.fruitsappbackend.service;
 
 import com.hamza.fruitsappbackend.dto.ProductDTO;
+import com.hamza.fruitsappbackend.payload.ProductResponse;
 
 import java.util.List;
 import java.util.Optional;
@@ -13,7 +14,7 @@ public interface ProductService {
 
     List<ProductDTO> getProductsByCategoryId(Long categoryId);
 
-    List<ProductDTO> getAllProducts();
+    ProductResponse getAllProducts(int pageSize, int pageNumber, String sortBy, String sortDirection);
 
     ProductDTO updateProduct(ProductDTO productDTO, String token);
 

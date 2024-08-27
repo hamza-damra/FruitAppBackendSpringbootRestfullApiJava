@@ -1,17 +1,19 @@
 package com.hamza.fruitsappbackend.controller;
 
+import com.hamza.fruitsappbackend.constant.Strings;
 import com.hamza.fruitsappbackend.dto.ProductDTO;
+import com.hamza.fruitsappbackend.payload.ProductResponse;
 import com.hamza.fruitsappbackend.service.ProductService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-
 
 @RestController
 @RequestMapping("/api/v1/products")
@@ -46,8 +48,12 @@ public class ProductController {
     }
 
     @GetMapping("/all")
-    public ResponseEntity<List<ProductDTO>> getAllProducts() {
-        List<ProductDTO> products = productService.getAllProducts();
+    public ResponseEntity<ProductResponse> getAllProducts(
+            @RequestParam(name = "pageSize", defaultValue = Strings.DEFAULT_PAGE_SIZE, required = false) int pageSize,
+            @RequestParam(name = "pageNumber", defaultValue = Strings.DEFAULT_PAGE_NUMBER, required = false) int pageNumber,
+            @RequestParam(name = "sortBy", defaultValue = Strings.DEFAULT_SORT_FIELD, required = false) String sortBy,
+            @RequestParam(name = "sortDirection", defaultValue = Strings.DEFAULT_SORT_DIRECTION, required = false) String sortDirection) {
+        ProductResponse products = productService.getAllProducts(pageSize, pageNumber, sortBy, sortDirection);
         return ResponseEntity.ok(products);
     }
 
@@ -77,7 +83,6 @@ public class ProductController {
         return emitter;
     }
 
-
     private void sendProductUpdate(ProductDTO productDTO) {
         List<SseEmitter> deadEmitters = new ArrayList<>();
 
@@ -93,5 +98,4 @@ public class ProductController {
 
         emitters.removeAll(deadEmitters);
     }
-
 }

@@ -11,8 +11,13 @@ import com.hamza.fruitsappbackend.repository.CategoryRepository;
 import com.hamza.fruitsappbackend.repository.ReviewRepository;
 import com.hamza.fruitsappbackend.service.ProductService;
 import com.hamza.fruitsappbackend.utils.AuthorizationUtils;
+import com.hamza.fruitsappbackend.payload.ProductResponse;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -62,10 +67,23 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public List<ProductDTO> getAllProducts() {
-        return productRepository.findAll().stream()
+    public ProductResponse getAllProducts(int pageSize, int pageNumber, String sortBy, String sortDirection) {
+        Sort sort = sortDirection.equalsIgnoreCase(Sort.Direction.ASC.name()) ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
+        Pageable pageable = PageRequest.of(pageNumber, pageSize, sort);
+
+        Page<Product> productPage = productRepository.findAll(pageable);
+        List<ProductDTO> content = productPage.getContent().stream()
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
+
+        return new ProductResponse(
+                productPage.getSize(),
+                productPage.getNumber(),
+                productPage.getTotalElements(),
+                productPage.getTotalPages(),
+                productPage.isLast(),
+                content
+        );
     }
 
     @Override
