@@ -17,7 +17,6 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/carts")
-@Validated
 public class CartController {
 
     private final CartService cartService;
@@ -29,9 +28,8 @@ public class CartController {
 
     @PostMapping("/add")
     @ResponseStatus(HttpStatus.CREATED)
-    @Validated(OnCreate.class)
     public ResponseEntity<CartDTO> createCart(@RequestHeader("Authorization") String token,
-                                              @Validated(OnCreate.class) @RequestBody CartDTO cartDTO) {
+                                              @Valid @RequestBody CartDTO cartDTO) {
         CartDTO savedCart = cartService.saveCart(cartDTO, token);
         return ResponseEntity.status(HttpStatus.CREATED).body(savedCart);
     }
@@ -43,9 +41,9 @@ public class CartController {
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
-    @GetMapping("/user/{userId}")
-    public ResponseEntity<List<CartDTO>> getCartsByUserId(@RequestHeader("Authorization") String token, @PathVariable Long userId) {
-        List<CartDTO> carts = cartService.getCartsByUserId(userId, token);
+    @GetMapping("/user")
+    public ResponseEntity<List<CartDTO>> getCartsByUserId(@RequestHeader("Authorization") String token) {
+        List<CartDTO> carts = cartService.getCartsByUserId(token);
         return ResponseEntity.ok(carts);
     }
 
@@ -56,10 +54,9 @@ public class CartController {
     }
 
     @PutMapping("/{id}")
-    @Validated(OnUpdate.class)
     public ResponseEntity<CartDTO> updateCart(@RequestHeader("Authorization") String token,
                                               @PathVariable Long id,
-                                              @Validated(OnUpdate.class) @RequestBody CartDTO cartDTO) {
+                                              @Valid @RequestBody CartDTO cartDTO) {
         cartDTO.setId(id);
         CartDTO updatedCart = cartService.updateCart(cartDTO, token);
         return updatedCart != null ? ResponseEntity.ok(updatedCart) : ResponseEntity.notFound().build();
@@ -85,6 +82,13 @@ public class CartController {
                                                        @PathVariable Long cartId,
                                                        @PathVariable Long cartItemId) {
         cartService.removeCartItemFromCart(cartId, cartItemId, token);
+        return ResponseEntity.noContent().build();
+    }
+
+
+    @DeleteMapping("/delete-by-userId")
+    public ResponseEntity<Void> deleteCartsByUserId(@RequestHeader("Authorization") String token) {
+        cartService.deleteCartsByUserId(token);
         return ResponseEntity.noContent().build();
     }
 }

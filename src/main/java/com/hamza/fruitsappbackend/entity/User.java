@@ -1,6 +1,5 @@
 package com.hamza.fruitsappbackend.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -39,7 +38,7 @@ public class User {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
-    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private Cart cart;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -87,8 +86,4 @@ public class User {
         updatedAt = LocalDateTime.now();
     }
 
-    public boolean hasRole(String roleName) {
-        return roles.stream()
-                .noneMatch(role -> role.getName().equals(roleName));
-    }
 }

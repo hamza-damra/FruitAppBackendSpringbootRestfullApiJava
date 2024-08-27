@@ -1,5 +1,6 @@
 package com.hamza.fruitsappbackend.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -43,6 +44,7 @@ public class ProductDTO {
     @Min(value = 0, message = "Calories must be a non-negative number")
     private int calories;
 
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime expirationDate;
 
     private Double totalRating;

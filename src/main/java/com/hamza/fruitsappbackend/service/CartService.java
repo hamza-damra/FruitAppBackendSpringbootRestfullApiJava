@@ -12,7 +12,7 @@ public interface CartService {
 
     Optional<CartDTO> getCartById(Long id, String token);
 
-    List<CartDTO> getCartsByUserId(Long userId, String token);
+    List<CartDTO> getCartsByUserId(String token);
 
     List<CartDTO> getAllCarts(String token);
 
@@ -20,7 +20,7 @@ public interface CartService {
 
     void deleteCartById(Long id, String token);
 
-    void deleteCartsByUserId(Long userId, String token);
+    void deleteCartsByUserId(String token);
 
     CartItemDTO addCartItemToCart(Long cartId, CartItemDTO cartItemDTO, String token);
 
