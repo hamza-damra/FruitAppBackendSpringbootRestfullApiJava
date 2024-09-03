@@ -1,4 +1,4 @@
-package com.hamza.fruitsappbackend.service.impl;
+package com.hamza.fruitsappbackend.service.service_impl;
 
 import com.hamza.fruitsappbackend.dto.ChangePassword;
 import com.hamza.fruitsappbackend.dto.MailBody;
@@ -62,7 +62,7 @@ public class ForgotPasswordServiceImpl implements ForgotPasswordService {
         MailBody mailBody = MailBody.builder()
                 .to(user.getEmail())
                 .subject("Reset Password")
-                .body("Click here to reset your password: http://localhost:8080/api/v1/forgotPassword/resetPassword/" + otp)
+                .body("OTP code for your fruit hub application to reset password is" + otp)
                 .build();
 
         mailService.sendEmail(mailBody);
