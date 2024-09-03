@@ -90,7 +90,7 @@ public class AccountVerificationServiceImpl implements AccountVerificationServic
                 "<div class=\"footer\">" +
                 "<p>If this attempt wasn’t you, please email <a href=\"mailto:fruitsappcompany@mail.com\">fruitsappcompany@mail.com</a> for assistance.</p>" +
                 "<p>Fruits Application, Inc.</p>" +
-                "<p>2261 Market St #4667, San Francisco CA 94114</p>" +
+                "<p>Palestine, Jericho City P58302 AbuSaker Street</p>" +
                 "</div>" +
                 "</div>" +
                 "</body>" +

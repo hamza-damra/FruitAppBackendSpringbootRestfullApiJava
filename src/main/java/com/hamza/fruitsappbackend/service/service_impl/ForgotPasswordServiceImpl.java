@@ -59,10 +59,54 @@ public class ForgotPasswordServiceImpl implements ForgotPasswordService {
 
         forgotPasswordRepository.save(forgotPassword);
 
+        String pngImageUrl = "https://firebasestorage.googleapis.com/v0/b/testing-18f33.appspot.com/o/image.png?alt=media&token=ed7d8c51-10e5-42c9-8c57-79eb031e5858";
+
+        String htmlBody = "<!DOCTYPE html>" +
+                "<html lang=\"en\">" +
+                "<head>" +
+                "<meta charset=\"UTF-8\">" +
+                "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">" +
+                "<title>Reset Password</title>" +
+                "<style>" +
+                "body {margin: 0; padding: 0; background-color: #e6f7e6; font-family: 'Open Sans', sans-serif; color: #006400;}" +
+                ".container {max-width: 550px; margin: 0 auto; background-color: #ffffff; padding: 20px; border-radius: 8px; border-top: 5px solid #006400;}" +
+                ".header {text-align: center; margin-bottom: 20px;}" +
+                ".header img {width: 132.5px; height: auto;}" +
+                ".content {line-height: 1.6; color: #006400;}" +
+                ".otp-code {font-size: 24px; font-weight: bold; color: #32cd32; text-align: center; margin: 20px 0;}" +
+                ".footer {text-align: center; font-size: 12px; color: #2f4f4f; margin-top: 20px;}" +
+                ".footer a {color: #2f4f4f; text-decoration: none;}" +
+                "</style>" +
+                "</head>" +
+                "<body>" +
+                "<div class=\"container\">" +
+                "<div class=\"header\">" +
+                "<a href=\"https://yourwebsite.com\" target=\"_blank\">" +
+                "<img src=\"" + pngImageUrl + "\" alt=\"Fruits Application\" title=\"Fruits Application\">" +
+                "</a>" +
+                "</div>" +
+                "<div class=\"content\">" +
+                "<p>Hello,</p>" +
+                "<p>We received a request to reset your password for your Fruits Application account. To proceed, please use the verification code below:</p>" +
+                "<div class=\"otp-code\">" + otp + "</div>" +
+                "<p>Enter this code on the password reset page to reset your password.</p>" +
+                "<p>If you did not request a password reset, please ignore this email or contact our support team if you have any concerns.</p>" +
+                "</div>" +
+                "<div class=\"footer\">" +
+                "<p>If this attempt wasn’t you, please email <a href=\"mailto:fruitsappcompany@mail.com\">fruitsappcompany@mail.com</a> for assistance.</p>" +
+                "<p>Fruits Application, Inc.</p>" +
+                "<p>Palestine, Jericho City P58302 AbuSaker Street</p>" +
+                "</div>" +
+                "</div>" +
+                "</body>" +
+                "</html>";
+
+
+
         MailBody mailBody = MailBody.builder()
                 .to(user.getEmail())
                 .subject("Reset Password")
-                .body("OTP code for your fruit hub application to reset password is" + otp)
+                .body(htmlBody)
                 .build();
 
         mailService.sendEmail(mailBody);
