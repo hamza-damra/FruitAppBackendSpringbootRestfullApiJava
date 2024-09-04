@@ -2,6 +2,7 @@ package com.hamza.fruitsappbackend.service.service_impl;
 
 import com.hamza.fruitsappbackend.dto.UserDTO;
 import com.hamza.fruitsappbackend.entity.*;
+import com.hamza.fruitsappbackend.exception.BadRequestException;
 import com.hamza.fruitsappbackend.exception.UserNotFoundException;
 import com.hamza.fruitsappbackend.exception.RoleNotFoundException;
 import com.hamza.fruitsappbackend.repository.UserRepository;
@@ -9,6 +10,7 @@ import com.hamza.fruitsappbackend.repository.RoleRepository;
 import com.hamza.fruitsappbackend.service.UserService;
 import com.hamza.fruitsappbackend.service.AccountVerificationService;
 import com.hamza.fruitsappbackend.utils.AuthorizationUtils;
+import jakarta.transaction.Transactional;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -46,13 +48,14 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional
     public UserDTO saveUser(UserDTO userDTO) {
         User user = modelMapper.map(userDTO, User.class);
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         user.setIsVerified(false);
 
-        if (user.getRoles() == null) {
-            throw new RuntimeException("Roles cannot be null");
+        if (user.getRoles() == null || user.getRoles().isEmpty()) {
+            throw new BadRequestException("At least one role is required.");
         }
 
         if (userDTO.getRoles() != null && !userDTO.getRoles().isEmpty()) {
@@ -99,6 +102,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional
     public UserDTO updateUser(UserDTO userDTO, String token) {
         authorizationUtils.checkUserOrAdminRole(token, userDTO.getId());
 
@@ -114,6 +118,9 @@ public class UserServiceImpl implements UserService {
         if (userDTO.getPassword() != null) {
             existingUser.setPassword(passwordEncoder.encode(userDTO.getPassword()));
         }
+        if(userDTO.getImageUrl() != null) {
+            existingUser.setImageUrl(userDTO.getImageUrl());
+        }
         if(userDTO.getIsVerified() != null) {
             existingUser.setIsVerified(userDTO.getIsVerified());
         }
@@ -128,8 +135,7 @@ public class UserServiceImpl implements UserService {
 
         mapAndSetRelatedEntities(userDTO, existingUser);
 
-        User updatedUser = userRepository.save(existingUser);
-        return modelMapper.map(updatedUser, UserDTO.class);
+        return modelMapper.map(existingUser, UserDTO.class);
     }
 
     @Override

@@ -94,6 +94,15 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
     }
 
+    @ExceptionHandler(CustomResponseStatusException.class)
+    protected ResponseEntity<CustomErrorResponse> handleCustomResponseStatusException(CustomResponseStatusException exception) {
+        CustomErrorResponse errorResponse = new CustomErrorResponse(
+                exception.getMessage(),
+                HttpStatus.CONFLICT.value()
+        );
+        return new ResponseEntity<>(errorResponse, HttpStatus.CONFLICT);
+    }
+
     @ExceptionHandler(ReviewImageNotFoundException.class)
     protected ResponseEntity<CustomErrorResponse> handleReviewImageNotFound(ReviewImageNotFoundException exception) {
         CustomErrorResponse errorResponse = new CustomErrorResponse(

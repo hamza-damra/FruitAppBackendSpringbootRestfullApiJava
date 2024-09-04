@@ -4,6 +4,7 @@ import com.hamza.fruitsappbackend.dto.RoleDto;
 import com.hamza.fruitsappbackend.entity.Role;
 import com.hamza.fruitsappbackend.entity.User;
 import com.hamza.fruitsappbackend.exception.BadRequestException;
+import com.hamza.fruitsappbackend.exception.CustomResponseStatusException;
 import com.hamza.fruitsappbackend.exception.RoleNotFoundException;
 import com.hamza.fruitsappbackend.exception.RoleDeletionException;
 import com.hamza.fruitsappbackend.repository.RoleRepository;
@@ -13,8 +14,11 @@ import com.hamza.fruitsappbackend.utils.AuthorizationUtils;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Set;
@@ -34,14 +38,23 @@ public class RoleServiceImpl implements RoleService {
         authorizationUtils.checkAdminRole(token);
 
         Role role = modelMapper.map(roleDto, Role.class);
-        if(roleRepository.existsById(role.getId()))
-        {
-            throw new BadRequestException("Role with id: " + role.getId() + " and name: " + role.getName() + " already exists");
+
+        if (roleRepository.existsByName(role.getName())) {
+            throw new CustomResponseStatusException("Role with name: " + role.getName() + " already exists");
         }
+
         role.setName("ROLE_" + role.getName().toUpperCase());
-        role = roleRepository.save(role);
+
+        try {
+            role = roleRepository.save(role);
+        } catch (DataIntegrityViolationException ex) {
+            throw new CustomResponseStatusException("Duplicate role entry not allowed: " + role.getName());
+        }
+
         return modelMapper.map(role, RoleDto.class);
     }
+
+
 
     @Override
     @Transactional

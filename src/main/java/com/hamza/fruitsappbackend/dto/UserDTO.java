@@ -36,6 +36,8 @@ public class UserDTO {
     @Size(min = 8, message = "Password should have at least 8 characters")
     private String password;
 
+    private String imageUrl;
+
     private Boolean isVerified;
 
 
