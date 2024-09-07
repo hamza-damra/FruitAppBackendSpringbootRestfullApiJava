@@ -15,8 +15,10 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
 import java.security.Key;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Map;
+import java.util.TimeZone;
 import java.util.logging.Logger;
 
 @Component
@@ -41,7 +43,7 @@ public class JwtTokenProvider {
         this.key = Keys.secretKeyFor(SignatureAlgorithm.HS512);
     }
 
-    // Generate token
+
     public String generateToken(Authentication authentication) {
         UserDetails userPrincipal = (UserDetails) authentication.getPrincipal();
         String email = userPrincipal.getUsername();
@@ -50,15 +52,22 @@ public class JwtTokenProvider {
                 .orElseThrow(() -> new UserNotFoundException("email", email));
 
         String userId = user.getId().toString();
-
-        String imageUrl = "https://images.inc.com/uploaded_files/image/1920x1080/getty_481292845_77896.jpg"; // Replace with actual
-        Map<String, Object> additionalClaims = Map.of(
-                "imageUrl", imageUrl, // Replace with actual claims
-                "userId", userId
-        );
+        Boolean isVerified = user.getIsVerified();
+        String imageUrl = user.getImageUrl() == null ? "" : user.getImageUrl();
 
         Date currentDate = new Date();
         Date expirationDate = new Date(currentDate.getTime() + validityInMilliseconds);
+
+        String formattedIssuedAt = formatDate(currentDate);
+        String formattedExpiration = formatDate(expirationDate);
+
+        Map<String, Object> additionalClaims = Map.of(
+                "userId", userId,
+                "imageUrl", imageUrl,
+                "isVerified", isVerified,
+                "iat", formattedIssuedAt,
+                "exp", formattedExpiration
+        );
 
         return Jwts.builder()
                 .setSubject(email)
@@ -68,6 +77,13 @@ public class JwtTokenProvider {
                 .signWith(key)
                 .compact();
     }
+
+    private String formatDate(Date date) {
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+        dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+        return dateFormat.format(date);
+    }
+
 
     public String getUserNameFromToken(String token) {
         token = token.trim();
