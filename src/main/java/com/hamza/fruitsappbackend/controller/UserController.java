@@ -3,6 +3,8 @@ package com.hamza.fruitsappbackend.controller;
 import com.hamza.fruitsappbackend.dto.JwtAuthResponseDtoLogin;
 import com.hamza.fruitsappbackend.dto.JwtAuthResponseDtoSignup;
 import com.hamza.fruitsappbackend.dto.UserDTO;
+import com.hamza.fruitsappbackend.exception.BadRequestException;
+import com.hamza.fruitsappbackend.exception.JwtAuthenticationException;
 import com.hamza.fruitsappbackend.service.UserService;
 import com.hamza.fruitsappbackend.security.JwtTokenProvider;
 import jakarta.validation.Valid;
@@ -37,29 +39,31 @@ public class UserController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<JwtAuthResponseDtoSignup> registerUser(@Valid @RequestBody UserDTO userDTO) {
+    public ResponseEntity<UserDTO> registerUser(@Valid @RequestBody UserDTO userDTO) {
         logger.info("Registering user");
         UserDTO createdUser = userService.saveUser(userDTO);
-
         userService.sendVerificationEmail(createdUser.getEmail());
-
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(userDTO.getEmail(), userDTO.getPassword()));
-
-        String token = jwtTokenProvider.generateToken(authentication);
-
-        return new ResponseEntity<>(new JwtAuthResponseDtoSignup(createdUser, token), HttpStatus.CREATED);
+        return new ResponseEntity<>(createdUser, HttpStatus.CREATED);
     }
 
     @PostMapping("/login")
     public ResponseEntity<JwtAuthResponseDtoLogin> loginUser(@RequestParam String email, @RequestParam String password) {
         logger.info("User login attempt: " + email);
         try {
+            // Check if the user's email is verified
+            UserDTO user = userService.getUserByEmail(email)
+                    .orElseThrow(() -> new IllegalArgumentException("User not found with email: " + email));
+
+            if (!user.getIsVerified()) {
+               throw new BadRequestException("User is not verified. Please verify your email.");
+            }
+
+            // Authenticate the user
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(email, password));
 
+            // Generate JWT token
             String token = jwtTokenProvider.generateToken(authentication);
-
             return new ResponseEntity<>(new JwtAuthResponseDtoLogin(token), HttpStatus.OK);
         } catch (AuthenticationException e) {
             logger.severe("User not authenticated: " + e.getMessage());
@@ -78,7 +82,7 @@ public class UserController {
         String result = userService.verifyAccount(otp);
 
         if ("Account verified successfully.".equals(result)) {
-            return ResponseEntity.ok(result);
+            return ResponseEntity.ok("Account verified successfully. Please log in.");
         } else {
             return new ResponseEntity<>(result, HttpStatus.EXPECTATION_FAILED);
         }
@@ -91,7 +95,7 @@ public class UserController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    @GetMapping("all")
+    @GetMapping("/all")
     public ResponseEntity<List<UserDTO>> getAllUsers(@RequestHeader("Authorization") String token) {
         List<UserDTO> users = userService.getAllUsers(token);
         return ResponseEntity.ok(users);

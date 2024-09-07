@@ -83,13 +83,17 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public Optional<UserDTO> getUserByEmail(String email) {
+        return userRepository.findByEmail(email)
+                .map(user -> modelMapper.map(user, UserDTO.class));
+    }
+
+    @Override
     public Optional<UserDTO> getUserByEmail(String email, String token) {
         authorizationUtils.checkUserOrAdminRoleByEmail(token, email);
 
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new UserNotFoundException("email", email));
-
-        return Optional.of(modelMapper.map(user, UserDTO.class));
+        return userRepository.findByEmail(email)
+                .map(user -> modelMapper.map(user, UserDTO.class));
     }
 
     @Override
@@ -118,10 +122,10 @@ public class UserServiceImpl implements UserService {
         if (userDTO.getPassword() != null) {
             existingUser.setPassword(passwordEncoder.encode(userDTO.getPassword()));
         }
-        if(userDTO.getImageUrl() != null) {
+        if (userDTO.getImageUrl() != null) {
             existingUser.setImageUrl(userDTO.getImageUrl());
         }
-        if(userDTO.getIsVerified() != null) {
+        if (userDTO.getIsVerified() != null) {
             existingUser.setIsVerified(userDTO.getIsVerified());
         }
 
@@ -166,9 +170,23 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public String verifyAccount(Integer otp) {
-        return accountVerificationService.verifyAccount(otp);
+        String result = accountVerificationService.verifyAccount(otp);
+        if ("Account verified successfully.".equals(result)) {
+            User user = userRepository.findByOtp(otp)
+                    .orElseThrow(() -> new UserNotFoundException("OTP", otp.toString()));
+            user.setIsVerified(true);
+            userRepository.save(user);
+        }
+        return result;
     }
 
+
+    @Override
+    public UserDTO getUserByOtp(Integer otp) {
+        User user = userRepository.findByOtp(otp)
+                .orElseThrow(() -> new UserNotFoundException("OTP", otp.toString()));
+        return modelMapper.map(user, UserDTO.class);
+    }
 
     private void mapAndSetRelatedEntities(UserDTO userDTO, User user) {
         if (userDTO.getAddresses() != null) {
