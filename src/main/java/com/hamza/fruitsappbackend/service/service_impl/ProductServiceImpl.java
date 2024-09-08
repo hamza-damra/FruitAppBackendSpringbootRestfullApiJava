@@ -20,6 +20,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -90,6 +91,7 @@ public class ProductServiceImpl implements ProductService {
     public ProductDTO updateProduct(ProductDTO productDTO, String token) {
         authorizationUtils.checkAdminRole(token);
         Product existingProduct = findProductById(productDTO.getId());
+
         updateProductDetails(productDTO, existingProduct);
         setCategory(productDTO, existingProduct);
         Product updatedProduct = productRepository.save(existingProduct);
@@ -108,8 +110,6 @@ public class ProductServiceImpl implements ProductService {
             Category category = categoryRepository.findById(productDTO.getCategoryId())
                     .orElseThrow(() -> new CategoryNotFoundException("id", productDTO.getCategoryId().toString()));
             product.setCategory(category);
-        } else {
-            product.setCategory(null);
         }
     }
 
@@ -119,12 +119,50 @@ public class ProductServiceImpl implements ProductService {
     }
 
     private void updateProductDetails(ProductDTO productDTO, Product product) {
-        product.setName(productDTO.getName());
-        product.setDescription(productDTO.getDescription());
-        product.setPrice(productDTO.getPrice());
-        product.setImageUrl(productDTO.getImageUrl());
-        product.setStockQuantity(productDTO.getStockQuantity());
+        if (productDTO.getName() != null)
+            product.setName(productDTO.getName());
+
+        if (productDTO.getDescription() != null)
+            product.setDescription(productDTO.getDescription());
+
+        if (productDTO.getPrice() != null)
+            product.setPrice(productDTO.getPrice());
+
+        if (productDTO.getStockQuantity() != null)
+            product.setStockQuantity(productDTO.getStockQuantity());
+
+        if (productDTO.getCategoryId() != null) {
+            Optional<Category> category = categoryRepository.findCategoryById(productDTO.getCategoryId());
+            category.ifPresent(product::setCategory);
+        }
+
+        if (productDTO.getImageUrl() != null)
+            product.setImageUrl(productDTO.getImageUrl());
+
+        if (productDTO.getProductWeight() != null)
+            product.setProductWeight(productDTO.getProductWeight());
+
+        if (productDTO.getCalories() != null)
+            product.setCalories(productDTO.getCalories());
+
+        if (productDTO.getExpirationDate() != null)
+            product.setExpirationDate(productDTO.getExpirationDate());
+
+        if (productDTO.getTotalRating() != null)
+            product.setTotalRating(productDTO.getTotalRating());
+
+        if (productDTO.getCounterFiveStars() != null)
+            product.setCounterFiveStars(productDTO.getCounterFiveStars());
+        if (productDTO.getCounterFourStars() != null)
+            product.setCounterFourStars(productDTO.getCounterFourStars());
+        if (productDTO.getCounterThreeStars() != null)
+            product.setCounterThreeStars(productDTO.getCounterThreeStars());
+        if (productDTO.getCounterTwoStars() != null)
+            product.setCounterTwoStars(productDTO.getCounterTwoStars());
+        if (productDTO.getCounterOneStars() != null)
+            product.setCounterOneStars(productDTO.getCounterOneStars());
     }
+
 
     private ProductDTO convertToDto(Product product) {
         ProductDTO productDTO = modelMapper.map(product, ProductDTO.class);

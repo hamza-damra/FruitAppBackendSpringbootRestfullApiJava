@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -43,7 +44,7 @@ public class Product {
     private int calories;
 
     @Column(name = "expiration_date", nullable = true)
-    private LocalDateTime expirationDate;
+    private LocalDate expirationDate;
 
     @Column(name = "total_rating", nullable = false)
     private Double totalRating = 0.0;

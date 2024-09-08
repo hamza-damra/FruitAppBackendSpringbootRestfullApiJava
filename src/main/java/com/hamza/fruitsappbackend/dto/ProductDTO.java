@@ -1,12 +1,11 @@
 package com.hamza.fruitsappbackend.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.hamza.fruitsappbackend.validators.markers.OnCreate;
 import jakarta.validation.constraints.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Getter
@@ -17,21 +16,21 @@ public class ProductDTO {
 
     private Long id;
 
-    @NotBlank(message = "Name is required")
+    @NotBlank(message = "Name is required", groups = OnCreate.class)
     @Size(min = 2, max = 100, message = "Name should be between 2 and 100 characters")
     private String name;
 
-    @NotBlank(message = "Description is required")
+    @NotBlank(message = "Description is required", groups = OnCreate.class)
     @Size(min = 10, max = 1000, message = "Description should be between 10 and 1000 characters")
     private String description;
 
     @DecimalMin(value = "0.0", inclusive = false, message = "Price must be greater than 0")
-    private double price;
+    private Double price;
 
     @Min(value = 0, message = "Stock quantity must be a non-negative number")
-    private int stockQuantity;
+    private Integer stockQuantity;
 
-    @NotBlank(message = "Image URL is required")
+    @NotBlank(message = "Image URL is required", groups = OnCreate.class)
     private String imageUrl;
 
     @NotNull(message = "Category ID cannot be null")
@@ -39,18 +38,21 @@ public class ProductDTO {
     private Long categoryId;
 
     @DecimalMin(value = "0.0", inclusive = false, message = "Product weight must be greater than 0")
-    private double productWeight;
+    private Double productWeight;
 
     @Min(value = 0, message = "Calories must be a non-negative number")
-    private int calories;
+    private Integer calories;
 
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
-    private LocalDateTime expirationDate;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
+    @NotNull(message = "Expiration date must not be null", groups = OnCreate.class)
+    private LocalDate expirationDate;
 
-    private Double totalRating;
-    private int counterFiveStars;
-    private int counterFourStars;
-    private int counterThreeStars;
-    private int counterTwoStars;
-    private int counterOneStars;
+
+    private Integer likeCount = 0;
+    private Double totalRating = 0.0;
+    private Integer counterFiveStars = 0;
+    private Integer counterFourStars = 0;
+    private Integer counterThreeStars = 0;
+    private Integer counterTwoStars = 0;
+    private Integer counterOneStars = 0;
 }

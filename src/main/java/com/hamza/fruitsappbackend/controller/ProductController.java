@@ -4,9 +4,13 @@ import com.hamza.fruitsappbackend.constant.Strings;
 import com.hamza.fruitsappbackend.dto.ProductDTO;
 import com.hamza.fruitsappbackend.payload.ProductResponse;
 import com.hamza.fruitsappbackend.service.ProductService;
+import com.hamza.fruitsappbackend.validators.markers.OnCreate;
+import com.hamza.fruitsappbackend.validators.markers.OnUpdate;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
@@ -28,7 +32,7 @@ public class ProductController {
     }
 
     @PostMapping("/add")
-    public ResponseEntity<ProductDTO> createProduct(@RequestHeader("Authorization") String token, @RequestBody ProductDTO productDTO) {
+    public ResponseEntity<ProductDTO> createProduct(@RequestHeader("Authorization") String token, @RequestBody @Validated(OnCreate.class) ProductDTO productDTO) {
         ProductDTO savedProduct = productService.saveProduct(productDTO, token);
         sendProductUpdate(savedProduct);
         return ResponseEntity.ok(savedProduct);
@@ -58,7 +62,7 @@ public class ProductController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ProductDTO> updateProduct(@RequestHeader("Authorization") String token, @PathVariable Long id, @RequestBody ProductDTO productDTO) {
+    public ResponseEntity<ProductDTO> updateProduct(@RequestHeader("Authorization") String token, @PathVariable Long id, @RequestBody @Validated(OnUpdate.class) ProductDTO productDTO) {
         productDTO.setId(id);
         ProductDTO updatedProduct = productService.updateProduct(productDTO, token);
         sendProductUpdate(updatedProduct);
@@ -83,7 +87,7 @@ public class ProductController {
         return emitter;
     }
 
-    private void sendProductUpdate(ProductDTO productDTO) {
+    private void sendProductUpdate(@Valid ProductDTO productDTO) {
         List<SseEmitter> deadEmitters = new ArrayList<>();
 
         for (SseEmitter emitter : emitters) {
