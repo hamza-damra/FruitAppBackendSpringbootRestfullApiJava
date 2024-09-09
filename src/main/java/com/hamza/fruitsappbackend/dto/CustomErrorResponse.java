@@ -1,10 +1,7 @@
-package com.hamza.fruitsappbackend.exception;
+package com.hamza.fruitsappbackend.dto;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
-
-import java.util.Map;
 
 @Getter
 @Setter

@@ -1,5 +1,6 @@
 package com.hamza.fruitsappbackend.exception;
 
+import com.hamza.fruitsappbackend.dto.CustomErrorResponse;
 import io.jsonwebtoken.security.SignatureException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;

@@ -3,7 +3,6 @@ package com.hamza.fruitsappbackend.service.service_impl;
 import com.hamza.fruitsappbackend.dto.RoleDto;
 import com.hamza.fruitsappbackend.entity.Role;
 import com.hamza.fruitsappbackend.entity.User;
-import com.hamza.fruitsappbackend.exception.BadRequestException;
 import com.hamza.fruitsappbackend.exception.CustomResponseStatusException;
 import com.hamza.fruitsappbackend.exception.RoleNotFoundException;
 import com.hamza.fruitsappbackend.exception.RoleDeletionException;
@@ -15,10 +14,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.http.HttpStatus;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Set;

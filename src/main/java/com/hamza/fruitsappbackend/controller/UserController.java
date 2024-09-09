@@ -1,10 +1,8 @@
 package com.hamza.fruitsappbackend.controller;
 
 import com.hamza.fruitsappbackend.dto.JwtAuthResponseDtoLogin;
-import com.hamza.fruitsappbackend.dto.JwtAuthResponseDtoSignup;
 import com.hamza.fruitsappbackend.dto.UserDTO;
 import com.hamza.fruitsappbackend.exception.BadRequestException;
-import com.hamza.fruitsappbackend.exception.JwtAuthenticationException;
 import com.hamza.fruitsappbackend.service.UserService;
 import com.hamza.fruitsappbackend.security.JwtTokenProvider;
 import jakarta.validation.Valid;
@@ -42,7 +40,6 @@ public class UserController {
     public ResponseEntity<UserDTO> registerUser(@Valid @RequestBody UserDTO userDTO) {
         logger.info("Registering user");
         UserDTO createdUser = userService.saveUser(userDTO);
-        userService.sendVerificationEmail(createdUser.getEmail());
         return new ResponseEntity<>(createdUser, HttpStatus.CREATED);
     }
 

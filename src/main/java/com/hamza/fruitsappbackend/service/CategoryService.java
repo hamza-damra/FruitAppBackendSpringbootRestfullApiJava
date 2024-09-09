@@ -3,7 +3,6 @@ package com.hamza.fruitsappbackend.service;
 import com.hamza.fruitsappbackend.dto.CategoryDTO;
 
 import java.util.List;
-import java.util.Optional;
 
 public interface CategoryService {
 

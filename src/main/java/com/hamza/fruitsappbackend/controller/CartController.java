@@ -3,12 +3,9 @@ package com.hamza.fruitsappbackend.controller;
 import com.hamza.fruitsappbackend.dto.CartDTO;
 import com.hamza.fruitsappbackend.dto.CartItemDTO;
 import com.hamza.fruitsappbackend.service.CartService;
-import com.hamza.fruitsappbackend.validators.markers.OnCreate;
-import com.hamza.fruitsappbackend.validators.markers.OnUpdate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
 

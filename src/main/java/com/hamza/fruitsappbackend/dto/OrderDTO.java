@@ -1,8 +1,6 @@
 package com.hamza.fruitsappbackend.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.hamza.fruitsappbackend.constant.OrderStatus;
 import com.hamza.fruitsappbackend.constant.PaymentMethod;
 import com.hamza.fruitsappbackend.validators.annotation.ValidTotalPrice;
