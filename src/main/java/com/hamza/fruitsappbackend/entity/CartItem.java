@@ -22,7 +22,7 @@ public class CartItem {
     private Long id;
 
     @Column(nullable = false)
-    private int quantity;
+    private Integer quantity;
 
     @Column(nullable = false)
     private BigDecimal price;
@@ -40,6 +40,13 @@ public class CartItem {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id", nullable = false)
     private Product product;
+
+    public CartItem(Cart cart, Product product) {
+        this.cart = cart;
+        this.product = product;
+        this.quantity = 1;
+        this.price = product.getPrice() != null ? BigDecimal.valueOf(product.getPrice()) : BigDecimal.ZERO; // Set default price
+    }
 
     @PrePersist
     protected void onCreate() {

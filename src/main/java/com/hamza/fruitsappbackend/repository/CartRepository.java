@@ -1,5 +1,6 @@
 package com.hamza.fruitsappbackend.repository;
 
+import com.hamza.fruitsappbackend.constant.CartStatus;
 import com.hamza.fruitsappbackend.entity.Cart;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -13,4 +14,6 @@ public interface CartRepository extends JpaRepository<Cart, Long> {
     void deleteByUserId(Long userId);
 
     boolean existsByUserId(Long userId);
+
+    boolean existsByUserIdAndStatus(Long userId, CartStatus cartStatus);
 }

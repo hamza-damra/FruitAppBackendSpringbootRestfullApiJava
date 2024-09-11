@@ -244,4 +244,13 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
         return new ResponseEntity<>(responseBody, HttpStatus.BAD_REQUEST);
     }
+
+    @ExceptionHandler(InsufficientStockException.class)
+    protected ResponseEntity<CustomErrorResponse> handleInsufficientStockException(InsufficientStockException ex) {
+        CustomErrorResponse errorResponse = new CustomErrorResponse(
+                ex.getMessage() + " is not available in the stock",
+                HttpStatus.BAD_REQUEST.value()
+        );
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+    }
 }

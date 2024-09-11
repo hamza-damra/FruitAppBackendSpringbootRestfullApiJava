@@ -47,6 +47,9 @@ public class ProductDTO {
     private LocalDate expirationDate;
 
 
+    private boolean isFavorite;
+    private boolean isInCart;
+
     private Integer likeCount = 0;
     private Double totalRating = 0.0;
     private Integer counterFiveStars = 0;
@@ -54,4 +57,15 @@ public class ProductDTO {
     private Integer counterThreeStars = 0;
     private Integer counterTwoStars = 0;
     private Integer counterOneStars = 0;
+
+
+    public void setIsInCart(boolean isInCart) {
+        this.isInCart = isInCart;
+        this.likeCount = isInCart? likeCount + 1 : likeCount - 1;
+    }
+
+    public void setIsFavorite(boolean isFavorite) {
+        this.isFavorite = isFavorite;
+        this.likeCount = isFavorite? likeCount + 1 : likeCount - 1;
+    }
 }

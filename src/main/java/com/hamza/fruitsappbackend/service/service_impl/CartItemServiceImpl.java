@@ -6,6 +6,7 @@ import com.hamza.fruitsappbackend.entity.CartItem;
 import com.hamza.fruitsappbackend.entity.Product;
 import com.hamza.fruitsappbackend.exception.CartItemNotFoundException;
 import com.hamza.fruitsappbackend.exception.CartNotFoundException;
+import com.hamza.fruitsappbackend.exception.InsufficientStockException;
 import com.hamza.fruitsappbackend.exception.ProductNotFoundException;
 import com.hamza.fruitsappbackend.repository.CartItemRepository;
 import com.hamza.fruitsappbackend.repository.CartRepository;
@@ -46,34 +47,38 @@ public class CartItemServiceImpl implements CartItemService {
 
     @Override
     public CartItemDTO saveCartItem(Long cartId, CartItemDTO cartItemDTO, String token) {
-
         Cart cart = cartRepository.findById(cartId)
                 .orElseThrow(() -> new CartNotFoundException("id", cartId.toString()));
 
-        authorizationUtils.checkUserOrAdminRole(token, cart.getUser().getId());
+        Product product = productRepository.findById(cartItemDTO.getProductId())
+                .orElseThrow(() -> new ProductNotFoundException("id", cartItemDTO.getProductId().toString()));
 
-        CartItem cartItem = createOrUpdateCartItem(cartItemDTO, cart);
-        CartItem savedCartItem = cartItemRepository.save(cartItem);
+        if (product.getStockQuantity() < cartItemDTO.getQuantity()) {
+            throw new InsufficientStockException("Insufficient stock for product: " + product.getName());
+        }
 
-        return modelMapper.map(savedCartItem, CartItemDTO.class);
+
+        CartItem cartItem = findOrCreateCartItem(cart, product);
+        cartItem.setQuantity(cartItem.getQuantity() + cartItemDTO.getQuantity());
+        cartItem.setPrice(BigDecimal.valueOf(product.getPrice()));
+        cartItemRepository.save(cartItem);
+        product.setInCart(true);
+        productRepository.save(product);
+
+        return modelMapper.map(cartItem, CartItemDTO.class);
     }
 
     @Override
     public Optional<CartItemDTO> getCartItemById(Long id, String token) {
-        token = token.trim();
-        System.out.println("Received token: "+ token);
-
         CartItem cartItem = cartItemRepository.findById(id)
                 .orElseThrow(() -> new CartItemNotFoundException("id", id.toString()));
 
         authorizationUtils.checkUserOrAdminRole(token, cartItem.getCart().getUser().getId());
-
         return Optional.of(modelMapper.map(cartItem, CartItemDTO.class));
     }
 
     @Override
     public List<CartItemDTO> getCartItemsByCartId(Long cartId, String token) {
-
         Cart cart = cartRepository.findById(cartId)
                 .orElseThrow(() -> new CartNotFoundException("id", cartId.toString()));
 
@@ -86,9 +91,6 @@ public class CartItemServiceImpl implements CartItemService {
 
     @Override
     public List<CartItemDTO> getAllCartItems(String token) {
-        token = token.trim();
-        System.out.println("Received token: "+ token);
-
         authorizationUtils.checkAdminRole(token);
 
         return cartItemRepository.findAll().stream()
@@ -98,9 +100,6 @@ public class CartItemServiceImpl implements CartItemService {
 
     @Override
     public CartItemDTO updateCartItem(Long cartId, CartItemDTO cartItemDTO, String token) {
-        token = token.trim();
-        System.out.println("Received token: "+ token);
-
         Cart cart = cartRepository.findById(cartId)
                 .orElseThrow(() -> new CartNotFoundException("id", cartId.toString()));
 
@@ -113,17 +112,16 @@ public class CartItemServiceImpl implements CartItemService {
             throw new RuntimeException("CartItem does not belong to the specified cart");
         }
 
-        CartItem updatedCartItem = createOrUpdateCartItem(cartItemDTO, cart);
-        cartItemRepository.save(updatedCartItem);
+        validateStockAvailability(existingCartItem.getProduct(), cartItemDTO.getQuantity());
 
-        return modelMapper.map(updatedCartItem, CartItemDTO.class);
+        existingCartItem.setQuantity(cartItemDTO.getQuantity());
+        cartItemRepository.save(existingCartItem);
+
+        return modelMapper.map(existingCartItem, CartItemDTO.class);
     }
 
     @Override
     public void deleteCartItemById(Long cartId, Long id, String token) {
-        token = token.trim();
-        System.out.println("Received token: "+ token);
-
         CartItem cartItem = cartItemRepository.findById(id)
                 .orElseThrow(() -> new CartItemNotFoundException("id", id.toString()));
 
@@ -133,21 +131,21 @@ public class CartItemServiceImpl implements CartItemService {
             throw new RuntimeException("CartItem does not belong to the specified cart");
         }
 
+        Product product = cartItem.getProduct();
+        product.setInCart(false);
+        productRepository.save(product);
+
         cartItemRepository.deleteById(id);
     }
 
-    private CartItem createOrUpdateCartItem(CartItemDTO cartItemDTO, Cart cart) {
-        CartItem cartItem = cartItemDTO.getId() != null ?
-                cartItemRepository.findById(cartItemDTO.getId())
-                        .orElse(new CartItem()) : new CartItem();
+    private CartItem findOrCreateCartItem(Cart cart, Product product) {
+        return cartItemRepository.findByCartIdAndProductId(cart.getId(), product.getId())
+                .orElseGet(() -> new CartItem(cart, product));
+    }
 
-        cartItem.setCart(cart);
-        Product product = productRepository.findById(cartItemDTO.getProductId())
-                .orElseThrow(() -> new ProductNotFoundException("id", cartItemDTO.getProductId().toString()));
-        cartItem.setProduct(product);
-        cartItem.setQuantity(cartItemDTO.getQuantity());
-        cartItem.setPrice(BigDecimal.valueOf(product.getPrice()));
-
-        return cartItem;
+    private void validateStockAvailability(Product product, int requestedQuantity) {
+        if (product.getStockQuantity() < requestedQuantity) {
+            throw new InsufficientStockException("Insufficient stock for product: " + product.getName());
+        }
     }
 }

@@ -6,10 +6,9 @@ import com.hamza.fruitsappbackend.entity.Product;
 import com.hamza.fruitsappbackend.entity.Review;
 import com.hamza.fruitsappbackend.exception.ProductNotFoundException;
 import com.hamza.fruitsappbackend.exception.CategoryNotFoundException;
-import com.hamza.fruitsappbackend.repository.ProductRepository;
-import com.hamza.fruitsappbackend.repository.CategoryRepository;
-import com.hamza.fruitsappbackend.repository.ReviewRepository;
+import com.hamza.fruitsappbackend.repository.*;
 import com.hamza.fruitsappbackend.service.ProductService;
+import com.hamza.fruitsappbackend.service.WishlistService;
 import com.hamza.fruitsappbackend.utils.AuthorizationUtils;
 import com.hamza.fruitsappbackend.payload.ProductResponse;
 import org.modelmapper.ModelMapper;
@@ -31,16 +30,20 @@ public class ProductServiceImpl implements ProductService {
     private final CategoryRepository categoryRepository;
     private final ReviewRepository reviewRepository;
     private final ModelMapper modelMapper;
+    private final WishlistRepository wishlistRepository;
+    private final CartItemRepository cartItemRepository;
     private final AuthorizationUtils authorizationUtils;
 
     @Autowired
     public ProductServiceImpl(ProductRepository productRepository, CategoryRepository categoryRepository,
-                              ReviewRepository reviewRepository, ModelMapper modelMapper,
+                              ReviewRepository reviewRepository, ModelMapper modelMapper, WishlistRepository wishlistRepository, CartItemRepository cartItemRepository,
                               AuthorizationUtils authorizationUtils) {
         this.productRepository = productRepository;
         this.categoryRepository = categoryRepository;
         this.reviewRepository = reviewRepository;
         this.modelMapper = modelMapper;
+        this.wishlistRepository = wishlistRepository;
+        this.cartItemRepository = cartItemRepository;
         this.authorizationUtils = authorizationUtils;
     }
 
@@ -50,30 +53,32 @@ public class ProductServiceImpl implements ProductService {
         Product product = convertToEntity(productDTO);
         setCategory(productDTO, product);
         Product savedProduct = productRepository.save(product);
-        return convertToDto(savedProduct);
+        return convertToDto(savedProduct, authorizationUtils.getUserFromToken(token).getId());
     }
 
     @Override
-    public Optional<ProductDTO> getProductById(Long id) {
+    public Optional<ProductDTO> getProductById(String token, Long id) {
+        Long userId = authorizationUtils.getUserFromToken(token).getId();
         return productRepository.findById(id)
-                .map(this::convertToDto);
+                .map(product -> convertToDto(product, userId));
     }
 
     @Override
-    public List<ProductDTO> getProductsByCategoryId(Long categoryId) {
+    public List<ProductDTO> getProductsByCategoryId(String token, Long categoryId) {
+        Long userId = authorizationUtils.getUserFromToken(token).getId();
         return productRepository.findByCategoryId(categoryId).stream()
-                .map(this::convertToDto)
+                .map(product -> convertToDto(product, userId))
                 .collect(Collectors.toList());
     }
 
     @Override
-    public ProductResponse getAllProducts(int pageSize, int pageNumber, String sortBy, String sortDirection) {
+    public ProductResponse getAllProducts(String token, int pageSize, int pageNumber, String sortBy, String sortDirection) {
         Sort sort = sortDirection.equalsIgnoreCase(Sort.Direction.ASC.name()) ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
         Pageable pageable = PageRequest.of(pageNumber, pageSize, sort);
 
         Page<Product> productPage = productRepository.findAll(pageable);
         List<ProductDTO> content = productPage.getContent().stream()
-                .map(this::convertToDto)
+                .map(contentItem-> convertToDto(contentItem, authorizationUtils.getUserFromToken(token).getId()))
                 .collect(Collectors.toList());
 
         return new ProductResponse(
@@ -94,7 +99,7 @@ public class ProductServiceImpl implements ProductService {
         updateProductDetails(productDTO, existingProduct);
         setCategory(productDTO, existingProduct);
         Product updatedProduct = productRepository.save(existingProduct);
-        return convertToDto(updatedProduct);
+        return convertToDto(updatedProduct, authorizationUtils.getUserFromToken(token).getId());
     }
 
     @Override
@@ -163,8 +168,12 @@ public class ProductServiceImpl implements ProductService {
     }
 
 
-    private ProductDTO convertToDto(Product product) {
+    private ProductDTO convertToDto(Product product, Long userId) {
         ProductDTO productDTO = modelMapper.map(product, ProductDTO.class);
+        boolean isFavorite = wishlistRepository.existsByUserIdAndProductId(userId, product.getId());
+        productDTO.setIsFavorite(isFavorite);
+        boolean isInCart = cartItemRepository.existsByCartUserIdAndProductId(userId, product.getId());
+        productDTO.setIsInCart(isInCart);
         productDTO.setTotalRating(product.getTotalRating());
         productDTO.setCounterFiveStars(product.getCounterFiveStars());
         productDTO.setCounterFourStars(product.getCounterFourStars());

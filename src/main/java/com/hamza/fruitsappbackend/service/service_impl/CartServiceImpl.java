@@ -1,5 +1,6 @@
 package com.hamza.fruitsappbackend.service.service_impl;
 
+import com.hamza.fruitsappbackend.constant.CartStatus;
 import com.hamza.fruitsappbackend.dto.CartDTO;
 import com.hamza.fruitsappbackend.dto.CartItemDTO;
 import com.hamza.fruitsappbackend.entity.Cart;
@@ -50,12 +51,12 @@ public class CartServiceImpl implements CartService {
         Long userId = getUserIdFromToken(token);
         authorizationUtils.checkUserOrAdminRole(token, userId);
 
-        if (cartDTO.getId() == null && cartRepository.existsByUserId(userId)) {
-            throw new IllegalStateException("User can have only one cart.");
+        if (cartDTO.getId() == null && cartRepository.existsByUserIdAndStatus(userId, CartStatus.ACTIVE)) {
+            throw new IllegalStateException("User can have only one active cart.");
         }
 
         Cart cart = createOrUpdateCart(cartDTO, userId);
-        cart.setCartItems(List.of());
+        cart.setStatus(CartStatus.ACTIVE);
         Cart savedCart = cartRepository.save(cart);
 
         List<CartItemDTO> savedCartItems = cartDTO.getCartItems().stream()
@@ -67,13 +68,26 @@ public class CartServiceImpl implements CartService {
 
     @Override
     @Transactional
+    public CartDTO completeCart(Long cartId, String token) {
+        Cart cart = cartRepository.findById(cartId)
+                .orElseThrow(() -> new CartNotFoundException("id", cartId.toString()));
+
+        authorizationUtils.checkUserOrAdminRole(token, cart.getUser().getId());
+
+        cart.setStatus(CartStatus.COMPLETED);
+        cartRepository.save(cart);
+
+        return modelMapper.map(cart, CartDTO.class);
+    }
+
+    @Override
+    @Transactional
     public CartDTO updateCart(CartDTO cartDTO, String token) {
         Long userId = getUserIdFromToken(token);
         Cart cart = cartRepository.findById(cartDTO.getId())
                 .orElseThrow(() -> new CartNotFoundException("id", cartDTO.getId().toString()));
 
         authorizationUtils.checkUserOrAdminRole(token, userId);
-
         setUser(cart, userId);
 
         List<CartItemDTO> savedCartItems = cartDTO.getCartItems().stream()
@@ -81,54 +95,41 @@ public class CartServiceImpl implements CartService {
                 .collect(Collectors.toList());
 
         Cart updatedCart = cartRepository.save(cart);
-
         return mapCartToDTO(updatedCart, savedCartItems);
     }
 
     @Override
     @Transactional
     public CartItemDTO addCartItemToCart(Long cartId, CartItemDTO cartItemDTO, String token) {
-        Long userId = getUserIdFromToken(token);
-        authorizationUtils.checkUserOrAdminRole(token, userId);
-
         return cartItemService.saveCartItem(cartId, cartItemDTO, token);
     }
 
     @Override
     @Transactional
     public void removeCartItemFromCart(Long cartId, Long cartItemId, String token) {
-        Long userId = getUserIdFromToken(token);
-        authorizationUtils.checkUserOrAdminRole(token, userId);
-
         cartItemService.deleteCartItemById(cartId, cartItemId, token);
     }
 
     @Override
     @Transactional
     public Optional<CartDTO> getCartById(Long id, String token) {
-        Long userId = getUserIdFromToken(token);
         Cart cart = cartRepository.findById(id)
                 .orElseThrow(() -> new CartNotFoundException("id", id.toString()));
 
-        authorizationUtils.checkUserOrAdminRole(token, cart.getUser().getId());
-
         List<CartItemDTO> cartItems = cartItemService.getCartItemsByCartId(cart.getId(), token);
-
         return Optional.of(mapCartToDTO(cart, cartItems));
     }
 
     @Override
     @Transactional
-    public List<CartDTO> getCartsByUserId(String token) {
+    public CartDTO getCartByUserId(String token) {
         Long userId = getUserIdFromToken(token);
-        authorizationUtils.checkUserOrAdminRole(token, userId);
 
-        return cartRepository.findByUserId(userId).stream()
-                .map(cart -> {
-                    List<CartItemDTO> cartItems = cartItemService.getCartItemsByCartId(cart.getId(), token);
-                    return mapCartToDTO(cart, cartItems);
-                })
-                .collect(Collectors.toList());
+        Cart cart = cartRepository.findByUserId(userId)
+                .orElseThrow(() -> new CartNotFoundException("user_id", userId.toString()));
+
+        List<CartItemDTO> cartItems = cartItemService.getCartItemsByCartId(cart.getId(), token);
+        return mapCartToDTO(cart, cartItems);
     }
 
     @Override
@@ -147,30 +148,22 @@ public class CartServiceImpl implements CartService {
     @Override
     @Transactional
     public void deleteCartById(Long id, String token) {
-        Long userId = getUserIdFromToken(token);
         Cart cart = cartRepository.findById(id)
                 .orElseThrow(() -> new CartNotFoundException("id", id.toString()));
-
-        authorizationUtils.checkUserOrAdminRole(token, cart.getUser().getId());
 
         cartRepository.deleteById(id);
     }
 
     @Override
     @Transactional
-    public void deleteCartsByUserId(String token) {
+    public void deleteCartByUserId(String token) {
         Long userId = getUserIdFromToken(token);
-        authorizationUtils.checkUserOrAdminRole(token, userId);
 
-        if (userRepository.existsById(userId)) {
-            if (cartRepository.existsByUserId(userId)) {
-                cartRepository.deleteByUserId(userId);
-            } else {
-                throw new BadRequestException("Cart does not exist");
-            }
-        } else {
-            throw new UserNotFoundException("id", userId.toString());
+        if (!cartRepository.existsByUserId(userId)) {
+            throw new BadRequestException("Cart does not exist for user.");
         }
+
+        cartRepository.deleteByUserId(userId);
     }
 
     private Long getUserIdFromToken(String token) {

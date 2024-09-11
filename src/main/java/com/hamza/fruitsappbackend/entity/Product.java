@@ -29,19 +29,25 @@ public class Product {
     private String description;
 
     @Column(nullable = false)
-    private double price;
+    private Double price;
 
     @Column(name = "stock_quantity", nullable = false)
-    private int stockQuantity;
+    private Integer stockQuantity;
 
     @Column(name = "image_url")
     private String imageUrl;
 
     @Column(name = "product_weight", nullable = false)
-    private double productWeight;
+    private Double productWeight;
 
     @Column(nullable = false)
-    private int calories;
+    private Integer calories;
+
+    @Transient
+    private boolean isFavorite;
+
+    @Transient
+    private boolean isInCart;
 
     @Column(name = "expiration_date", nullable = true)
     private LocalDate expirationDate;

@@ -10,11 +10,11 @@ public interface ProductService {
 
     ProductDTO saveProduct(ProductDTO productDTO, String token);
 
-    Optional<ProductDTO> getProductById(Long id);
+    Optional<ProductDTO> getProductById(String token, Long id);
 
-    List<ProductDTO> getProductsByCategoryId(Long categoryId);
+    List<ProductDTO> getProductsByCategoryId(String token, Long categoryId);
 
-    ProductResponse getAllProducts(int pageSize, int pageNumber, String sortBy, String sortDirection);
+    ProductResponse getAllProducts(String token, int pageSize, int pageNumber, String sortBy, String sortDirection);
 
     ProductDTO updateProduct(ProductDTO productDTO, String token);
 

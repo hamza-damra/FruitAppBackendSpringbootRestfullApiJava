@@ -32,37 +32,42 @@ public class ProductController {
     }
 
     @PostMapping("/add")
-    public ResponseEntity<ProductDTO> createProduct(@RequestHeader("Authorization") String token, @RequestBody @Validated(OnCreate.class) ProductDTO productDTO) {
+    public ResponseEntity<ProductDTO> createProduct(@RequestHeader("Authorization") String token,
+                                                    @RequestBody @Validated(OnCreate.class) ProductDTO productDTO) {
         ProductDTO savedProduct = productService.saveProduct(productDTO, token);
         sendProductUpdate(savedProduct);
         return ResponseEntity.ok(savedProduct);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ProductDTO> getProductById(@PathVariable Long id) {
-        Optional<ProductDTO> productDTO = productService.getProductById(id);
+    public ResponseEntity<ProductDTO> getProductById(@RequestHeader("Authorization") String token, @PathVariable Long id) {
+        Optional<ProductDTO> productDTO = productService.getProductById(token, id);
         return productDTO.map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
     @GetMapping("/category/{categoryId}")
-    public ResponseEntity<List<ProductDTO>> getProductsByCategoryId(@PathVariable Long categoryId) {
-        List<ProductDTO> products = productService.getProductsByCategoryId(categoryId);
+    public ResponseEntity<List<ProductDTO>> getProductsByCategoryId(@RequestHeader("Authorization") String token,
+                                                                    @PathVariable Long categoryId) {
+        List<ProductDTO> products = productService.getProductsByCategoryId(token, categoryId);
         return ResponseEntity.ok(products);
     }
 
     @GetMapping("/all")
     public ResponseEntity<ProductResponse> getAllProducts(
+            @RequestHeader("Authorization") String token,
             @RequestParam(name = "pageSize", defaultValue = Strings.DEFAULT_PAGE_SIZE, required = false) int pageSize,
             @RequestParam(name = "pageNumber", defaultValue = Strings.DEFAULT_PAGE_NUMBER, required = false) int pageNumber,
             @RequestParam(name = "sortBy", defaultValue = Strings.DEFAULT_SORT_FIELD, required = false) String sortBy,
             @RequestParam(name = "sortDirection", defaultValue = Strings.DEFAULT_SORT_DIRECTION, required = false) String sortDirection) {
-        ProductResponse products = productService.getAllProducts(pageSize, pageNumber, sortBy, sortDirection);
+        ProductResponse products = productService.getAllProducts(token, pageSize, pageNumber, sortBy, sortDirection);
         return ResponseEntity.ok(products);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ProductDTO> updateProduct(@RequestHeader("Authorization") String token, @PathVariable Long id, @RequestBody @Validated(OnUpdate.class) ProductDTO productDTO) {
+    public ResponseEntity<ProductDTO> updateProduct(@RequestHeader("Authorization") String token,
+                                                    @PathVariable Long id,
+                                                    @RequestBody @Validated(OnUpdate.class) ProductDTO productDTO) {
         productDTO.setId(id);
         ProductDTO updatedProduct = productService.updateProduct(productDTO, token);
         sendProductUpdate(updatedProduct);

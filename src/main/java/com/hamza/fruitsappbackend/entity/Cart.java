@@ -1,6 +1,6 @@
 package com.hamza.fruitsappbackend.entity;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
+import com.hamza.fruitsappbackend.constant.CartStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -29,6 +29,10 @@ public class Cart {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false)
+    private CartStatus status;
+
     @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "user_id", nullable = false, unique = true)
     private User user;
@@ -41,21 +45,11 @@ public class Cart {
         LocalDateTime now = LocalDateTime.now();
         createdAt = now;
         updatedAt = now;
+        status = CartStatus.ACTIVE;
     }
 
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
-    }
-
-    public void addCartItem(CartItem cartItem) {
-        cartItems.add(cartItem);
-        cartItem.setCart(this);
-    }
-
-
-    public void removeCartItem(CartItem cartItem) {
-        cartItems.remove(cartItem);
-        cartItem.setCart(null);
     }
 }
