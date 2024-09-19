@@ -50,17 +50,20 @@ public class UserController {
 
             UserDTO user = userService.getUserByEmail(email)
                     .orElseThrow(() -> new IllegalArgumentException("User not found with email: " + email));
-
-            if (!user.getIsVerified()) {
-               throw new BadRequestException("User is not verified. Please verify your email.");
-            }
-
-
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(email, password));
 
+            if (!user.getIsVerified()) {
+                throw new BadRequestException("User is not verified. Please verify your email.");
+            }
+
 
             String token = jwtTokenProvider.generateToken(authentication);
+
+
+
+
+
             return new ResponseEntity<>(new JwtAuthResponseDtoLogin(token), HttpStatus.OK);
         } catch (AuthenticationException e) {
             logger.severe("User not authenticated: " + e.getMessage());
