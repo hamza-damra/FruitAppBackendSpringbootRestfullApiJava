@@ -13,6 +13,7 @@ import com.hamza.fruitsappbackend.modulus.cart.repository.CartRepository;
 import com.hamza.fruitsappbackend.modulus.product.repository.ProductRepository;
 import com.hamza.fruitsappbackend.modulus.cart.service.CartItemService;
 import com.hamza.fruitsappbackend.utils.AuthorizationUtils;
+import jakarta.transaction.Transactional;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
@@ -47,6 +48,10 @@ public class CartItemServiceImpl implements CartItemService {
     @Override
     @CachePut(value = "cartItems", key = "#cartItemDTO.productId")
     public CartItemDTO addCartItemToCart(Long cartId, CartItemDTO cartItemDTO, String token) {
+
+        Long userId = getUserIdFromToken(token);
+        authorizationUtils.checkUserOrAdminRole(token, userId);
+
         Cart cart = cartRepository.findById(cartId)
                 .orElseThrow(() -> new CartNotFoundException("id", cartId.toString()));
 
@@ -69,6 +74,7 @@ public class CartItemServiceImpl implements CartItemService {
     @Cacheable(value = "cartItems", key = "#productId")
     public CartItemDTO getCartItemByProductId(Long productId, String token) {
         Long userId = getUserIdFromToken(token);
+        authorizationUtils.checkUserOrAdminRole(token, userId);
         Cart cart = cartRepository.findByUserId(userId)
                 .orElseThrow(() -> new CartNotFoundException("userId", userId.toString()));
 
@@ -81,7 +87,8 @@ public class CartItemServiceImpl implements CartItemService {
     @Override
     @Cacheable(value = "cartItemsByUser", key = "123L")
     public List<CartItemDTO> getCartItemsByUser(String token) {
-        Long userId = authorizationUtils.getUserFromToken(token).getId();
+        Long userId = getUserIdFromToken(token);
+        authorizationUtils.checkUserOrAdminRole(token, userId);
         Cart cart = cartRepository.findByUserId(userId)
                 .orElseThrow(() -> new CartNotFoundException("id", userId.toString()));
 
@@ -91,8 +98,13 @@ public class CartItemServiceImpl implements CartItemService {
     }
 
     @Override
+    @Transactional
     @CachePut(value = "cartItems", key = "#cartItemDTO.productId")
     public CartItemDTO updateCartItem(Long cartId, CartItemDTO cartItemDTO, String token) {
+        Long userId = getUserIdFromToken(token);
+        authorizationUtils.checkUserOrAdminRole(token, userId);
+
+
         CartItem existingCartItem = cartItemRepository.findById(cartItemDTO.getId())
                 .orElseThrow(() -> new CartItemNotFoundException("id", cartItemDTO.getId().toString()));
 
@@ -103,9 +115,12 @@ public class CartItemServiceImpl implements CartItemService {
     }
 
     @Override
+    @Transactional
     @CacheEvict(value = "cartItems", key = "#productId")
     public void deleteCartItemByProductId(Long productId, String token) {
         Long userId = getUserIdFromToken(token);
+        authorizationUtils.checkUserOrAdminRole(token, userId);
+
         Cart cart = cartRepository.findByUserId(userId)
                 .orElseThrow(() -> new CartNotFoundException("userId", userId.toString()));
 
@@ -113,6 +128,25 @@ public class CartItemServiceImpl implements CartItemService {
                 .orElseThrow(() -> new CartItemNotFoundException("productId", productId.toString()));
 
         cartItemRepository.delete(cartItem);
+    }
+
+    @Override
+    @Transactional
+    public void deleteAllCartItemsByUser(String token) {
+        Long userId = getUserIdFromToken(token);
+
+        authorizationUtils.checkUserOrAdminRole(token, userId);
+
+        Cart cart = cartRepository.findByUserId(userId)
+                .orElseThrow(() -> new CartNotFoundException("userId", userId.toString()));
+
+        if(cart.getCartItems().isEmpty())
+        {
+            throw new BadRequestException("User does not have any items in cart");
+        }
+
+
+        cartItemRepository.deleteAllByCartId(cart.getId());
     }
 
     private CartItem findOrCreateCartItem(Cart cart, Product product) {

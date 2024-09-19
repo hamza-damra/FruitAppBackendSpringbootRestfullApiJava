@@ -62,4 +62,12 @@ public class CartController {
         cartItemService.deleteCartItemByProductId(productId, token);
         return ResponseEntity.noContent().build();
     }
+
+    @DeleteMapping("/all")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public ResponseEntity<Void> removeAllCartItems(@RequestHeader("Authorization") String token) {
+        cartItemService.deleteAllCartItemsByUser(token);
+        return ResponseEntity.noContent().build();
+    }
+
 }

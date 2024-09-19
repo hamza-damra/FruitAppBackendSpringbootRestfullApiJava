@@ -16,4 +16,6 @@ public interface CartItemService {
     CartItemDTO updateCartItem(Long cartId, CartItemDTO cartItemDTO, String token);
 
     void deleteCartItemByProductId(Long productId, String token);
+
+    void deleteAllCartItemsByUser(String token);
 }
