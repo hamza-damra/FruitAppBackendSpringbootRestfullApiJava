@@ -1,8 +1,8 @@
 package com.hamza.fruitsappbackend.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.hamza.fruitsappbackend.dto.CustomErrorResponse;
-import com.hamza.fruitsappbackend.exception.JwtAuthenticationException;
+import com.hamza.fruitsappbackend.exception.dto.CustomErrorResponse;
+import com.hamza.fruitsappbackend.security.exception.JwtAuthenticationException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

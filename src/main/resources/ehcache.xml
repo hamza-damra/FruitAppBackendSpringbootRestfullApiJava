@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://www.ehcache.org/v3"
+        xsi:schemaLocation="http://www.ehcache.org/v3
+                            https://www.ehcache.org/v3/schema/ehcache-core-3.0.xsd">
+    <cache alias="products">
+        <key-type>java.lang.Long</key-type>
+        <value-type>com.hamza.fruitsappbackend.modulus.product.dto.ProductDTO</value-type>
+        <expiry>
+            <ttl unit="minutes">60</ttl>
+        </expiry>
+        <resources>
+            <heap>200</heap>
+        </resources>
+    </cache>
+
+    <cache alias="productsByCategoryId">
+        <key-type>java.lang.Long</key-type>
+        <value-type>java.util.List</value-type>
+        <expiry>
+            <ttl unit="minutes">60</ttl>
+        </expiry>
+        <resources>
+            <heap>100</heap>
+        </resources>
+    </cache>
+
+    <cache alias="allProducts">
+        <key-type>java.lang.String</key-type>
+        <value-type>com.hamza.fruitsappbackend.modulus.product.dto.ProductResponse</value-type>
+        <expiry>
+            <ttl unit="minutes">60</ttl>
+        </expiry>
+        <resources>
+            <heap>200</heap>
+        </resources>
+    </cache>
+
+    <cache alias="cartItems">
+        <key-type>java.lang.Long</key-type>
+        <value-type>com.hamza.fruitsappbackend.modulus.cart.dto.CartItemDTO</value-type>
+        <expiry>
+            <ttl unit="minutes">60</ttl>
+        </expiry>
+        <resources>
+            <heap>150</heap>
+        </resources>
+    </cache>
+
+    <cache alias="cartItemsByUser">
+        <key-type>java.lang.Long</key-type>
+        <value-type>java.util.List</value-type>
+        <expiry>
+            <ttl unit="minutes">60</ttl>
+        </expiry>
+        <resources>
+            <heap>150</heap>
+        </resources>
+    </cache>
+
+</config>

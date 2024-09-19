@@ -1,9 +1,9 @@
 package com.hamza.fruitsappbackend.security;
 
-import com.hamza.fruitsappbackend.entity.User;
-import com.hamza.fruitsappbackend.exception.JwtAuthenticationException;
-import com.hamza.fruitsappbackend.exception.UserNotFoundException;
-import com.hamza.fruitsappbackend.repository.UserRepository;
+import com.hamza.fruitsappbackend.modulus.user.entity.User;
+import com.hamza.fruitsappbackend.security.exception.JwtAuthenticationException;
+import com.hamza.fruitsappbackend.modulus.user.exception.UserNotFoundException;
+import com.hamza.fruitsappbackend.modulus.user.repository.UserRepository;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.SignatureException;
@@ -36,6 +36,7 @@ public class JwtTokenProvider {
     @Autowired
     public JwtTokenProvider(UserRepository userRepository) {
         this.userRepository = userRepository;
+
     }
 
     @PostConstruct
@@ -54,6 +55,7 @@ public class JwtTokenProvider {
         String userId = user.getId().toString();
         Boolean isVerified = user.getIsVerified();
         String imageUrl = user.getImageUrl() == null ? "" : user.getImageUrl();
+        String name = user.getName();
 
         Date currentDate = new Date();
         Date expirationDate = new Date(currentDate.getTime() + validityInMilliseconds);
@@ -63,19 +65,22 @@ public class JwtTokenProvider {
 
         Map<String, Object> additionalClaims = Map.of(
                 "userId", userId,
+                "name" , name,
                 "imageUrl", imageUrl,
                 "isVerified", isVerified,
                 "iat", formattedIssuedAt,
                 "exp", formattedExpiration
         );
 
-        return Jwts.builder()
+        String token = Jwts.builder()
                 .setSubject(email)
                 .setIssuedAt(currentDate)
                 .setExpiration(expirationDate)
                 .addClaims(additionalClaims)
                 .signWith(key)
                 .compact();
+
+        return token;
     }
 
     private String formatDate(Date date) {
@@ -107,7 +112,6 @@ public class JwtTokenProvider {
                 .getBody();
     }
 
-    // Validate token
     public boolean validateToken(String token) {
         try {
             token = token.trim();

@@ -1,6 +1,6 @@
 package com.hamza.fruitsappbackend.security;
 
-import com.hamza.fruitsappbackend.dto.CustomErrorResponse;
+import com.hamza.fruitsappbackend.exception.dto.CustomErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.core.AuthenticationException;

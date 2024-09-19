@@ -1,7 +1,7 @@
 package com.hamza.fruitsappbackend.utils;
 
-import com.hamza.fruitsappbackend.entity.User;
-import com.hamza.fruitsappbackend.repository.UserRepository;
+import com.hamza.fruitsappbackend.modulus.user.entity.User;
+import com.hamza.fruitsappbackend.modulus.user.repository.UserRepository;
 import com.hamza.fruitsappbackend.security.JwtTokenProvider;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Component;
