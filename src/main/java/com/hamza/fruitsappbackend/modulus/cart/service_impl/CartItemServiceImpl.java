@@ -19,6 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -46,7 +47,10 @@ public class CartItemServiceImpl implements CartItemService {
     }
 
     @Override
-    @CachePut(value = "cartItems", key = "#cartItemDTO.productId")
+    @Caching(
+            put = @CachePut(value = "cartItems", key = "#cartItemDTO.productId"),
+            evict = @CacheEvict(value = "cartItemsByUser", key = "123L")
+    )
     public CartItemDTO addCartItemToCart(Long cartId, CartItemDTO cartItemDTO, String token) {
 
         Long userId = getUserIdFromToken(token);
@@ -58,9 +62,10 @@ public class CartItemServiceImpl implements CartItemService {
         Product product = productRepository.findById(cartItemDTO.getProductId())
                 .orElseThrow(() -> new ProductNotFoundException("id", cartItemDTO.getProductId().toString()));
 
-        if(cartItemRepository.existsByCartUserIdAndProductId(cart.getId(), product.getId())){
-           throw new BadRequestException("Item already exists in the cart");
-       }
+        if(cartItemRepository.existsByCartIdAndProductId(cart.getId(), product.getId())){
+            throw new BadRequestException("Item already exists in the cart");
+        }
+
 
         CartItem cartItem = findOrCreateCartItem(cart, product);
         cartItem.setQuantity(cartItemDTO.getQuantity());
@@ -132,6 +137,7 @@ public class CartItemServiceImpl implements CartItemService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "cartItemsByUser", key = "123L")
     public void deleteAllCartItemsByUser(String token) {
         Long userId = getUserIdFromToken(token);
 
