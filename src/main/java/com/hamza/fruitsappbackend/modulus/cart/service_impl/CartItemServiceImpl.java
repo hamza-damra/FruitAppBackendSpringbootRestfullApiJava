@@ -58,14 +58,16 @@ public class CartItemServiceImpl implements CartItemService {
         Product product = productRepository.findById(cartItemDTO.getProductId())
                 .orElseThrow(() -> new ProductNotFoundException("id", cartItemDTO.getProductId().toString()));
 
-        if(cartItemRepository.existsByCartUserIdAndProductId(cart.getId(), product.getId())){
-           throw new BadRequestException("Item already exists in the cart");
-       }
+        if(cartItemRepository.existsByCartIdAndProductId(cart.getId(), product.getId())){
+            throw new BadRequestException("Item already exists in the cart");
+        }
 
         CartItem cartItem = findOrCreateCartItem(cart, product);
         cartItem.setQuantity(cartItemDTO.getQuantity());
         cartItem.setPrice(BigDecimal.valueOf(product.getPrice()));
         cartItemRepository.save(cartItem);
+
+        updateCartTotal(cart);
 
         return modelMapper.map(cartItem, CartItemDTO.class);
     }
@@ -85,31 +87,20 @@ public class CartItemServiceImpl implements CartItemService {
     }
 
     @Override
-    @Cacheable(value = "cartItemsByUser", key = "123L")
-    public List<CartItemDTO> getCartItemsByUser(String token) {
-        Long userId = getUserIdFromToken(token);
-        authorizationUtils.checkUserOrAdminRole(token, userId);
-        Cart cart = cartRepository.findByUserId(userId)
-                .orElseThrow(() -> new CartNotFoundException("id", userId.toString()));
-
-        return cartItemRepository.findByCartId(cart.getId()).stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    @Transactional
     @CachePut(value = "cartItems", key = "#cartItemDTO.productId")
     public CartItemDTO updateCartItem(Long cartId, CartItemDTO cartItemDTO, String token) {
         Long userId = getUserIdFromToken(token);
         authorizationUtils.checkUserOrAdminRole(token, userId);
-
 
         CartItem existingCartItem = cartItemRepository.findById(cartItemDTO.getId())
                 .orElseThrow(() -> new CartItemNotFoundException("id", cartItemDTO.getId().toString()));
 
         existingCartItem.setQuantity(cartItemDTO.getQuantity());
         cartItemRepository.save(existingCartItem);
+
+        Cart cart = cartRepository.findById(cartId)
+                .orElseThrow(() -> new CartNotFoundException("id", cartId.toString()));
+        updateCartTotal(cart);
 
         return convertToDTO(existingCartItem);
     }
@@ -128,25 +119,73 @@ public class CartItemServiceImpl implements CartItemService {
                 .orElseThrow(() -> new CartItemNotFoundException("productId", productId.toString()));
 
         cartItemRepository.delete(cartItem);
+
+        updateCartTotal(cart);
+    }
+
+    @Override
+    public List<CartItemDTO> getCartItemsByUser(String token) {
+        Long userId = getUserIdFromToken(token);
+        authorizationUtils.checkUserOrAdminRole(token, userId);
+
+        Cart cart = cartRepository.findByUserId(userId)
+                .orElseThrow(() -> new CartNotFoundException("userId", userId.toString()));
+
+        List<CartItem> cartItems = cart.getCartItems();
+
+        return cartItems.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
     }
 
     @Override
     @Transactional
     public void deleteAllCartItemsByUser(String token) {
         Long userId = getUserIdFromToken(token);
-
         authorizationUtils.checkUserOrAdminRole(token, userId);
 
         Cart cart = cartRepository.findByUserId(userId)
                 .orElseThrow(() -> new CartNotFoundException("userId", userId.toString()));
 
-        if(cart.getCartItems().isEmpty())
-        {
-            throw new BadRequestException("User does not have any items in cart");
-        }
-
-
         cartItemRepository.deleteAllByCartId(cart.getId());
+
+        cart.setTotalPrice(BigDecimal.ZERO);
+        cart.setTotalQuantity(0);
+        cartRepository.save(cart);
+    }
+
+    @Override
+    @Transactional
+    public CartItemDTO increaseCartItemQuantity(Long productId, String token) {
+        Long userId = getUserIdFromToken(token);
+        authorizationUtils.checkUserOrAdminRole(token, userId);
+
+        Cart cart = cartRepository.findByUserId(userId)
+                .orElseThrow(() -> new CartNotFoundException("userId", userId.toString()));
+
+        CartItem cartItem = cartItemRepository.findByCartIdAndProductId(cart.getId(), productId)
+                .orElseThrow(() -> new CartItemNotFoundException("productId", productId.toString()));
+
+        cartItem.setQuantity(cartItem.getQuantity() + 1);
+        cartItemRepository.save(cartItem);
+
+        updateCartTotal(cart);
+
+        return convertToDTO(cartItem);
+    }
+
+    private void updateCartTotal(Cart cart) {
+        BigDecimal totalPrice = cart.getCartItems().stream()
+                .map(item -> item.getPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        int totalQuantity = cart.getCartItems().stream()
+                .mapToInt(CartItem::getQuantity)
+                .sum();
+
+        cart.setTotalPrice(totalPrice);
+        cart.setTotalQuantity(totalQuantity);
+        cartRepository.save(cart);
     }
 
     private CartItem findOrCreateCartItem(Cart cart, Product product) {
@@ -164,6 +203,8 @@ public class CartItemServiceImpl implements CartItemService {
         cartItemDTO.setProductId(cartItem.getProduct().getId());
         cartItemDTO.setQuantity(cartItem.getQuantity());
         cartItemDTO.setPrice(cartItem.getProduct().getPrice());
+        cartItemDTO.setProductName(cartItem.getProduct().getName());
+        cartItemDTO.setProductImageUrl(cartItem.getProduct().getImageUrl());
         return cartItemDTO;
     }
 }

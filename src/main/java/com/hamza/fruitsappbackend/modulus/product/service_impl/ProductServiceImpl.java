@@ -1,6 +1,11 @@
 package com.hamza.fruitsappbackend.modulus.product.service_impl;
 
+import com.hamza.fruitsappbackend.modulus.cart.entity.Cart;
+import com.hamza.fruitsappbackend.modulus.cart.entity.CartItem;
+import com.hamza.fruitsappbackend.modulus.cart.exception.CartItemNotFoundException;
+import com.hamza.fruitsappbackend.modulus.cart.exception.CartNotFoundException;
 import com.hamza.fruitsappbackend.modulus.cart.repository.CartItemRepository;
+import com.hamza.fruitsappbackend.modulus.cart.repository.CartRepository;
 import com.hamza.fruitsappbackend.modulus.product.dto.ProductDTO;
 import com.hamza.fruitsappbackend.modulus.product.entity.Category;
 import com.hamza.fruitsappbackend.modulus.product.entity.Product;
@@ -38,6 +43,7 @@ public class ProductServiceImpl implements ProductService {
     private final CategoryRepository categoryRepository;
     private final ReviewRepository reviewRepository;
     private final ModelMapper modelMapper;
+    private final CartRepository cartRepository;
     private final WishlistRepository wishlistRepository;
     private final CartItemRepository cartItemRepository;
     private final AuthorizationUtils authorizationUtils;
@@ -45,12 +51,13 @@ public class ProductServiceImpl implements ProductService {
 
     @Autowired
     public ProductServiceImpl(ProductRepository productRepository, CategoryRepository categoryRepository,
-                              ReviewRepository reviewRepository, ModelMapper modelMapper, WishlistRepository wishlistRepository,
+                              ReviewRepository reviewRepository, ModelMapper modelMapper, CartRepository cartRepository, WishlistRepository wishlistRepository,
                               CartItemRepository cartItemRepository, AuthorizationUtils authorizationUtils) {
         this.productRepository = productRepository;
         this.categoryRepository = categoryRepository;
         this.reviewRepository = reviewRepository;
         this.modelMapper = modelMapper;
+        this.cartRepository = cartRepository;
         this.wishlistRepository = wishlistRepository;
         this.cartItemRepository = cartItemRepository;
         this.authorizationUtils = authorizationUtils;
@@ -163,6 +170,9 @@ public class ProductServiceImpl implements ProductService {
         ProductDTO productDTO = modelMapper.map(product, ProductDTO.class);
         productDTO.setIsFavorite(wishlistRepository.existsByUserIdAndProductId(userId, product.getId()));
         productDTO.setIsInCart(cartItemRepository.existsByCartUserIdAndProductId(userId, product.getId()));
+        Cart cart = cartRepository.findByUserId(userId).orElseThrow(() -> new CartNotFoundException("userId", userId.toString()));;
+        Optional<CartItem> cartItemOpt = cart.getCartItems().stream().filter(cartItem -> cartItem.getProduct().getId().equals(product.getId())).findFirst();
+        productDTO.setQuantityInCart(cartItemOpt.map(CartItem::getQuantity).orElse(0));
         return productDTO;
     }
 

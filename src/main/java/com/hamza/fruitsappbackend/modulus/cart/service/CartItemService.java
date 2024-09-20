@@ -18,4 +18,6 @@ public interface CartItemService {
     void deleteCartItemByProductId(Long productId, String token);
 
     void deleteAllCartItemsByUser(String token);
+
+    CartItemDTO increaseCartItemQuantity(Long productId, String token);
 }

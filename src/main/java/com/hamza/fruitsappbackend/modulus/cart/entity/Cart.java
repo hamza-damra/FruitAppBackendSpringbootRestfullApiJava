@@ -8,6 +8,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -38,6 +39,12 @@ public class Cart {
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
     private CartStatus status;
+
+    @Column(name = "total_price", precision = 10, scale = 2)
+    BigDecimal totalPrice;
+
+    @Column(name = "total_quantity")
+    private Integer totalQuantity;
 
     @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "user_id", nullable = false, unique = true)

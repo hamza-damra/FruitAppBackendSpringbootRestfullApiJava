@@ -5,6 +5,7 @@ import com.hamza.fruitsappbackend.modulus.product.dto.ProductResponse;
 import com.hamza.fruitsappbackend.modulus.product.service.ProductService;
 import com.hamza.fruitsappbackend.validation.markers.OnCreate;
 import com.hamza.fruitsappbackend.validation.markers.OnUpdate;
+import com.hamza.fruitsappbackend.websocket.WebSocketProductHandler;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -23,10 +24,13 @@ public class ProductController {
 
     private final ProductService productService;
     private final List<SseEmitter> emitters = new ArrayList<>();
+    private final WebSocketProductHandler webSocketProductHandler;
+
 
     @Autowired
-    public ProductController(ProductService productService) {
+    public ProductController(ProductService productService, WebSocketProductHandler webSocketProductHandler) {
         this.productService = productService;
+        this.webSocketProductHandler = webSocketProductHandler;
     }
 
     @PostMapping("/add")
@@ -34,6 +38,7 @@ public class ProductController {
                                                     @RequestBody @Validated(OnCreate.class) ProductDTO productDTO) {
         ProductDTO savedProduct = productService.addProduct(productDTO, token);
         sendProductUpdate(savedProduct);
+        webSocketProductHandler.sendProductUpdate(savedProduct);
         return ResponseEntity.ok(savedProduct);
     }
 
@@ -72,6 +77,7 @@ public class ProductController {
         productDTO.setId(id);
         ProductDTO updatedProduct = productService.updateProduct(productDTO, token);
         sendProductUpdate(updatedProduct);
+        webSocketProductHandler.sendProductUpdate(updatedProduct);
         return ResponseEntity.ok(updatedProduct);
     }
 
@@ -79,6 +85,7 @@ public class ProductController {
     public ResponseEntity<Void> deleteProductById(@RequestHeader("Authorization") String token, @PathVariable Long id) {
         productService.deleteProductById(id, token);
         sendProductUpdate(null);
+        webSocketProductHandler.sendProductUpdate(null);
         return ResponseEntity.noContent().build();
     }
 

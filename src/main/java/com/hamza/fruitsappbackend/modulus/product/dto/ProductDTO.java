@@ -1,6 +1,8 @@
 package com.hamza.fruitsappbackend.modulus.product.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.hamza.fruitsappbackend.utils.ProductDTOSerializer;
 import com.hamza.fruitsappbackend.validation.markers.OnCreate;
 import jakarta.validation.constraints.*;
 import lombok.*;
@@ -9,8 +11,10 @@ import java.time.LocalDate;
 
 @Getter
 @Setter
+@ToString
 @NoArgsConstructor
 @AllArgsConstructor
+@JsonSerialize(using = ProductDTOSerializer.class)
 public class ProductDTO {
 
     private Long id;
@@ -25,6 +29,8 @@ public class ProductDTO {
 
     @DecimalMin(value = "0.0", inclusive = false, message = "Price must be greater than 0")
     private Double price;
+
+    private Integer quantityInCart;
 
     @Min(value = 0, message = "Stock quantity must be a non-negative number")
     private Integer stockQuantity;
@@ -61,11 +67,12 @@ public class ProductDTO {
 
     public void setIsInCart(boolean isInCart) {
         this.isInCart = isInCart;
-        this.likeCount = isInCart? likeCount + 1 : likeCount - 1;
+        this.likeCount = isInCart ? likeCount + 1 : Math.max(likeCount - 1, 0);
     }
 
     public void setIsFavorite(boolean isFavorite) {
         this.isFavorite = isFavorite;
-        this.likeCount = isFavorite? likeCount + 1 : likeCount - 1;
+        this.likeCount = isFavorite ? likeCount + 1 : Math.max(likeCount - 1, 0);
     }
 }
+

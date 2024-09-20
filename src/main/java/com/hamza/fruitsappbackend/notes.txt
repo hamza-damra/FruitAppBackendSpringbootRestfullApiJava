@@ -1,0 +1,1 @@
+1- add total selling to product entity (model) to indicate the number of product selling

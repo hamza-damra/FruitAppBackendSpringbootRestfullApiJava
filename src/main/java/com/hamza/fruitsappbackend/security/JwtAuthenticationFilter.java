@@ -26,7 +26,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private static final Logger logger = Logger.getLogger(JwtAuthenticationFilter.class.getName());
 
     private final JwtTokenProvider jwtTokenProvider;
-    private final UserDetailsService userDetailsService;
+private final UserDetailsService userDetailsService;
 
     @Autowired
     public JwtAuthenticationFilter(JwtTokenProvider jwtTokenProvider, UserDetailsService userDetailsService) {
@@ -105,10 +105,22 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     private String getJwtTokenFromRequest(HttpServletRequest request) {
+        // First, try to get the token from the Authorization header
         String bearerToken = request.getHeader("Authorization");
+
         if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
             return bearerToken.substring(7);
         }
-        return null;
+
+        // If no token found in Authorization header, check the query parameter
+        String tokenParam = request.getParameter("token");
+
+        if (StringUtils.hasText(tokenParam)) {
+            return tokenParam;
+        }
+
+        // If no token in both places, throw an exception or return null
+        throw new JwtAuthenticationException("No JWT token found in request header or query parameters.");
     }
+
 }

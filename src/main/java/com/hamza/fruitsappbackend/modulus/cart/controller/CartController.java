@@ -24,7 +24,6 @@ public class CartController {
         this.cartItemService = cartItemService;
     }
 
-    // Add an item to the cart
     @PostMapping("/add")
     @ResponseStatus(HttpStatus.CREATED)
     public ResponseEntity<CartItemDTO> addItemToCart(@RequestHeader("Authorization") String token,
@@ -68,6 +67,13 @@ public class CartController {
     public ResponseEntity<Void> removeAllCartItems(@RequestHeader("Authorization") String token) {
         cartItemService.deleteAllCartItemsByUser(token);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/increase-quantity/{productId}")
+    public ResponseEntity<CartItemDTO> increaseCartItemQuantity(@PathVariable Long productId,
+                                                                 @RequestHeader("Authorization") String token) {
+        CartItemDTO updatedCartItem = cartItemService.increaseCartItemQuantity(productId, token);
+        return ResponseEntity.ok(updatedCartItem);
     }
 
 }
