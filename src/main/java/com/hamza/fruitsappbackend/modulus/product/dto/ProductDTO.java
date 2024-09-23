@@ -55,7 +55,7 @@ public class ProductDTO {
 
     private boolean isFavorite;
     private boolean isInCart;
-
+    private Long orderCount = 0L;
     private Integer likeCount = 0;
     private Double totalRating = 0.0;
     private Integer counterFiveStars = 0;

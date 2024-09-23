@@ -33,6 +33,12 @@ public class WishlistController {
         return ResponseEntity.ok("Product removed from wishlist");
     }
 
+    @DeleteMapping("/all/remove")
+    public ResponseEntity<String> removeAllFromWishlist(@RequestHeader("Authorization") String token) {
+        wishlistService.removeAllFromWishlist(token);
+        return ResponseEntity.ok("All products removed from wishlist");
+    }
+
     @GetMapping("/user")
     public ResponseEntity<List<WishlistDTO>> getWishlist(@RequestHeader("Authorization") String token) {
         List<WishlistDTO> wishlistItems = wishlistService.getWishlistByUserId(token);

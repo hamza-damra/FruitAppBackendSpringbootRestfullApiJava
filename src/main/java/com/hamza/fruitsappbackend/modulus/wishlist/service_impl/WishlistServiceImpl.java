@@ -13,7 +13,9 @@ import com.hamza.fruitsappbackend.modulus.wishlist.repository.WishlistRepository
 import com.hamza.fruitsappbackend.modulus.wishlist.service.WishlistService;
 import com.hamza.fruitsappbackend.utils.AuthorizationUtils;
 import com.hamza.fruitsappbackend.security.JwtTokenProvider;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,6 +46,7 @@ public class WishlistServiceImpl implements WishlistService {
     }
 
     @Override
+    @CacheEvict(value = "allProducts", allEntries = true)
     public void addToWishlist(Long productId, String token) {
         Long userId = getUserIdFromToken(token);
         authorizationUtils.checkUserOrAdminRole(token, userId);
@@ -67,6 +70,7 @@ public class WishlistServiceImpl implements WishlistService {
     }
 
     @Override
+    @CacheEvict(value = "allProducts", allEntries = true)
     public void removeFromWishlist(Long productId, String token) {
         Long userId = getUserIdFromToken(token);
         authorizationUtils.checkUserOrAdminRole(token, userId);
@@ -99,6 +103,17 @@ public class WishlistServiceImpl implements WishlistService {
         return wishlists.stream()
                 .map(wishlist -> new WishlistDTO(wishlist.getId(), wishlist.getProduct().getId(), wishlist.getCreatedAt()))
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional
+    @CacheEvict(value = "allProducts", allEntries = true)
+    public void removeAllFromWishlist(String token) {
+        Long userId = getUserIdFromToken(token);
+        authorizationUtils.checkUserOrAdminRole(token, userId);
+
+        wishlistRepository.deleteAllByUserId(userId);
+        logger.info("Removed all products from wishlist for user ID {}", userId);
     }
 
     private Long getUserIdFromToken(String token) {

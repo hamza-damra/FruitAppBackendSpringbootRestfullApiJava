@@ -28,7 +28,7 @@ public class CartController {
     @ResponseStatus(HttpStatus.CREATED)
     public ResponseEntity<CartItemDTO> addItemToCart(@RequestHeader("Authorization") String token,
                                                      @Valid @RequestBody CartItemDTO cartItemDTO) {
-        CartItemDTO addedCartItem = cartService.addCartItemToCart(null, cartItemDTO, token);
+        CartItemDTO addedCartItem = cartService.addCartItemToCart(cartItemDTO, token);
         return ResponseEntity.status(HttpStatus.CREATED).body(addedCartItem);
     }
 

@@ -49,6 +49,9 @@ public class Product {
     @Column(name = "image_url")
     private String imageUrl;
 
+    @Column(name = "order_count", nullable = false)
+    private Long orderCount = 0L;
+
     @Column(name = "product_weight", nullable = false)
     private Double productWeight;
 
@@ -61,7 +64,7 @@ public class Product {
     @Transient
     private boolean isInCart;
 
-    @Column(name = "expiration_date", nullable = true)
+    @Column(name = "expiration_date", nullable = false)
     private LocalDate expirationDate;
 
     @Column(name = "total_rating", nullable = false)

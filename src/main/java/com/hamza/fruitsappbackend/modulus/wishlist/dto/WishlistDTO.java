@@ -1,5 +1,6 @@
 package com.hamza.fruitsappbackend.modulus.wishlist.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -17,5 +18,6 @@ import java.time.LocalDateTime;
 public class WishlistDTO {
     private Long id;
     private Long productId;
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime createdAt;
 }

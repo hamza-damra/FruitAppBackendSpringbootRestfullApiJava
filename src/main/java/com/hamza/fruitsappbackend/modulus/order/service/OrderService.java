@@ -1,5 +1,6 @@
 package com.hamza.fruitsappbackend.modulus.order.service;
 
+import com.hamza.fruitsappbackend.constant.OrderStatus;
 import com.hamza.fruitsappbackend.modulus.order.dto.OrderDTO;
 
 import java.util.List;
@@ -17,6 +18,8 @@ public interface OrderService {
     OrderDTO updateOrderByUserIdAndOrderId(Long orderId, Long userId, OrderDTO orderDTO, String token); // User or Admin
 
     void deleteOrderById(Long id, String token);
+
+    OrderDTO updateOrderStatus(Long orderId, OrderStatus newStatus, String token);
 
     void deleteOrdersByUserId(Long userId, String token);
 

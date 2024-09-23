@@ -3,6 +3,7 @@ package com.hamza.fruitsappbackend.modulus.cart.service_impl;
 import com.hamza.fruitsappbackend.constant.CartStatus;
 import com.hamza.fruitsappbackend.modulus.cart.dto.CartItemDTO;
 import com.hamza.fruitsappbackend.modulus.cart.entity.Cart;
+import com.hamza.fruitsappbackend.modulus.user.entity.User;
 import com.hamza.fruitsappbackend.modulus.user.exception.UserNotFoundException;
 import com.hamza.fruitsappbackend.modulus.cart.repository.CartRepository;
 import com.hamza.fruitsappbackend.modulus.user.repository.UserRepository;
@@ -10,6 +11,7 @@ import com.hamza.fruitsappbackend.modulus.cart.service.CartItemService;
 import com.hamza.fruitsappbackend.modulus.cart.service.CartService;
 import com.hamza.fruitsappbackend.security.JwtTokenProvider;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import jakarta.transaction.Transactional;
@@ -34,12 +36,18 @@ public class CartServiceImpl implements CartService {
 
     @Override
     @Transactional
-    public CartItemDTO addCartItemToCart(Long cartId, CartItemDTO cartItemDTO, String token) {
+    public CartItemDTO addCartItemToCart(CartItemDTO cartItemDTO, String token) {
         Long userId = getUserIdFromToken(token);
+        User user = userRepository.findById(userId).orElseThrow(() -> new UserNotFoundException("id", userId.toString()));
 
-        Cart cart = cartRepository.findByUserIdAndStatus(userId, CartStatus.ACTIVE)
-                .orElseGet(() -> createNewCart(userId));
-
+        Cart cart;
+        if(user.getCart() == null)
+        {
+            cart = createNewCart(userId);
+            user.setCart(cart);
+        }else {
+            cart = user.getCart();
+        }
         return cartItemService.addCartItemToCart(cart.getId(), cartItemDTO, token);
     }
 

@@ -9,4 +9,6 @@ public interface WishlistService {
     void removeFromWishlist(Long productId, String token);
     List<WishlistDTO> getWishlistByUserId(String token);
     List<WishlistDTO> getAllWishlists(String token);
+
+    void removeAllFromWishlist(String token);
 }

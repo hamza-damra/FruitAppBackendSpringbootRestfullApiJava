@@ -1,9 +1,5 @@
 package com.hamza.fruitsappbackend.modulus.product.service_impl;
 
-import com.hamza.fruitsappbackend.modulus.cart.entity.Cart;
-import com.hamza.fruitsappbackend.modulus.cart.entity.CartItem;
-import com.hamza.fruitsappbackend.modulus.cart.exception.CartItemNotFoundException;
-import com.hamza.fruitsappbackend.modulus.cart.exception.CartNotFoundException;
 import com.hamza.fruitsappbackend.modulus.cart.repository.CartItemRepository;
 import com.hamza.fruitsappbackend.modulus.cart.repository.CartRepository;
 import com.hamza.fruitsappbackend.modulus.product.dto.ProductDTO;
@@ -16,6 +12,7 @@ import com.hamza.fruitsappbackend.modulus.product.repository.CategoryRepository;
 import com.hamza.fruitsappbackend.modulus.product.repository.ProductRepository;
 import com.hamza.fruitsappbackend.modulus.product.service.ProductService;
 import com.hamza.fruitsappbackend.modulus.review.repository.ReviewRepository;
+import com.hamza.fruitsappbackend.modulus.user.entity.User;
 import com.hamza.fruitsappbackend.utils.AuthorizationUtils;
 import com.hamza.fruitsappbackend.modulus.product.dto.ProductResponse;
 import com.hamza.fruitsappbackend.modulus.wishlist.repository.WishlistRepository;
@@ -43,7 +40,6 @@ public class ProductServiceImpl implements ProductService {
     private final CategoryRepository categoryRepository;
     private final ReviewRepository reviewRepository;
     private final ModelMapper modelMapper;
-    private final CartRepository cartRepository;
     private final WishlistRepository wishlistRepository;
     private final CartItemRepository cartItemRepository;
     private final AuthorizationUtils authorizationUtils;
@@ -52,46 +48,36 @@ public class ProductServiceImpl implements ProductService {
     @Autowired
     public ProductServiceImpl(ProductRepository productRepository, CategoryRepository categoryRepository,
                               ReviewRepository reviewRepository, ModelMapper modelMapper, CartRepository cartRepository, WishlistRepository wishlistRepository,
-                              CartItemRepository cartItemRepository, AuthorizationUtils authorizationUtils) {
+                              CartItemRepository cartItemRepository, WishlistRepository wishlistRepository1, CartItemRepository cartItemRepository1, AuthorizationUtils authorizationUtils) {
         this.productRepository = productRepository;
         this.categoryRepository = categoryRepository;
         this.reviewRepository = reviewRepository;
         this.modelMapper = modelMapper;
-        this.cartRepository = cartRepository;
-        this.wishlistRepository = wishlistRepository;
-        this.cartItemRepository = cartItemRepository;
+        this.wishlistRepository = wishlistRepository1;
+        this.cartItemRepository = cartItemRepository1;
         this.authorizationUtils = authorizationUtils;
     }
 
     @Override
-    @Caching(put = {
-            @CachePut(value = "products", key = "#result.id")
-    }, evict = {
-            @CacheEvict(value = "allProducts", allEntries = true)
-    })
+    @CacheEvict(value = "allProducts", allEntries = true)
     public ProductDTO addProduct(ProductDTO productDTO, String token) {
         authorizationUtils.checkAdminRole(token);
         Product product = convertToEntity(productDTO);
         setCategory(productDTO, product);
         Product savedProduct = productRepository.save(product);
-        return convertToDto(savedProduct, authorizationUtils.getUserFromToken(token).getId());
+        return convertToDto(savedProduct, token);
     }
 
     @Override
-    @Cacheable(value = "products", key = "#id")
     public Optional<ProductDTO> getProductById(String token, Long id) {
-        Long userId = authorizationUtils.getUserFromToken(token).getId();
         return productRepository.findById(id)
-                .map(product -> convertToDto(product, userId));
+                .map(p -> convertToDto(p, token));
     }
 
     @Override
-    @Cacheable(value = "productsByCategoryId", key = "#categoryId")
     public List<ProductDTO> getProductsByCategoryId(String token, Long categoryId) {
-        Long userId = authorizationUtils.getUserFromToken(token).getId();
         return productRepository.findByCategoryId(categoryId).stream()
-                .map(product -> convertToDto(product, userId))
-                .collect(Collectors.toList());
+                .map(p -> convertToDto(p, token)).collect(Collectors.toList());
     }
 
     @Override
@@ -105,8 +91,7 @@ public class ProductServiceImpl implements ProductService {
         long executionTime = endTime - startTime;
         logger.info("Product retrieval query executed in: {} ms", executionTime);
         List<ProductDTO> content = productPage.getContent().stream()
-                .map(contentItem -> convertToDto(contentItem, authorizationUtils.getUserFromToken(token).getId()))
-                .collect(Collectors.toList());
+                .map(contentItem -> convertToDto(contentItem, token)).toList();
 
         return new ProductResponse(
                 productPage.getSize(),
@@ -120,7 +105,7 @@ public class ProductServiceImpl implements ProductService {
 
 
     @Override
-    @CachePut(value = "products", key = "#productDTO.id")
+    @CacheEvict(value = "allProducts", allEntries = true)
     public ProductDTO updateProduct(ProductDTO productDTO, String token) {
         authorizationUtils.checkAdminRole(token);
         Product existingProduct = findProductById(productDTO.getId());
@@ -128,14 +113,11 @@ public class ProductServiceImpl implements ProductService {
         updateProductDetails(productDTO, existingProduct);
         setCategory(productDTO, existingProduct);
         Product updatedProduct = productRepository.save(existingProduct);
-        return convertToDto(updatedProduct, authorizationUtils.getUserFromToken(token).getId());
+        return convertToDto(updatedProduct, token);
     }
 
     @Override
-    @Caching(evict = {
-            @CacheEvict(value = "products", key = "#id"),
-            @CacheEvict(value = "allProducts", allEntries = true)
-    })
+    @CacheEvict(value = "allProducts", allEntries = true)
     public void deleteProductById(Long id, String token) {
         authorizationUtils.checkAdminRole(token);
         Product product = findProductById(id);
@@ -166,18 +148,32 @@ public class ProductServiceImpl implements ProductService {
         product.setExpirationDate(Optional.ofNullable(productDTO.getExpirationDate()).orElse(product.getExpirationDate()));
     }
 
-    private ProductDTO convertToDto(Product product, Long userId) {
+    private ProductDTO convertToDto(Product product, String token) {
         ProductDTO productDTO = modelMapper.map(product, ProductDTO.class);
-        productDTO.setIsFavorite(wishlistRepository.existsByUserIdAndProductId(userId, product.getId()));
-        productDTO.setIsInCart(cartItemRepository.existsByCartUserIdAndProductId(userId, product.getId()));
-        Cart cart = cartRepository.findByUserId(userId).orElseThrow(() -> new CartNotFoundException("userId", userId.toString()));;
-        Optional<CartItem> cartItemOpt = cart.getCartItems().stream().filter(cartItem -> cartItem.getProduct().getId().equals(product.getId())).findFirst();
-        productDTO.setQuantityInCart(cartItemOpt.map(CartItem::getQuantity).orElse(0));
+        User user = authorizationUtils.getUserFromToken(token);
+        boolean isFavorite = wishlistRepository.existsByUserIdAndProductId(user.getId(), product.getId());
+        productDTO.setIsFavorite(isFavorite);
+        boolean isInCart = cartItemRepository.existsByCartIdAndProductId(user.getCart().getId(), product.getId());
+        productDTO.setIsInCart(isInCart);
         return productDTO;
     }
 
+
+
     private Product convertToEntity(ProductDTO productDTO) {
-        return modelMapper.map(productDTO, Product.class);
+        Product product = new Product();
+        product.setName(productDTO.getName());
+        product.setDescription(productDTO.getDescription());
+        product.setPrice(productDTO.getPrice());
+        product.setStockQuantity(productDTO.getStockQuantity());
+        product.setImageUrl(productDTO.getImageUrl());
+        product.setProductWeight(productDTO.getProductWeight());
+        product.setCaloriesPer100Grams(productDTO.getCaloriesPer100Grams());
+        product.setExpirationDate(productDTO.getExpirationDate());
+        product.setQuantityInCart(0);
+        product.setOrderCount(0L);
+
+        return product;
     }
 
     public void updateProductTotalRating(Long productId) {

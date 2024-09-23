@@ -8,10 +8,14 @@ import com.hamza.fruitsappbackend.modulus.order.repository.OrderRepository;
 import com.hamza.fruitsappbackend.modulus.user.repository.UserRepository;
 import com.hamza.fruitsappbackend.modulus.order.service.OrderService;
 import com.hamza.fruitsappbackend.utils.AuthorizationUtils;
+import com.hamza.fruitsappbackend.constant.OrderStatus;
+import com.hamza.fruitsappbackend.modulus.product.entity.Product;
+import com.hamza.fruitsappbackend.modulus.product.repository.ProductRepository;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -22,23 +26,36 @@ public class OrderServiceImpl implements OrderService {
 
     private final OrderRepository orderRepository;
     private final UserRepository userRepository;
+    private final ProductRepository productRepository;
     private final ModelMapper modelMapper;
     private final AuthorizationUtils authorizationUtils;
 
     @Autowired
     public OrderServiceImpl(OrderRepository orderRepository, UserRepository userRepository,
+                            ProductRepository productRepository,
                             ModelMapper modelMapper, AuthorizationUtils authorizationUtils) {
         this.orderRepository = orderRepository;
         this.userRepository = userRepository;
+        this.productRepository = productRepository;
         this.modelMapper = modelMapper;
         this.authorizationUtils = authorizationUtils;
     }
 
     @Override
+    @Transactional
     public OrderDTO saveOrder(OrderDTO orderDTO, String token) {
         authorizationUtils.checkUserOrAdminRole(token, orderDTO.getUserId());
         Order order = modelMapper.map(orderDTO, Order.class);
+        order.setStatus(OrderStatus.PENDING);
+
         Order savedOrder = orderRepository.save(order);
+
+        savedOrder.getOrderItems().forEach(orderItem -> {
+            Product product = orderItem.getProduct();
+            product.setOrderCount(product.getOrderCount() + 1);
+            productRepository.save(product);
+        });
+
         return mapOrderToDTO(savedOrder);
     }
 
@@ -71,15 +88,55 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
+    @Transactional
     public OrderDTO updateOrderByUserIdAndOrderId(Long orderId, Long userId, OrderDTO orderDTO, String token) {
         authorizationUtils.checkUserOrAdminRole(token, userId);
 
         Order existingOrder = orderRepository.findById(orderId)
                 .orElseThrow(() -> new OrderNotFoundException("id", orderId.toString()));
 
+        OrderStatus previousStatus = existingOrder.getStatus();
         modelMapper.map(orderDTO, existingOrder);
+
+        if (isTransitionValid(previousStatus, orderDTO.getStatus())) {
+            if (orderDTO.getStatus() == OrderStatus.FAILED || orderDTO.getStatus() == OrderStatus.RETURNED || orderDTO.getStatus() == OrderStatus.CANCELLED) {
+                existingOrder.getOrderItems().forEach(orderItem -> {
+                    Product product = orderItem.getProduct();
+                    product.setOrderCount(product.getOrderCount() - 1);
+                    productRepository.save(product);
+                });
+            }
+            existingOrder.setStatus(orderDTO.getStatus());
+        } else {
+            throw new IllegalStateException("Invalid status transition from " + previousStatus + " to " + orderDTO.getStatus());
+        }
+
         Order updatedOrder = orderRepository.save(existingOrder);
         return mapOrderToDTO(updatedOrder);
+    }
+
+    @Override
+    @Transactional
+    public OrderDTO updateOrderStatus(Long orderId, OrderStatus newStatus, String token) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new OrderNotFoundException("id", orderId.toString()));
+
+        authorizationUtils.checkUserOrAdminRole(token, order.getUser().getId());
+
+        if (isTransitionValid(order.getStatus(), newStatus)) {
+            if (newStatus == OrderStatus.FAILED || newStatus == OrderStatus.RETURNED || newStatus == OrderStatus.CANCELLED) {
+                order.getOrderItems().forEach(orderItem -> {
+                    Product product = orderItem.getProduct();
+                    product.setOrderCount(product.getOrderCount() - 1);
+                    productRepository.save(product);
+                });
+            }
+            order.setStatus(newStatus);
+            Order updatedOrder = orderRepository.save(order);
+            return mapOrderToDTO(updatedOrder);
+        } else {
+            throw new IllegalStateException("Invalid status transition from " + order.getStatus() + " to " + newStatus);
+        }
     }
 
     @Override
@@ -88,7 +145,6 @@ public class OrderServiceImpl implements OrderService {
                 .orElseThrow(() -> new OrderNotFoundException("id", id.toString()));
 
         authorizationUtils.checkUserOrAdminRole(token, order.getUser().getId());
-
         orderRepository.deleteById(id);
     }
 
@@ -111,6 +167,15 @@ public class OrderServiceImpl implements OrderService {
         } else {
             throw new OrderNotFoundException("Order", orderId.toString());
         }
+    }
+
+    private boolean isTransitionValid(OrderStatus currentStatus, OrderStatus newStatus) {
+        return switch (currentStatus) {
+            case PENDING -> newStatus == OrderStatus.PROCESSING || newStatus == OrderStatus.CANCELLED;
+            case PROCESSING -> newStatus == OrderStatus.SHIPPED || newStatus == OrderStatus.FAILED;
+            case SHIPPED -> newStatus == OrderStatus.DELIVERED || newStatus == OrderStatus.RETURNED;
+            case DELIVERED, CANCELLED, RETURNED, FAILED -> false;
+        };
     }
 
     private OrderDTO mapOrderToDTO(Order order) {

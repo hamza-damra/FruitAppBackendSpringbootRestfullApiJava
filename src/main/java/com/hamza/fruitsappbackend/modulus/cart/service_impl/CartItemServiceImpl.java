@@ -19,6 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -47,6 +48,7 @@ public class CartItemServiceImpl implements CartItemService {
 
     @Override
     @CachePut(value = "cartItems", key = "#cartItemDTO.productId")
+    @CacheEvict(value = "allProducts", allEntries = true)
     public CartItemDTO addCartItemToCart(Long cartId, CartItemDTO cartItemDTO, String token) {
 
         Long userId = getUserIdFromToken(token);
@@ -88,6 +90,7 @@ public class CartItemServiceImpl implements CartItemService {
 
     @Override
     @CachePut(value = "cartItems", key = "#cartItemDTO.productId")
+    @CacheEvict(value = "allProducts", allEntries = true)
     public CartItemDTO updateCartItem(Long cartId, CartItemDTO cartItemDTO, String token) {
         Long userId = getUserIdFromToken(token);
         authorizationUtils.checkUserOrAdminRole(token, userId);
@@ -107,7 +110,12 @@ public class CartItemServiceImpl implements CartItemService {
 
     @Override
     @Transactional
-    @CacheEvict(value = "cartItems", key = "#productId")
+    @Caching(
+            evict = {
+                    @CacheEvict(value = "cartItems", key = "#productId"),
+                    @CacheEvict(value = "cartItems", key = "#productId")
+            }
+    )
     public void deleteCartItemByProductId(Long productId, String token) {
         Long userId = getUserIdFromToken(token);
         authorizationUtils.checkUserOrAdminRole(token, userId);
@@ -117,10 +125,8 @@ public class CartItemServiceImpl implements CartItemService {
 
         CartItem cartItem = cartItemRepository.findByCartIdAndProductId(cart.getId(), productId)
                 .orElseThrow(() -> new CartItemNotFoundException("productId", productId.toString()));
-
-        cartItemRepository.delete(cartItem);
-
         updateCartTotal(cart);
+        cartItemRepository.delete(cartItem);
     }
 
     @Override
@@ -140,6 +146,11 @@ public class CartItemServiceImpl implements CartItemService {
 
     @Override
     @Transactional
+    @Caching(
+            evict = {
+                    @CacheEvict(value = "cartItems", allEntries = true),
+            }
+    )
     public void deleteAllCartItemsByUser(String token) {
         Long userId = getUserIdFromToken(token);
         authorizationUtils.checkUserOrAdminRole(token, userId);
@@ -156,6 +167,12 @@ public class CartItemServiceImpl implements CartItemService {
 
     @Override
     @Transactional
+    @Caching(
+            evict = {
+                    @CacheEvict(value = "cartItems", key = "#productId"),
+                    @CacheEvict(value = "cartItems", key = "#productId")
+            }
+    )
     public CartItemDTO increaseCartItemQuantity(Long productId, String token) {
         Long userId = getUserIdFromToken(token);
         authorizationUtils.checkUserOrAdminRole(token, userId);
