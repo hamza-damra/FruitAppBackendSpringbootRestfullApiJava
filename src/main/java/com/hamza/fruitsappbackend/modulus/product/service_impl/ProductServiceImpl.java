@@ -170,6 +170,7 @@ public class ProductServiceImpl implements ProductService {
         product.setProductWeight(productDTO.getProductWeight());
         product.setCaloriesPer100Grams(productDTO.getCaloriesPer100Grams());
         product.setExpirationDate(productDTO.getExpirationDate());
+        product.setTotalRating(0.0);
         product.setQuantityInCart(0);
         product.setOrderCount(0L);
 

@@ -48,7 +48,7 @@ public class ProductDTO {
     @Min(value = 0, message = "caloriesPer100Grams must be a non-negative number")
     private Integer caloriesPer100Grams;
 
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     @NotNull(message = "Expiration date must not be null", groups = OnCreate.class)
     private LocalDate expirationDate;
 

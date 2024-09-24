@@ -52,7 +52,6 @@ public class AddressServiceImpl implements AddressService {
     }
 
     @Override
-    @Cacheable(value = "address", key = "#id")
     public Optional<AddressDTO> getAddressById(Long id, String token) {
         Long userId = getUserIdFromToken(token);
         authorizationUtils.checkUserOrAdminRole(token, userId);
@@ -62,7 +61,6 @@ public class AddressServiceImpl implements AddressService {
     }
 
     @Override
-    @Cacheable(value = "userAddresses", key = "#token")
     public List<AddressDTO> getAddressesByUserId(String token) {
         Long userId = getUserIdFromToken(token);
         authorizationUtils.checkUserOrAdminRole(token, userId);
@@ -73,7 +71,6 @@ public class AddressServiceImpl implements AddressService {
     }
 
     @Override
-    @Cacheable(value = "allAddresses")
     public List<AddressDTO> getAllAddresses(String token) {
         authorizationUtils.checkAdminRole(token);
         return addressRepository.findAll().stream()
@@ -88,21 +85,63 @@ public class AddressServiceImpl implements AddressService {
         authorizationUtils.checkUserOrAdminRole(token, userId);
 
         Address addressToUpdate = findAddressById(addressDTO.getId());
-        Address updatedAddress = convertToEntity(addressDTO);
-        updatedAddress.setUser(addressToUpdate.getUser());
-        updatedAddress.setCreatedAt(addressToUpdate.getCreatedAt());
+        if (!addressToUpdate.getUser().getId().equals(userId)) {
+            throw new AddressNotFoundException("id", addressDTO.getId().toString());
+        }
 
-        handleDefaultAddressLogic(userId, updatedAddress);
+        updateAddressFields(addressToUpdate, addressDTO);
 
-        return convertToDto(addressRepository.save(updatedAddress));
+        handleDefaultAddressLogic(userId, addressToUpdate);
+
+        return convertToDto(addressRepository.save(addressToUpdate));
+    }
+
+    private void updateAddressFields(Address addressToUpdate, AddressDTO addressDTO) {
+        if (addressDTO.getCity() != null) {
+            addressToUpdate.setCity(addressDTO.getCity());
+        }
+
+        if (addressDTO.getStreetAddress() != null) {
+            addressToUpdate.setStreetAddress(addressDTO.getStreetAddress());
+        }
+
+        if (addressDTO.getFullName() != null) {
+            addressToUpdate.setFullName(addressDTO.getFullName());
+        }
+
+        if (addressDTO.getApartmentNumber() != null) {
+            addressToUpdate.setApartmentNumber(addressDTO.getApartmentNumber());
+        }
+
+        if (addressDTO.getFloorNumber() != null) {
+            addressToUpdate.setFloorNumber(addressDTO.getFloorNumber());
+        }
     }
 
     @Override
     public void deleteAddressById(Long id, String token) {
         Long userId = getUserIdFromToken(token);
         authorizationUtils.checkUserOrAdminRole(token, userId);
-
         Address address = findAddressById(id);
+        if (!address.getUser().getId().equals(userId)) {
+            throw new AddressNotFoundException("id", id.toString());
+        }
+
+        if (address.isDefault()) {
+            List<Address> userAddresses = addressRepository.findByUserId(userId);
+            if (!userAddresses.isEmpty()) {
+                Address newDefault = userAddresses.stream()
+                        .filter(a -> !a.getId().equals(id))
+                        .findFirst()
+                        .orElse(null);
+
+                if (newDefault != null) {
+                    newDefault.setDefault(true);
+                    addressRepository.save(newDefault);
+                }
+            }
+        }
+
         addressRepository.deleteById(id);
     }
 
@@ -111,7 +150,9 @@ public class AddressServiceImpl implements AddressService {
     public void deleteAddressByUserId(String token) {
         Long userId = getUserIdFromToken(token);
         authorizationUtils.checkUserOrAdminRole(token, userId);
-
+        if (!addressRepository.existsAddressesByUser(userRepository.getUserById(userId))) {
+            throw new AddressNotFoundException("userId", userId.toString());
+        }
         addressRepository.deleteAddressByUser(findUserById(userId));
     }
 
@@ -131,24 +172,20 @@ public class AddressServiceImpl implements AddressService {
         return convertToDto(addressRepository.save(updatedAddress));
     }
 
-    // Helper method to get user ID from JWT token
     private Long getUserIdFromToken(String token) {
-        return Long.valueOf(jwtTokenProvider.getUserIdFromToken(token));
+        return authorizationUtils.getUserFromToken(token).getId();
     }
 
-    // Helper method to find Address by ID
     private Address findAddressById(Long id) {
         return addressRepository.findById(id)
                 .orElseThrow(() -> new AddressNotFoundException("id", id.toString()));
     }
 
-    // Helper method to find User by ID
     private User findUserById(Long id) {
         return userRepository.findById(id)
                 .orElseThrow(() -> new UserNotFoundException("id", id.toString()));
     }
 
-    // Helper method to find Address by User ID
     private Address findAddressByUserId(Long userId) {
         return addressRepository.findByUserId(userId)
                 .stream()
@@ -156,17 +193,14 @@ public class AddressServiceImpl implements AddressService {
                 .orElseThrow(() -> new AddressNotFoundException("userId", userId.toString()));
     }
 
-    // Helper method to convert Address entity to DTO
     private AddressDTO convertToDto(Address address) {
         return modelMapper.map(address, AddressDTO.class);
     }
 
-    // Helper method to convert AddressDTO to entity
     private Address convertToEntity(AddressDTO addressDTO) {
         return modelMapper.map(addressDTO, Address.class);
     }
 
-    // Helper method to prepare Address for saving
     private Address prepareAddressForSaving(AddressDTO addressDTO, Long userId) {
         Address address = convertToEntity(addressDTO);
         User user = findUserById(userId);
@@ -174,7 +208,6 @@ public class AddressServiceImpl implements AddressService {
         return address;
     }
 
-    // Helper method to handle default address logic
     private void handleDefaultAddressLogic(Long userId, Address address) {
         List<Address> userAddresses = addressRepository.findByUserId(userId);
 

@@ -11,8 +11,6 @@ import com.hamza.fruitsappbackend.modulus.cart.service.CartItemService;
 import com.hamza.fruitsappbackend.modulus.cart.service.CartService;
 import com.hamza.fruitsappbackend.security.JwtTokenProvider;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import jakarta.transaction.Transactional;
 
@@ -27,7 +25,7 @@ public class CartServiceImpl implements CartService {
     @Autowired
     public CartServiceImpl(CartRepository cartRepository, UserRepository userRepository,
                            CartItemService cartItemService,
-                            JwtTokenProvider jwtTokenProvider) {
+                           JwtTokenProvider jwtTokenProvider) {
         this.cartRepository = cartRepository;
         this.userRepository = userRepository;
         this.cartItemService = cartItemService;
@@ -38,32 +36,15 @@ public class CartServiceImpl implements CartService {
     @Transactional
     public CartItemDTO addCartItemToCart(CartItemDTO cartItemDTO, String token) {
         Long userId = getUserIdFromToken(token);
-        User user = userRepository.findById(userId).orElseThrow(() -> new UserNotFoundException("id", userId.toString()));
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException("id", userId.toString()));
 
-        Cart cart;
-        if(user.getCart() == null)
-        {
-            cart = createNewCart(userId);
-            user.setCart(cart);
-        }else {
-            cart = user.getCart();
-        }
+        Cart cart = user.getCart();
+
         return cartItemService.addCartItemToCart(cart.getId(), cartItemDTO, token);
     }
 
     private Long getUserIdFromToken(String token) {
         return Long.valueOf(jwtTokenProvider.getUserIdFromToken(token));
     }
-
-    private Cart createNewCart(Long userId) {
-        return userRepository.findById(userId)
-                .map(user -> {
-                    Cart newCart = new Cart();
-                    newCart.setUser(user);
-                    newCart.setStatus(CartStatus.ACTIVE);
-                    return cartRepository.save(newCart);
-                })
-                .orElseThrow(() -> new UserNotFoundException("id", userId.toString()));
-    }
-
 }

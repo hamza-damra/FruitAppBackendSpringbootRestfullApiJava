@@ -51,9 +51,6 @@ public class CartItemServiceImpl implements CartItemService {
     @CacheEvict(value = "allProducts", allEntries = true)
     public CartItemDTO addCartItemToCart(Long cartId, CartItemDTO cartItemDTO, String token) {
 
-        Long userId = getUserIdFromToken(token);
-        authorizationUtils.checkUserOrAdminRole(token, userId);
-
         Cart cart = cartRepository.findById(cartId)
                 .orElseThrow(() -> new CartNotFoundException("id", cartId.toString()));
 

@@ -36,7 +36,7 @@ public class AddressController {
 
     @GetMapping("/user")
     public ResponseEntity<List<AddressDTO>> getAddressesByUserId(@RequestHeader("Authorization") String token) {
-        List<AddressDTO> addresses = addressService.getAddressesByUserId(token); // No userId parameter needed
+        List<AddressDTO> addresses = addressService.getAddressesByUserId(token);
         return ResponseEntity.ok(addresses);
     }
 

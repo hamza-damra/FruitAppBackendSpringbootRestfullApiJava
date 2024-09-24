@@ -1,5 +1,6 @@
 package com.hamza.fruitsappbackend.modulus.user.entity;
 
+import com.hamza.fruitsappbackend.constant.CartStatus;
 import com.hamza.fruitsappbackend.modulus.cart.entity.Cart;
 import com.hamza.fruitsappbackend.modulus.order.entity.Order;
 import com.hamza.fruitsappbackend.modulus.review.entity.Review;
@@ -90,6 +91,9 @@ public class User {
         LocalDateTime now = LocalDateTime.now();
         createdAt = now;
         updatedAt = now;
+        cart = new Cart();
+        cart.setUser(this);
+        cart.setStatus(CartStatus.ACTIVE);
     }
 
     @PreUpdate

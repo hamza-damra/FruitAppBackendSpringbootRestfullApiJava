@@ -16,4 +16,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     @Query("SELECT u FROM User u WHERE u.accountVerification.otp = :otp")
     Optional<User> findByOtp(Integer otp);
+
+    User getUserById(Long userId);
 }
