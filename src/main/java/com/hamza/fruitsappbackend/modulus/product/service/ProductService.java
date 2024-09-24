@@ -21,4 +21,9 @@ public interface ProductService {
     void deleteProductById(Long id, String token);
 
     void updateProductTotalRating(Long productId);
+
+    void deleteAllProducts(String token);
+
+    List<ProductDTO> searchProducts(String keyword, String token);
+
 }

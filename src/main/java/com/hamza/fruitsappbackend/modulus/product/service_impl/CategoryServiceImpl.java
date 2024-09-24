@@ -38,7 +38,6 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
-    @Cacheable(value = "categories", key = "#id")
     public CategoryDTO getCategoryById(Long id) {
         return categoryRepository.findById(id)
                 .map(category -> modelMapper.map(category, CategoryDTO.class))
@@ -46,7 +45,6 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
-    @Cacheable(value = "allCategories")
     public List<CategoryDTO> getAllCategories() {
         return categoryRepository.findAll().stream()
                 .map(category -> modelMapper.map(category, CategoryDTO.class))

@@ -194,4 +194,23 @@ public class ProductServiceImpl implements ProductService {
         product.setCounterOneStars((int) reviews.stream().filter(r -> r.getRating() == 1).count());
         productRepository.save(product);
     }
+
+    @Override
+    public void deleteAllProducts(String token) {
+        authorizationUtils.checkAdminRole(token);
+        productRepository.deleteAll();
+    }
+
+    @Override
+    public List<ProductDTO> searchProducts(String keyword, String token) {
+        List<Product> products = productRepository.searchByName(keyword);
+
+        if (products.isEmpty()) {
+            products = productRepository.searchByDescription(keyword);
+        }
+
+        return products.stream()
+                .map(product -> convertToDto(product, token))
+                .collect(Collectors.toList());
+    }
 }

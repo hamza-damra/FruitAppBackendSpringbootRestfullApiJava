@@ -89,6 +89,13 @@ public class ProductController {
         return ResponseEntity.noContent().build();
     }
 
+    @DeleteMapping("/all")
+    public ResponseEntity<Void> deleteAllProducts(@RequestHeader("Authorization") String token) {
+        productService.deleteAllProducts(token);
+        return ResponseEntity.noContent().build();
+    }
+
+
     @GetMapping("/subscribe")
     public SseEmitter subscribe() {
         SseEmitter emitter = new SseEmitter(3600000L);
@@ -98,6 +105,15 @@ public class ProductController {
         emitter.onTimeout(() -> emitters.remove(emitter));
 
         return emitter;
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<List<ProductDTO>> searchProducts(
+            @RequestParam("keyword") String keyword,
+            @RequestHeader("Authorization") String token) {
+
+        List<ProductDTO> productDTOs = productService.searchProducts(keyword, token);
+        return ResponseEntity.ok(productDTOs);
     }
 
     private void sendProductUpdate(@Valid ProductDTO productDTO) {
