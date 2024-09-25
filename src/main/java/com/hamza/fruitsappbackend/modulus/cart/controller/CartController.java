@@ -12,7 +12,7 @@ import jakarta.validation.Valid;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/cart-items")
+@RequestMapping("/api/cart")
 public class CartController {
 
     private final CartService cartService;
@@ -30,6 +30,18 @@ public class CartController {
                                                      @Valid @RequestBody CartItemDTO cartItemDTO) {
         CartItemDTO addedCartItem = cartService.addCartItemToCart(cartItemDTO, token);
         return ResponseEntity.status(HttpStatus.CREATED).body(addedCartItem);
+    }
+
+    @PostMapping("/complete")
+    public ResponseEntity<Void> completeCart(@RequestHeader("Authorization") String token) {
+        cartService.completeCart(token);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/reopen")
+    public ResponseEntity<Void> reopenCart(@RequestHeader("Authorization") String token) {
+        cartService.reopenCart(token);
+        return ResponseEntity.ok().build();
     }
 
     @GetMapping("/get")
@@ -76,4 +88,11 @@ public class CartController {
         return ResponseEntity.ok(updatedCartItem);
     }
 
+
+    @PostMapping("/decrease-quantity/{productId}")
+    public ResponseEntity<CartItemDTO> decreaseCartItemQuantity(@PathVariable Long productId,
+                                                                @RequestHeader("Authorization") String token) {
+        CartItemDTO updatedCartItem = cartItemService.decreaseCartItemQuantity(productId, token);
+        return ResponseEntity.ok(updatedCartItem);
+    }
 }

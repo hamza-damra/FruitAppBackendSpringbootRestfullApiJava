@@ -41,7 +41,7 @@ public class Cart {
     private CartStatus status;
 
     @Column(name = "total_price", precision = 10, scale = 2)
-    BigDecimal totalPrice;
+    private BigDecimal totalPrice;
 
     @Column(name = "total_quantity")
     private Integer totalQuantity;
@@ -64,5 +64,27 @@ public class Cart {
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
+    }
+
+    public void addItem(CartItem item) {
+        if (this.status == CartStatus.COMPLETED) {
+            throw new IllegalStateException("Cannot modify a completed cart.");
+        }
+        this.cartItems.add(item);
+        updateTotal();
+    }
+
+    public void completeCart() {
+        if (this.status == CartStatus.COMPLETED) {
+            throw new IllegalStateException("Cart is already completed.");
+        }
+        this.status = CartStatus.COMPLETED;
+    }
+
+    private void updateTotal() {
+        this.totalPrice = this.cartItems.stream()
+                .map(CartItem::getPrice)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        this.totalQuantity = this.cartItems.size();
     }
 }

@@ -20,4 +20,5 @@ public interface CartItemService {
     void deleteAllCartItemsByUser(String token);
 
     CartItemDTO increaseCartItemQuantity(Long productId, String token);
+    CartItemDTO decreaseCartItemQuantity(Long productId, String token);
 }

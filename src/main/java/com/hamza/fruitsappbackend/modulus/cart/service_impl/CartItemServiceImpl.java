@@ -1,5 +1,6 @@
 package com.hamza.fruitsappbackend.modulus.cart.service_impl;
 
+import com.hamza.fruitsappbackend.constant.CartStatus;
 import com.hamza.fruitsappbackend.exception.global.BadRequestException;
 import com.hamza.fruitsappbackend.modulus.cart.dto.CartItemDTO;
 import com.hamza.fruitsappbackend.modulus.cart.entity.Cart;
@@ -54,6 +55,10 @@ public class CartItemServiceImpl implements CartItemService {
         Cart cart = cartRepository.findById(cartId)
                 .orElseThrow(() -> new CartNotFoundException("id", cartId.toString()));
 
+        if(cart.getStatus() == CartStatus.COMPLETED){
+            throw new BadRequestException("Cannot add items to a completed cart");
+        }
+
         Product product = productRepository.findById(cartItemDTO.getProductId())
                 .orElseThrow(() -> new ProductNotFoundException("id", cartItemDTO.getProductId().toString()));
 
@@ -74,8 +79,8 @@ public class CartItemServiceImpl implements CartItemService {
     @Override
     @Cacheable(value = "cartItems", key = "#productId")
     public CartItemDTO getCartItemByProductId(Long productId, String token) {
-        Long userId = getUserIdFromToken(token);
-        authorizationUtils.checkUserOrAdminRole(token, userId);
+        Long userId = getUserIdAndCheckRole(token);
+
         Cart cart = cartRepository.findByUserId(userId)
                 .orElseThrow(() -> new CartNotFoundException("userId", userId.toString()));
 
@@ -89,8 +94,13 @@ public class CartItemServiceImpl implements CartItemService {
     @CachePut(value = "cartItems", key = "#cartItemDTO.productId")
     @CacheEvict(value = "allProducts", allEntries = true)
     public CartItemDTO updateCartItem(Long cartId, CartItemDTO cartItemDTO, String token) {
-        Long userId = getUserIdFromToken(token);
-        authorizationUtils.checkUserOrAdminRole(token, userId);
+
+        Cart cart = cartRepository.findById(cartId)
+                .orElseThrow(() -> new CartNotFoundException("id", cartId.toString()));
+
+        if(cart.getStatus() == CartStatus.COMPLETED){
+            throw new BadRequestException("Cannot update items in a completed cart");
+        }
 
         CartItem existingCartItem = cartItemRepository.findById(cartItemDTO.getId())
                 .orElseThrow(() -> new CartItemNotFoundException("id", cartItemDTO.getId().toString()));
@@ -98,8 +108,6 @@ public class CartItemServiceImpl implements CartItemService {
         existingCartItem.setQuantity(cartItemDTO.getQuantity());
         cartItemRepository.save(existingCartItem);
 
-        Cart cart = cartRepository.findById(cartId)
-                .orElseThrow(() -> new CartNotFoundException("id", cartId.toString()));
         updateCartTotal(cart);
 
         return convertToDTO(existingCartItem);
@@ -109,27 +117,25 @@ public class CartItemServiceImpl implements CartItemService {
     @Transactional
     @Caching(
             evict = {
-                    @CacheEvict(value = "cartItems", key = "#productId"),
                     @CacheEvict(value = "cartItems", key = "#productId")
             }
     )
     public void deleteCartItemByProductId(Long productId, String token) {
-        Long userId = getUserIdFromToken(token);
-        authorizationUtils.checkUserOrAdminRole(token, userId);
+        Long userId = getUserIdAndCheckRole(token);
 
         Cart cart = cartRepository.findByUserId(userId)
                 .orElseThrow(() -> new CartNotFoundException("userId", userId.toString()));
 
         CartItem cartItem = cartItemRepository.findByCartIdAndProductId(cart.getId(), productId)
                 .orElseThrow(() -> new CartItemNotFoundException("productId", productId.toString()));
-        updateCartTotal(cart);
+
         cartItemRepository.delete(cartItem);
+        updateCartTotal(cart);
     }
 
     @Override
     public List<CartItemDTO> getCartItemsByUser(String token) {
-        Long userId = getUserIdFromToken(token);
-        authorizationUtils.checkUserOrAdminRole(token, userId);
+        Long userId = getUserIdAndCheckRole(token);
 
         Cart cart = cartRepository.findByUserId(userId)
                 .orElseThrow(() -> new CartNotFoundException("userId", userId.toString()));
@@ -149,8 +155,7 @@ public class CartItemServiceImpl implements CartItemService {
             }
     )
     public void deleteAllCartItemsByUser(String token) {
-        Long userId = getUserIdFromToken(token);
-        authorizationUtils.checkUserOrAdminRole(token, userId);
+        Long userId = getUserIdAndCheckRole(token);
 
         Cart cart = cartRepository.findByUserId(userId)
                 .orElseThrow(() -> new CartNotFoundException("userId", userId.toString()));
@@ -166,13 +171,11 @@ public class CartItemServiceImpl implements CartItemService {
     @Transactional
     @Caching(
             evict = {
-                    @CacheEvict(value = "cartItems", key = "#productId"),
                     @CacheEvict(value = "cartItems", key = "#productId")
             }
     )
     public CartItemDTO increaseCartItemQuantity(Long productId, String token) {
-        Long userId = getUserIdFromToken(token);
-        authorizationUtils.checkUserOrAdminRole(token, userId);
+        Long userId = getUserIdAndCheckRole(token);
 
         Cart cart = cartRepository.findByUserId(userId)
                 .orElseThrow(() -> new CartNotFoundException("userId", userId.toString()));
@@ -186,6 +189,40 @@ public class CartItemServiceImpl implements CartItemService {
         updateCartTotal(cart);
 
         return convertToDTO(cartItem);
+    }
+
+    @Override
+    @Transactional
+    @Caching(
+            evict = {
+                    @CacheEvict(value = "cartItems", key = "#productId")
+            }
+    )
+    public CartItemDTO decreaseCartItemQuantity(Long productId, String token) {
+        Long userId = getUserIdAndCheckRole(token);
+
+        Cart cart = cartRepository.findByUserId(userId)
+                .orElseThrow(() -> new CartNotFoundException("userId", userId.toString()));
+
+        CartItem cartItem = cartItemRepository.findByCartIdAndProductId(cart.getId(), productId)
+                .orElseThrow(() -> new CartItemNotFoundException("productId", productId.toString()));
+
+        if (cartItem.getQuantity() <= 1) {
+            throw new BadRequestException("Cannot decrease quantity below 1");
+        }
+
+        cartItem.setQuantity(cartItem.getQuantity() - 1);
+        cartItemRepository.save(cartItem);
+
+        updateCartTotal(cart);
+
+        return convertToDTO(cartItem);
+    }
+
+    private Long getUserIdAndCheckRole(String token) {
+        Long userId = getUserIdFromToken(token);
+        authorizationUtils.checkUserOrAdminRole(token, userId);
+        return userId;
     }
 
     private void updateCartTotal(Cart cart) {
