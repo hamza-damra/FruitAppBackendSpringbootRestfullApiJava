@@ -10,10 +10,10 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ProductResponse {
-    private int pageSize;
-    private int pageNumber;
-    private long totalElements;
+    private int itemsPerPage;
+    private int currentPage;
+    private long totalItems;
     private int totalPages;
-    private boolean isLast;
-    private List<ProductDTO> content;
+    private boolean isLastPage;
+    private List<ProductDTO> items;
 }

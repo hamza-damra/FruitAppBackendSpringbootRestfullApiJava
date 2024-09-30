@@ -8,6 +8,7 @@ import jakarta.validation.constraints.*;
 import lombok.*;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Getter
 @Setter
@@ -51,6 +52,8 @@ public class ProductDTO {
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     @NotNull(message = "Expiration date must not be null", groups = OnCreate.class)
     private LocalDate expirationDate;
+
+    private LocalDateTime addedAt;
 
 
     private boolean isFavorite;

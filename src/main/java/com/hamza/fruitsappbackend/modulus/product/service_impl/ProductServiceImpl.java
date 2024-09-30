@@ -150,13 +150,24 @@ public class ProductServiceImpl implements ProductService {
 
     private ProductDTO convertToDto(Product product, String token) {
         ProductDTO productDTO = modelMapper.map(product, ProductDTO.class);
+
+
         User user = authorizationUtils.getUserFromToken(token);
-        boolean isFavorite = wishlistRepository.existsByUserIdAndProductId(user.getId(), product.getId());
+
+
+        boolean isFavorite = user.getWishlistItems().stream()
+                .anyMatch(wishlistItem -> wishlistItem.getProduct().getId().equals(product.getId()));
         productDTO.setIsFavorite(isFavorite);
-        boolean isInCart = cartItemRepository.existsByCartIdAndProductId(user.getCart().getId(), product.getId());
+
+
+        boolean isInCart = user.getCart().getCartItems().stream()
+                .anyMatch(cartItem -> cartItem.getProduct().getId().equals(product.getId()));
         productDTO.setIsInCart(isInCart);
+        productDTO.setAddedAt(product.getCreatedAt());
+
         return productDTO;
     }
+
 
 
 
@@ -209,6 +220,15 @@ public class ProductServiceImpl implements ProductService {
             products = productRepository.searchByDescription(keyword);
         }
 
+        return products.stream()
+                .map(product -> convertToDto(product, token))
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<ProductDTO> getProductsByPriceRange(String token, double minPrice, double maxPrice) {
+        authorizationUtils.checkUserOrAdminRole(token, authorizationUtils.getUserFromToken(token).getId());
+        List<Product> products = productRepository.findByPriceRange(minPrice, maxPrice);
         return products.stream()
                 .map(product -> convertToDto(product, token))
                 .collect(Collectors.toList());

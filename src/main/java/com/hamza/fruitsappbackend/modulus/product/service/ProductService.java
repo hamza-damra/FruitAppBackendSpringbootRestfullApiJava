@@ -26,4 +26,5 @@ public interface ProductService {
 
     List<ProductDTO> searchProducts(String keyword, String token);
 
+    List<ProductDTO> getProductsByPriceRange(String token, double minPrice, double maxPrice);
 }

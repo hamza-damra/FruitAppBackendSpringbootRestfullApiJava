@@ -1,5 +1,6 @@
 package com.hamza.fruitsappbackend.modulus.product.controller;
 import com.hamza.fruitsappbackend.constant.Strings;
+import com.hamza.fruitsappbackend.modulus.product.dto.FilterProductByPriceResponse;
 import com.hamza.fruitsappbackend.modulus.product.dto.ProductDTO;
 import com.hamza.fruitsappbackend.modulus.product.dto.ProductResponse;
 import com.hamza.fruitsappbackend.modulus.product.service.ProductService;
@@ -47,6 +48,15 @@ public class ProductController {
         Optional<ProductDTO> productDTO = productService.getProductById(token, id);
         return productDTO.map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
+    }
+
+
+    @GetMapping("/filtered")
+    public ResponseEntity<FilterProductByPriceResponse> getProductsByPriceRange(@RequestHeader("Authorization") String token,
+                                                                                @RequestParam(name = "minPrice", defaultValue = "0", required = false) double minPrice,
+                                                                                @RequestParam(name = "maxPrice", defaultValue = "10000", required = false) double maxPrice){
+        List<ProductDTO> products = productService.getProductsByPriceRange(token, minPrice, maxPrice);
+        return ResponseEntity.ok(new FilterProductByPriceResponse(products.size(),products));
     }
 
     @GetMapping("/category/{categoryId}")

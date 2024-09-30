@@ -28,6 +28,7 @@ public class CartItem {
     @Column(nullable = false)
     private BigDecimal price;
 
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 

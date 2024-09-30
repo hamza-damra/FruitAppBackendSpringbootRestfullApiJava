@@ -1,6 +1,7 @@
 package com.hamza.fruitsappbackend.modulus.cart.service;
 
 import com.hamza.fruitsappbackend.modulus.cart.dto.CartItemDTO;
+import com.hamza.fruitsappbackend.modulus.cart.dto.CartResponseDto;
 
 import java.util.List;
 
@@ -8,7 +9,7 @@ public interface CartItemService {
 
     CartItemDTO addCartItemToCart(Long cartId, CartItemDTO cartItemDTO, String token);
 
-    List<CartItemDTO> getCartItemsByUser(String token);
+    CartResponseDto getCartItemsByUser(String token);
 
     CartItemDTO getCartItemByProductId(Long productId, String token);
 

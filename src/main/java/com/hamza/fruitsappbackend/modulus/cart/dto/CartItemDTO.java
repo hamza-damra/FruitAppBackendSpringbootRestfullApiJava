@@ -22,6 +22,8 @@ public class CartItemDTO {
     @Min(value = 1, message = "Quantity must be at least 1")
     private int quantity;
 
+    private int stockQuantity;
+
     private String productName;
 
     private String productImageUrl;

@@ -1,6 +1,7 @@
 package com.hamza.fruitsappbackend.modulus.cart.controller;
 
 import com.hamza.fruitsappbackend.modulus.cart.dto.CartItemDTO;
+import com.hamza.fruitsappbackend.modulus.cart.dto.CartResponseDto;
 import com.hamza.fruitsappbackend.modulus.cart.service.CartItemService;
 import com.hamza.fruitsappbackend.modulus.cart.service.CartService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,8 +46,8 @@ public class CartController {
     }
 
     @GetMapping("/get")
-    public ResponseEntity<List<CartItemDTO>> getCartItemsForUser(@RequestHeader("Authorization") String token) {
-        List<CartItemDTO> cartItems = cartItemService.getCartItemsByUser(token);
+    public ResponseEntity<CartResponseDto> getCartItemsForUser(@RequestHeader("Authorization") String token) {
+        CartResponseDto cartItems = cartItemService.getCartItemsByUser(token);
         return ResponseEntity.ok(cartItems);
     }
 

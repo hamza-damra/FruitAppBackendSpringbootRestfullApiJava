@@ -3,6 +3,7 @@ package com.hamza.fruitsappbackend.modulus.cart.service_impl;
 import com.hamza.fruitsappbackend.constant.CartStatus;
 import com.hamza.fruitsappbackend.exception.global.BadRequestException;
 import com.hamza.fruitsappbackend.modulus.cart.dto.CartItemDTO;
+import com.hamza.fruitsappbackend.modulus.cart.dto.CartResponseDto;
 import com.hamza.fruitsappbackend.modulus.cart.entity.Cart;
 import com.hamza.fruitsappbackend.modulus.cart.entity.CartItem;
 import com.hamza.fruitsappbackend.modulus.product.entity.Product;
@@ -17,10 +18,6 @@ import com.hamza.fruitsappbackend.utils.AuthorizationUtils;
 import jakarta.transaction.Transactional;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.CachePut;
-import org.springframework.cache.annotation.Cacheable;
-import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -48,8 +45,6 @@ public class CartItemServiceImpl implements CartItemService {
     }
 
     @Override
-    @CachePut(value = "cartItems", key = "#cartItemDTO.productId")
-    @CacheEvict(value = "allProducts", allEntries = true)
     public CartItemDTO addCartItemToCart(Long cartId, CartItemDTO cartItemDTO, String token) {
 
         Cart cart = cartRepository.findById(cartId)
@@ -77,7 +72,6 @@ public class CartItemServiceImpl implements CartItemService {
     }
 
     @Override
-    @Cacheable(value = "cartItems", key = "#productId")
     public CartItemDTO getCartItemByProductId(Long productId, String token) {
         Long userId = getUserIdAndCheckRole(token);
 
@@ -91,8 +85,6 @@ public class CartItemServiceImpl implements CartItemService {
     }
 
     @Override
-    @CachePut(value = "cartItems", key = "#cartItemDTO.productId")
-    @CacheEvict(value = "allProducts", allEntries = true)
     public CartItemDTO updateCartItem(Long cartId, CartItemDTO cartItemDTO, String token) {
 
         Cart cart = cartRepository.findById(cartId)
@@ -115,11 +107,6 @@ public class CartItemServiceImpl implements CartItemService {
 
     @Override
     @Transactional
-    @Caching(
-            evict = {
-                    @CacheEvict(value = "cartItems", key = "#productId")
-            }
-    )
     public void deleteCartItemByProductId(Long productId, String token) {
         Long userId = getUserIdAndCheckRole(token);
 
@@ -129,12 +116,14 @@ public class CartItemServiceImpl implements CartItemService {
         CartItem cartItem = cartItemRepository.findByCartIdAndProductId(cart.getId(), productId)
                 .orElseThrow(() -> new CartItemNotFoundException("productId", productId.toString()));
 
+        cart.getCartItems().remove(cartItem);
         cartItemRepository.delete(cartItem);
         updateCartTotal(cart);
     }
 
+
     @Override
-    public List<CartItemDTO> getCartItemsByUser(String token) {
+    public CartResponseDto getCartItemsByUser(String token) {
         Long userId = getUserIdAndCheckRole(token);
 
         Cart cart = cartRepository.findByUserId(userId)
@@ -142,18 +131,15 @@ public class CartItemServiceImpl implements CartItemService {
 
         List<CartItem> cartItems = cart.getCartItems();
 
-        return cartItems.stream()
+        BigDecimal totalPrice = cartItems.stream().map(CartItem::getPrice).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
+
+        return new CartResponseDto(new BigDecimal(totalPrice.toString()),cartItems.size(), cartItems.stream()
                 .map(this::convertToDTO)
-                .collect(Collectors.toList());
+                .collect(Collectors.toList()));
     }
 
     @Override
     @Transactional
-    @Caching(
-            evict = {
-                    @CacheEvict(value = "cartItems", allEntries = true),
-            }
-    )
     public void deleteAllCartItemsByUser(String token) {
         Long userId = getUserIdAndCheckRole(token);
 
@@ -169,11 +155,6 @@ public class CartItemServiceImpl implements CartItemService {
 
     @Override
     @Transactional
-    @Caching(
-            evict = {
-                    @CacheEvict(value = "cartItems", key = "#productId")
-            }
-    )
     public CartItemDTO increaseCartItemQuantity(Long productId, String token) {
         Long userId = getUserIdAndCheckRole(token);
 
@@ -193,11 +174,6 @@ public class CartItemServiceImpl implements CartItemService {
 
     @Override
     @Transactional
-    @Caching(
-            evict = {
-                    @CacheEvict(value = "cartItems", key = "#productId")
-            }
-    )
     public CartItemDTO decreaseCartItemQuantity(Long productId, String token) {
         Long userId = getUserIdAndCheckRole(token);
 
@@ -226,17 +202,25 @@ public class CartItemServiceImpl implements CartItemService {
     }
 
     private void updateCartTotal(Cart cart) {
-        BigDecimal totalPrice = cart.getCartItems().stream()
+        if (cart.getStatus() == CartStatus.COMPLETED) {
+            throw new IllegalStateException("Cannot update total for a completed cart.");
+        }
+
+        Cart updatedCart = cartRepository.findById(cart.getId())
+                .orElseThrow(() -> new CartNotFoundException("id" , cart.getId().toString()));
+
+        BigDecimal totalPrice = updatedCart.getCartItems().stream()
                 .map(item -> item.getPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        int totalQuantity = cart.getCartItems().stream()
+        int totalQuantity = updatedCart.getCartItems().stream()
                 .mapToInt(CartItem::getQuantity)
                 .sum();
 
-        cart.setTotalPrice(totalPrice);
-        cart.setTotalQuantity(totalQuantity);
-        cartRepository.save(cart);
+        updatedCart.setTotalPrice(totalPrice);
+        updatedCart.setTotalQuantity(totalQuantity);
+
+        cartRepository.save(updatedCart);
     }
 
     private CartItem findOrCreateCartItem(Cart cart, Product product) {
@@ -251,6 +235,7 @@ public class CartItemServiceImpl implements CartItemService {
     private CartItemDTO convertToDTO(CartItem cartItem) {
         CartItemDTO cartItemDTO = new CartItemDTO();
         cartItemDTO.setId(cartItem.getId());
+        cartItemDTO.setStockQuantity(cartItem.getProduct().getStockQuantity());
         cartItemDTO.setProductId(cartItem.getProduct().getId());
         cartItemDTO.setQuantity(cartItem.getQuantity());
         cartItemDTO.setPrice(cartItem.getProduct().getPrice());

@@ -13,6 +13,7 @@ public class ProductDTOSerializer extends JsonSerializer<ProductDTO> {
         gen.writeStartObject();
         gen.writeNumberField("id", productDTO.getId());
         gen.writeStringField("name", productDTO.getName());
+        gen.writeStringField("addedAt", productDTO.getAddedAt().toString());
         gen.writeStringField("description", productDTO.getDescription());
         gen.writeNumberField("price", productDTO.getPrice());
         gen.writeNumberField("stockQuantity", productDTO.getStockQuantity());

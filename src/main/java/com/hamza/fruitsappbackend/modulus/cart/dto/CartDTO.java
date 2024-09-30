@@ -28,8 +28,6 @@ public class CartDTO {
 
     private BigDecimal totalPrice;
 
-    private Integer totalQuantity;
-
     @NotNull(message = "Cart items cannot be null")
     private List<CartItemDTO> cartItems;
 

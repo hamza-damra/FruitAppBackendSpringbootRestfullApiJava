@@ -1,10 +1,14 @@
 package com.hamza.fruitsappbackend.modulus.order.controller;
 
 import com.hamza.fruitsappbackend.modulus.order.dto.OrderDTO;
+import com.hamza.fruitsappbackend.modulus.order.dto.OrderItemDTO;
 import com.hamza.fruitsappbackend.modulus.order.service.OrderService;
+import com.hamza.fruitsappbackend.modulus.order.service.OrderItemService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -12,13 +16,16 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/v1/orders")
+@Validated
 public class OrderController {
 
     private final OrderService orderService;
+    private final OrderItemService orderItemService;
 
     @Autowired
-    public OrderController(OrderService orderService) {
+    public OrderController(OrderService orderService, OrderItemService orderItemService) {
         this.orderService = orderService;
+        this.orderItemService = orderItemService;
     }
 
     @PostMapping("/create")
@@ -74,6 +81,46 @@ public class OrderController {
             @PathVariable Long orderId,
             @PathVariable Long userId) {
         orderService.deleteOrderByIdAndUserId(orderId, userId, token);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/items")
+    @ResponseStatus(HttpStatus.CREATED)
+    public ResponseEntity<OrderItemDTO> createOrderItem(@Valid @RequestBody OrderItemDTO orderItemDTO) {
+        OrderItemDTO savedOrderItem = orderItemService.saveOrderItem(orderItemDTO);
+        return ResponseEntity.status(HttpStatus.CREATED).body(savedOrderItem);
+    }
+
+    @GetMapping("/items/{id}")
+    public ResponseEntity<OrderItemDTO> getOrderItemById(@PathVariable Long id) {
+        Optional<OrderItemDTO> orderItemDTO = orderItemService.getOrderItemById(id);
+        return orderItemDTO.map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("/items/order/{orderId}")
+    public ResponseEntity<List<OrderItemDTO>> getOrderItemsByOrderId(@PathVariable Long orderId) {
+        List<OrderItemDTO> orderItems = orderItemService.getOrderItemsByOrderId(orderId);
+        return ResponseEntity.ok(orderItems);
+    }
+
+    @GetMapping("/items")
+    public ResponseEntity<List<OrderItemDTO>> getAllOrderItems() {
+        List<OrderItemDTO> orderItems = orderItemService.getAllOrderItems();
+        return ResponseEntity.ok(orderItems);
+    }
+
+    @PutMapping("/items/{id}")
+    public ResponseEntity<OrderItemDTO> updateOrderItem(@PathVariable Long id, @Valid @RequestBody OrderItemDTO orderItemDTO) {
+        orderItemDTO.setId(id);
+        OrderItemDTO updatedOrderItem = orderItemService.updateOrderItem(orderItemDTO);
+        return ResponseEntity.ok(updatedOrderItem);
+    }
+
+    @DeleteMapping("/items/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public ResponseEntity<Void> deleteOrderItemById(@PathVariable Long id) {
+        orderItemService.deleteOrderItemById(id);
         return ResponseEntity.noContent().build();
     }
 }
