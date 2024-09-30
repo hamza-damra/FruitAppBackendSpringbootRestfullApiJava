@@ -69,10 +69,10 @@ public class ProductController {
     @GetMapping("/all")
     public ResponseEntity<ProductResponse> getAllProducts(
             @RequestHeader("Authorization") String token,
-            @RequestParam(name = "pageSize", defaultValue = Strings.DEFAULT_PAGE_SIZE, required = false) int pageSize,
-            @RequestParam(name = "pageNumber", defaultValue = Strings.DEFAULT_PAGE_NUMBER, required = false) int pageNumber,
+            @RequestParam(name = "itemsPerPage", defaultValue = Strings.DEFAULT_PAGE_SIZE, required = false) int pageSize,
+            @RequestParam(name = "currentPage", defaultValue = Strings.DEFAULT_PAGE_NUMBER, required = false) int pageNumber,
             @RequestParam(name = "sortBy", defaultValue = Strings.DEFAULT_SORT_FIELD, required = false) String sortBy,
-            @RequestParam(name = "sortDirection", defaultValue = Strings.DEFAULT_SORT_DIRECTION, required = false) String sortDirection) {
+            @RequestParam(name = "sortDir", defaultValue = Strings.DEFAULT_SORT_DIRECTION, required = false) String sortDirection) {
         ProductResponse products = productService.getAllProducts(token, pageSize, pageNumber, sortBy, sortDirection);
         return ResponseEntity.ok(products);
     }

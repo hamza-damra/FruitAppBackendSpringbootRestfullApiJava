@@ -1,6 +1,7 @@
 package com.hamza.fruitsappbackend.modulus.wishlist.controller;
 
 import com.hamza.fruitsappbackend.modulus.wishlist.dto.WishlistDTO;
+import com.hamza.fruitsappbackend.modulus.wishlist.dto.WishlistResponse;
 import com.hamza.fruitsappbackend.modulus.wishlist.service.WishlistService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -40,9 +41,9 @@ public class WishlistController {
     }
 
     @GetMapping("/user")
-    public ResponseEntity<List<WishlistDTO>> getWishlist(@RequestHeader("Authorization") String token) {
+    public ResponseEntity<WishlistResponse> getWishlist(@RequestHeader("Authorization") String token) {
         List<WishlistDTO> wishlistItems = wishlistService.getWishlistByUserId(token);
-        return ResponseEntity.ok(wishlistItems);
+        return ResponseEntity.ok(new WishlistResponse(wishlistItems.size(), wishlistItems));
     }
 
     @GetMapping("/all")
