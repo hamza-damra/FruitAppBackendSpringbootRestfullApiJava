@@ -12,6 +12,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
@@ -93,6 +94,7 @@ public class User {
         updatedAt = now;
         cart = new Cart();
         cart.setUser(this);
+        cart.setTotalPrice(new BigDecimal(0));
         cart.setStatus(CartStatus.ACTIVE);
     }
 
