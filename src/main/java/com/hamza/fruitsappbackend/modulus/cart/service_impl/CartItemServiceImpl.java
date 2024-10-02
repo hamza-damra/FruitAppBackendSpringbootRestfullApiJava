@@ -18,6 +18,7 @@ import com.hamza.fruitsappbackend.utils.AuthorizationUtils;
 import jakarta.transaction.Transactional;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -45,6 +46,7 @@ public class CartItemServiceImpl implements CartItemService {
     }
 
     @Override
+    @CacheEvict(value = "allProducts", allEntries = true)
     public CartItemDTO addCartItemToCart(Long cartId, CartItemDTO cartItemDTO, String token) {
 
         Cart cart = cartRepository.findById(cartId)
@@ -85,6 +87,7 @@ public class CartItemServiceImpl implements CartItemService {
     }
 
     @Override
+    @CacheEvict(value = "allProducts", allEntries = true)
     public CartItemDTO updateCartItem(Long cartId, CartItemDTO cartItemDTO, String token) {
 
         Cart cart = cartRepository.findById(cartId)
@@ -107,6 +110,7 @@ public class CartItemServiceImpl implements CartItemService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "allProducts", allEntries = true)
     public void deleteCartItemByProductId(Long productId, String token) {
         Long userId = getUserIdAndCheckRole(token);
 
@@ -140,6 +144,7 @@ public class CartItemServiceImpl implements CartItemService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "allProducts", allEntries = true)
     public void deleteAllCartItemsByUser(String token) {
         Long userId = getUserIdAndCheckRole(token);
 
@@ -155,6 +160,7 @@ public class CartItemServiceImpl implements CartItemService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "allProducts", allEntries = true)
     public CartItemDTO increaseCartItemQuantity(Long productId, String token) {
         Long userId = getUserIdAndCheckRole(token);
 
@@ -174,6 +180,7 @@ public class CartItemServiceImpl implements CartItemService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "allProducts", allEntries = true)
     public CartItemDTO decreaseCartItemQuantity(Long productId, String token) {
         Long userId = getUserIdAndCheckRole(token);
 

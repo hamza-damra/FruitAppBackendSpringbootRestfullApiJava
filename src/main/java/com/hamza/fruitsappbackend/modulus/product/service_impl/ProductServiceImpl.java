@@ -207,6 +207,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    @CacheEvict(value = "allProducts", allEntries = true)
     public void deleteAllProducts(String token) {
         authorizationUtils.checkAdminRole(token);
         productRepository.deleteAll();
