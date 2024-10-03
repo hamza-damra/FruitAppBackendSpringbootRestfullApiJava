@@ -91,7 +91,6 @@ public class RoleServiceImpl implements RoleService {
     }
 
     @Override
-    @Cacheable(value = "roles", key = "#id")
     @Transactional
     public RoleDto getRoleById(Long id) {
         Role role = roleRepository.findById(id)
@@ -100,7 +99,6 @@ public class RoleServiceImpl implements RoleService {
     }
 
     @Override
-    @Cacheable(value = "allRoles")
     public List<RoleDto> getAllRoles() {
         return roleRepository.findAll().stream()
                 .map(role -> modelMapper.map(role, RoleDto.class))
