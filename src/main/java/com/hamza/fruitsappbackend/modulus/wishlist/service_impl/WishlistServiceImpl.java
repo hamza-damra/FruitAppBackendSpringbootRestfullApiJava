@@ -76,7 +76,7 @@ public class WishlistServiceImpl implements WishlistService {
         authorizationUtils.checkUserOrAdminRole(token, userId);
 
         Wishlist wishlist = wishlistRepository.findByUserIdAndProductId(userId, productId)
-                .orElseThrow(() -> new WishlistNotFoundException("user_id and product_id", userId.toString() + " " + productId.toString()));
+                .orElseThrow(() -> new WishlistNotFoundException("user_id and product_id", userId + " " + productId.toString()));
         wishlistRepository.delete(wishlist);
         logger.info("Product with ID {} removed from wishlist for user ID {}", productId, userId);
     }
