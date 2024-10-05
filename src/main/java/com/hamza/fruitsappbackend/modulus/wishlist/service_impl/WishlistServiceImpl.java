@@ -3,6 +3,7 @@ package com.hamza.fruitsappbackend.modulus.wishlist.service_impl;
 import com.hamza.fruitsappbackend.modulus.wishlist.dto.WishlistDTO;
 import com.hamza.fruitsappbackend.modulus.product.entity.Product;
 import com.hamza.fruitsappbackend.modulus.user.entity.User;
+import com.hamza.fruitsappbackend.modulus.wishlist.dto.WishlistResponse;
 import com.hamza.fruitsappbackend.modulus.wishlist.entity.Wishlist;
 import com.hamza.fruitsappbackend.modulus.product.exception.ProductNotFoundException;
 import com.hamza.fruitsappbackend.modulus.user.exception.UserNotFoundException;
@@ -16,6 +17,8 @@ import com.hamza.fruitsappbackend.security.JwtTokenProvider;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,7 +49,10 @@ public class WishlistServiceImpl implements WishlistService {
     }
 
     @Override
-    @CacheEvict(value = "allProducts", allEntries = true)
+    @Caching(evict = {
+            @CacheEvict(value = "allWishlists", allEntries = true),
+            @CacheEvict(value = "allProducts", allEntries = true)
+    })
     public void addToWishlist(Long productId, String token) {
         Long userId = getUserIdFromToken(token);
         authorizationUtils.checkUserOrAdminRole(token, userId);
@@ -70,7 +76,10 @@ public class WishlistServiceImpl implements WishlistService {
     }
 
     @Override
-    @CacheEvict(value = "allProducts", allEntries = true)
+    @Caching(evict = {
+            @CacheEvict(value = "allWishlists", allEntries = true),
+            @CacheEvict(value = "allProducts", allEntries = true)
+    })
     public void removeFromWishlist(Long productId, String token) {
         Long userId = getUserIdFromToken(token);
         authorizationUtils.checkUserOrAdminRole(token, userId);
@@ -82,27 +91,29 @@ public class WishlistServiceImpl implements WishlistService {
     }
 
     @Override
-    public List<WishlistDTO> getWishlistByUserId(String token) {
+    @Cacheable(value = "allWishlists", key = "#token")
+    public WishlistResponse getWishlistByUserId(String token) {
         Long userId = getUserIdFromToken(token);
         authorizationUtils.checkUserOrAdminRole(token, userId);
 
         List<Wishlist> wishlists = wishlistRepository.findByUserId(userId);
         logger.info("Fetched wishlist for user ID {}", userId);
 
-        return wishlists.stream()
+        return new WishlistResponse(wishlists.size(), wishlists.stream()
                 .map(wishlist -> convertToWishlistDTO(wishlist, token))
-                .collect(Collectors.toList());
+                .collect(Collectors.toList()));
     }
 
     @Override
-    public List<WishlistDTO> getAllWishlists(String token) {
+    @Cacheable(value = "allWishlists", key = "#token")
+    public WishlistResponse getAllWishlists(String token) {
         authorizationUtils.checkAdminRole(token);
         List<Wishlist> wishlists = wishlistRepository.findAll();
         logger.info("Fetched all wishlists");
 
-        return wishlists.stream()
+        return new WishlistResponse(wishlists.size(), wishlists.stream()
                 .map(wishlist -> convertToWishlistDTO(wishlist, token))
-                .collect(Collectors.toList());
+                .collect(Collectors.toList()));
     }
 
     private WishlistDTO convertToWishlistDTO(Wishlist wishlist, String token) {
@@ -142,7 +153,10 @@ public class WishlistServiceImpl implements WishlistService {
 
     @Override
     @Transactional
-    @CacheEvict(value = "allProducts", allEntries = true)
+    @Caching(evict = {
+            @CacheEvict(value = "allWishlists", allEntries = true),
+            @CacheEvict(value = "allProducts", allEntries = true)
+    })
     public void removeAllFromWishlist(String token) {
         Long userId = getUserIdFromToken(token);
         authorizationUtils.checkUserOrAdminRole(token, userId);

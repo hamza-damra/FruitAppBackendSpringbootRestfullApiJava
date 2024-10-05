@@ -42,13 +42,13 @@ public class WishlistController {
 
     @GetMapping("/user")
     public ResponseEntity<WishlistResponse> getWishlist(@RequestHeader("Authorization") String token) {
-        List<WishlistDTO> wishlistItems = wishlistService.getWishlistByUserId(token);
-        return ResponseEntity.ok(new WishlistResponse(wishlistItems.size(), wishlistItems));
+        WishlistResponse wishlistItems = wishlistService.getWishlistByUserId(token);
+        return ResponseEntity.ok(wishlistItems);
     }
 
     @GetMapping("/all")
-    public ResponseEntity<List<WishlistDTO>> getAllWishlists(@RequestHeader("Authorization") String token) {
-        List<WishlistDTO> wishlists = wishlistService.getAllWishlists(token);
+    public ResponseEntity<WishlistResponse> getAllWishlists(@RequestHeader("Authorization") String token) {
+        WishlistResponse wishlists = wishlistService.getAllWishlists(token);
         return ResponseEntity.ok(wishlists);
     }
 }
