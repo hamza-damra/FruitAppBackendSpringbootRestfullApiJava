@@ -2,6 +2,8 @@ package com.hamza.fruitsappbackend.modulus.wishlist.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import com.hamza.fruitsappbackend.validation.markers.OnCreate;
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
@@ -17,7 +19,6 @@ import java.time.LocalDateTime;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@JsonInclude(JsonInclude.Include.NON_NULL)
 public class WishlistDTO {
     private Long id;
 
@@ -25,12 +26,11 @@ public class WishlistDTO {
 
     private String name;
 
-
     private String description;
 
     private Double price;
 
-    private Integer quantityInCart;
+    private Integer quantityInCart = 0;
 
     private Integer stockQuantity;
 
@@ -46,10 +46,11 @@ public class WishlistDTO {
     private LocalDate expirationDate;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private LocalDateTime addedAt;
-
-
+    @JsonProperty("isFavorite")
     private boolean isFavorite;
+    @JsonProperty("isInCart")
     private boolean isInCart;
+
     private Long orderCount = 0L;
     private Integer likeCount = 0;
     private Double totalRating = 0.0;

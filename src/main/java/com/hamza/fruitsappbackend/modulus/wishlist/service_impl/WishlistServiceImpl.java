@@ -128,6 +128,9 @@ public class WishlistServiceImpl implements WishlistService {
         wishlistDTO.setAddedAt(wishlist.getProduct().getCreatedAt());
         wishlistDTO.setDescription(wishlist.getProduct().getDescription());
         wishlistDTO.setImageUrl(wishlist.getProduct().getImageUrl());
+        wishlistDTO.setStockQuantity(wishlist.getProduct().getStockQuantity());
+        wishlistDTO.setProductWeight(wishlist.getProduct().getProductWeight());
+        wishlistDTO.setQuantityInCart(wishlist.getProduct().getQuantityInCart() == null ? 0 : wishlist.getProduct().getQuantityInCart());
         wishlistDTO.setCaloriesPer100Grams(wishlist.getProduct().getCaloriesPer100Grams());
         wishlistDTO.setExpirationDate(wishlist.getProduct().getExpirationDate());
         wishlistDTO.setCounterOneStars(wishlist.getProduct().getCounterOneStars());

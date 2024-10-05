@@ -31,7 +31,7 @@ public class ProductDTO {
     @DecimalMin(value = "0.0", inclusive = false, message = "Price must be greater than 0")
     private Double price;
 
-    private Integer quantityInCart;
+    private Integer quantityInCart = 0;
 
     @Min(value = 0, message = "Stock quantity must be a non-negative number")
     private Integer stockQuantity;
