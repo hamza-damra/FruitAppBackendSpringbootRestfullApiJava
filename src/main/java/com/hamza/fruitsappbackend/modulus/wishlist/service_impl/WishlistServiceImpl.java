@@ -90,7 +90,7 @@ public class WishlistServiceImpl implements WishlistService {
         logger.info("Fetched wishlist for user ID {}", userId);
 
         return wishlists.stream()
-                .map(wishlist -> new WishlistDTO(wishlist.getId(), wishlist.getProduct().getId(), wishlist.getCreatedAt()))
+                .map(wishlist -> convertToWishlistDTO(wishlist, token))
                 .collect(Collectors.toList());
     }
 
@@ -101,8 +101,43 @@ public class WishlistServiceImpl implements WishlistService {
         logger.info("Fetched all wishlists");
 
         return wishlists.stream()
-                .map(wishlist -> new WishlistDTO(wishlist.getId(), wishlist.getProduct().getId(), wishlist.getCreatedAt()))
+                .map(wishlist -> convertToWishlistDTO(wishlist, token))
                 .collect(Collectors.toList());
+    }
+
+    private WishlistDTO convertToWishlistDTO(Wishlist wishlist, String token) {
+        WishlistDTO wishlistDTO = new WishlistDTO();
+        wishlistDTO.setId(wishlist.getId());
+        wishlistDTO.setProductId(wishlist.getProduct().getId());
+        wishlistDTO.setCategoryId(wishlist.getProduct().getCategory().getId());
+        wishlistDTO.setName(wishlist.getProduct().getName());
+        wishlistDTO.setPrice(wishlist.getProduct().getPrice());
+        wishlistDTO.setQuantityInCart(wishlist.getProduct().getQuantityInCart());
+        wishlistDTO.setTotalRating(wishlist.getProduct().getTotalRating());
+        wishlistDTO.setAddedAt(wishlist.getProduct().getCreatedAt());
+        wishlistDTO.setDescription(wishlist.getProduct().getDescription());
+        wishlistDTO.setImageUrl(wishlist.getProduct().getImageUrl());
+        wishlistDTO.setCaloriesPer100Grams(wishlist.getProduct().getCaloriesPer100Grams());
+        wishlistDTO.setExpirationDate(wishlist.getProduct().getExpirationDate());
+        wishlistDTO.setCounterOneStars(wishlist.getProduct().getCounterOneStars());
+        wishlistDTO.setCounterTwoStars(wishlist.getProduct().getCounterTwoStars());
+        wishlistDTO.setCounterThreeStars(wishlist.getProduct().getCounterThreeStars());
+        wishlistDTO.setCounterFourStars(wishlist.getProduct().getCounterFourStars());
+        wishlistDTO.setCounterFiveStars(wishlist.getProduct().getCounterFiveStars());
+        wishlistDTO.setCreatedAt(wishlist.getCreatedAt());
+
+        User user = authorizationUtils.getUserFromToken(token);
+
+        boolean isFavorite = user.getWishlistItems().stream()
+                .anyMatch(wishlistItem -> wishlistItem.getProduct().getId().equals(wishlist.getProduct().getId()));
+        wishlistDTO.setFavorite(isFavorite);
+
+
+        boolean isInCart = user.getCart().getCartItems().stream()
+                .anyMatch(cartItem -> cartItem.getProduct().getId().equals(wishlist.getProduct().getId()));
+        wishlistDTO.setInCart(isInCart);
+
+        return wishlistDTO;
     }
 
     @Override
