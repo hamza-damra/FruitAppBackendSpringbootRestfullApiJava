@@ -7,6 +7,8 @@ import com.hamza.fruitsappbackend.modulus.user.service.UserService;
 import com.hamza.fruitsappbackend.security.JwtTokenProvider;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
@@ -45,6 +47,12 @@ public class UserController {
     }
 
     @PostMapping("/login")
+    @Caching(
+            evict = {
+                    @CacheEvict(value = "allProducts" , allEntries = true),
+                    @CacheEvict(value = "allWishlists", allEntries = true)
+            }
+    )
     public ResponseEntity<JwtAuthResponseDtoLogin> loginUser(@RequestParam String email, @RequestParam String password) {
         logger.info("User login attempt: " + email);
         try {
