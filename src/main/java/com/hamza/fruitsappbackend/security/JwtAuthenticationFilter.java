@@ -101,7 +101,7 @@ private final UserDetailsService userDetailsService;
     }
 
     private boolean isUnsecuredEndpoint(String requestURI) {
-        return requestURI.startsWith("/api/v1/users/") || requestURI.startsWith("/api/v1/roles/") || requestURI.startsWith("/api/v1/orders") || requestURI.startsWith("/api/v1/forgotPassword");
+        return requestURI.startsWith("/api/v1/users/") || requestURI.startsWith("/api/v1/roles/") || requestURI.startsWith("/api/v1/orders") || requestURI.startsWith("/api/v1/forgotPassword") || requestURI.startsWith("/api/v1/resetEmail");
     }
 
     private String getJwtTokenFromRequest(HttpServletRequest request) {
