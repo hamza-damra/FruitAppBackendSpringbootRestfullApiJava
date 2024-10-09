@@ -1,6 +1,5 @@
 package com.hamza.fruitsappbackend.modulus.product.controller;
 import com.hamza.fruitsappbackend.constant.Strings;
-import com.hamza.fruitsappbackend.modulus.product.dto.FilterProductByPriceResponse;
 import com.hamza.fruitsappbackend.modulus.product.dto.ProductDTO;
 import com.hamza.fruitsappbackend.modulus.product.dto.ProductResponse;
 import com.hamza.fruitsappbackend.modulus.product.service.ProductService;
@@ -52,12 +51,17 @@ public class ProductController {
 
 
     @GetMapping("/filtered")
-    public ResponseEntity<FilterProductByPriceResponse> getProductsByPriceRange(@RequestHeader("Authorization") String token,
-                                                                                @RequestParam(name = "minPrice", defaultValue = "0", required = false) double minPrice,
-                                                                                @RequestParam(name = "maxPrice", defaultValue = "10000", required = false) double maxPrice){
-        List<ProductDTO> products = productService.getProductsByPriceRange(token, minPrice, maxPrice);
-        return ResponseEntity.ok(new FilterProductByPriceResponse(products.size(),products));
+    public ResponseEntity<ProductResponse> getProductsByPriceRange(
+            @RequestHeader("Authorization") String token,
+            @RequestParam(name = "minPrice", defaultValue = "0", required = false) double minPrice,
+            @RequestParam(name = "maxPrice", defaultValue = "10000", required = false) double maxPrice,
+            @RequestParam(name = "itemsPerPage", defaultValue = Strings.DEFAULT_PAGE_SIZE, required = false) int pageSize,
+            @RequestParam(name = "currentPage", defaultValue = Strings.DEFAULT_PAGE_NUMBER, required = false) int pageNumber) {
+        ProductResponse productResponse = productService.getProductsByPriceRange(token, minPrice, maxPrice, pageSize, pageNumber);
+        return ResponseEntity.ok(productResponse);
     }
+
+
 
     @GetMapping("/category/{categoryId}")
     public ResponseEntity<List<ProductDTO>> getProductsByCategoryId(@RequestHeader("Authorization") String token,

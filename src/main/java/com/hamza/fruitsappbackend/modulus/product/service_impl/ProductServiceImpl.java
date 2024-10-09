@@ -21,9 +21,7 @@ import org.apache.logging.log4j.Logger;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -169,8 +167,6 @@ public class ProductServiceImpl implements ProductService {
     }
 
 
-
-
     private Product convertToEntity(ProductDTO productDTO) {
         Product product = new Product();
         product.setName(productDTO.getName());
@@ -227,11 +223,39 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public List<ProductDTO> getProductsByPriceRange(String token, double minPrice, double maxPrice) {
+    public ProductResponse getProductsByPriceRange(String token, double minPrice, double maxPrice, int pageSize, int pageNumber) {
+        // Check user authorization
         authorizationUtils.checkUserOrAdminRole(token, authorizationUtils.getUserFromToken(token).getId());
-        List<Product> products = productRepository.findByPriceRange(minPrice, maxPrice);
-        return products.stream()
+
+        // Validate pageSize and pageNumber to prevent out-of-bounds access
+        if (pageSize <= 0) {
+            throw new IllegalArgumentException("Page size must be greater than 0");
+        }
+        if (pageNumber < 0) {
+            throw new IllegalArgumentException("Page number must be 0 or greater");
+        }
+
+        // Create a Pageable object
+        Pageable pageable = PageRequest.of(pageNumber, pageSize);
+
+        // Fetch products by price range with pagination
+        Page<Product> productPage = productRepository.findByPriceRange(minPrice, maxPrice, pageable);
+
+        // Convert the retrieved products to DTOs
+        List<ProductDTO> content = productPage.getContent().stream()
                 .map(product -> convertToDto(product, token))
                 .collect(Collectors.toList());
+
+        // Construct and return the ProductResponse with pagination details
+        return new ProductResponse(
+                productPage.getSize(),          // Current page size
+                productPage.getNumber(),        // Current page number
+                productPage.getTotalElements(), // Total number of products
+                productPage.getTotalPages(),    // Total number of pages
+                productPage.isLast(),           // Is this the last page?
+                content                         // List of products in DTO form
+        );
     }
+
+
 }
