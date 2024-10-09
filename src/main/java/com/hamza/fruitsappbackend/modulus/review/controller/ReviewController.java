@@ -1,6 +1,7 @@
 package com.hamza.fruitsappbackend.modulus.review.controller;
 
 import com.hamza.fruitsappbackend.modulus.review.dto.ReviewDTO;
+import com.hamza.fruitsappbackend.modulus.review.dto.ReviewsResponse;
 import com.hamza.fruitsappbackend.modulus.review.service.ReviewService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,7 +23,7 @@ public class ReviewController {
 
     @PostMapping("/add")
     public ResponseEntity<ReviewDTO> createReview(@RequestHeader("Authorization") String token, @RequestBody @Valid ReviewDTO reviewDTO) {
-        ReviewDTO savedReview = reviewService.saveReview(reviewDTO, token);
+        ReviewDTO savedReview = reviewService.addReview(reviewDTO, token);
         return ResponseEntity.ok(savedReview);
     }
 
@@ -33,8 +34,8 @@ public class ReviewController {
     }
 
     @GetMapping("/product/{productId}")
-    public ResponseEntity<List<ReviewDTO>> getReviewsByProductId(@PathVariable Long productId) {
-        List<ReviewDTO> reviews = reviewService.getReviewsByProductId(productId);
+    public ResponseEntity<ReviewsResponse> getReviewsByProductId(@PathVariable Long productId, @RequestHeader("Authorization") String token) {
+        ReviewsResponse reviews = reviewService.getReviewsForProduct(productId, token);
         return ResponseEntity.ok(reviews);
     }
 
@@ -44,7 +45,7 @@ public class ReviewController {
         return ResponseEntity.ok(reviews);
     }
 
-    @GetMapping
+    @GetMapping("/all")
     public ResponseEntity<List<ReviewDTO>> getAllReviews() {
         List<ReviewDTO> reviews = reviewService.getAllReviews();
         return ResponseEntity.ok(reviews);

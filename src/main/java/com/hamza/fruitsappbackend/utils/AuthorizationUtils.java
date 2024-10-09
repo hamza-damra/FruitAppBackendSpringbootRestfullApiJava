@@ -44,6 +44,7 @@ public class AuthorizationUtils {
         }
     }
 
+
     public void checkAdminRole(String token) {
         token = token.trim();
         if (token.startsWith("Bearer ")) {

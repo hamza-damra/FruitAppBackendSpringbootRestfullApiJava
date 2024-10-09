@@ -1,8 +1,11 @@
 package com.hamza.fruitsappbackend.modulus.review.service_impl;
 
+import com.hamza.fruitsappbackend.exception.global.BadRequestException;
+import com.hamza.fruitsappbackend.modulus.review.dto.AllReviewsCustomResponse;
 import com.hamza.fruitsappbackend.modulus.review.dto.ReviewDTO;
 import com.hamza.fruitsappbackend.modulus.review.dto.ReviewImageDto;
 import com.hamza.fruitsappbackend.modulus.product.exception.ProductNotFoundException;
+import com.hamza.fruitsappbackend.modulus.review.dto.ReviewsResponse;
 import com.hamza.fruitsappbackend.modulus.review.exception.ReviewNotFoundException;
 import com.hamza.fruitsappbackend.modulus.product.entity.Product;
 import com.hamza.fruitsappbackend.modulus.review.entity.Review;
@@ -25,6 +28,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -56,38 +60,34 @@ public class ReviewServiceImpl implements ReviewService {
     }
 
     @Override
-    public ReviewDTO saveReview(ReviewDTO reviewDTO, String token) {
+    public ReviewDTO addReview(ReviewDTO reviewDTO, String token) {
         String username = jwtTokenProvider.getUserNameFromToken(token);
         User user = userRepository.findByEmail(username)
                 .orElseThrow(() -> new UserNotFoundException("email", username));
 
-        // تحويل DTO إلى كيان
         Review review = modelMapper.map(reviewDTO, Review.class);
 
-        // تعيين المنتج
         Product product = productRepository.findById(reviewDTO.getProductId())
                 .orElseThrow(() -> new ProductNotFoundException("product_id", reviewDTO.getProductId().toString()));
         review.setProduct(product);
 
-        // تعيين المستخدم من التوكن
         review.setUser(user);
 
-        // فحص إذا كان المستخدم قد قام بتقييم المنتج مسبقًا
         if (reviewRepository.existsByProductAndUser(product, user)) {
-            throw new AccessDeniedException("You have already reviewed this product");
+            throw new BadRequestException("You have already reviewed this product");
         }
 
-        // تعيين الصور إذا وجدت
+
         List<ReviewImage> reviewImages = mapImageDtosToReviewImages(reviewDTO.getImageDtos(), review);
         review.setReviewImages(reviewImages);
 
-        // حفظ التقييم
+
         Review savedReview = reviewRepository.save(review);
 
-        // تحديث تقييم المنتج الإجمالي
+
         productService.updateProductTotalRating(product.getId());
 
-        // تحويل التقييم المحفوظ إلى DTO
+
         ReviewDTO savedReviewDTO = modelMapper.map(savedReview, ReviewDTO.class);
         List<ReviewImageDto> imageDtos = savedReview.getReviewImages().stream()
                 .map(image -> modelMapper.map(image, ReviewImageDto.class))
@@ -106,7 +106,7 @@ public class ReviewServiceImpl implements ReviewService {
         User user = userRepository.findByEmail(username)
                 .orElseThrow(() -> new UserNotFoundException("email", username));
 
-        // فحص الصلاحيات
+
         authorizationUtils.checkUserOrAdminRole(token, user.getId());
 
         if (!existingReview.getUser().equals(user) && user.getRoles().stream()
@@ -114,11 +114,11 @@ public class ReviewServiceImpl implements ReviewService {
             throw new AccessDeniedException("You do not have permission to update this review");
         }
 
-        // تحديث الحقول
+
         existingReview.setRating(reviewDTO.getRating());
         existingReview.setComment(reviewDTO.getComment());
 
-        // تحديث الصور
+
         List<ReviewImage> existingImages = existingReview.getReviewImages();
         List<ReviewImage> updatedImages = mapImageDtosToReviewImages(reviewDTO.getImageDtos(), existingReview);
         existingImages.removeIf(image -> !updatedImages.contains(image));
@@ -126,13 +126,13 @@ public class ReviewServiceImpl implements ReviewService {
 
         existingReview.setReviewImages(existingImages);
 
-        // حفظ التقييم المحدث
+
         Review updatedReview = reviewRepository.save(existingReview);
 
-        // تحديث تقييم المنتج الإجمالي
+
         productService.updateProductTotalRating(updatedReview.getProduct().getId());
 
-        // تحويل التقييم المحدث إلى DTO
+
         ReviewDTO updatedReviewDTO = modelMapper.map(updatedReview, ReviewDTO.class);
         List<ReviewImageDto> imageDtos = updatedReview.getReviewImages().stream()
                 .map(image -> modelMapper.map(image, ReviewImageDto.class))
@@ -142,7 +142,6 @@ public class ReviewServiceImpl implements ReviewService {
     }
 
     @Override
-    @Cacheable(value = "reviews", key = "#id")
     public ReviewDTO getReviewById(Long id) {
         return reviewRepository.findById(id)
                 .map(review -> modelMapper.map(review, ReviewDTO.class))
@@ -150,7 +149,6 @@ public class ReviewServiceImpl implements ReviewService {
     }
 
     @Override
-    @Cacheable(value = "reviewsByProductId", key = "#productId")
     public List<ReviewDTO> getReviewsByProductId(Long productId) {
         return reviewRepository.findByProductId(productId).stream()
                 .map(review -> modelMapper.map(review, ReviewDTO.class))
@@ -158,7 +156,6 @@ public class ReviewServiceImpl implements ReviewService {
     }
 
     @Override
-    @Cacheable(value = "reviewsByUserId", key = "#userId")
     public List<ReviewDTO> getReviewsByUserId(Long userId) {
         return reviewRepository.findByUserId(userId).stream()
                 .map(review -> modelMapper.map(review, ReviewDTO.class))
@@ -233,4 +230,38 @@ public class ReviewServiceImpl implements ReviewService {
                 .map(dto -> new ReviewImage(null, dto.getImageUrl(), review))
                 .collect(Collectors.toList());
     }
+
+    public ReviewsResponse getReviewsForProduct(Long productId, String token) {
+        User currentUser =  authorizationUtils.getUserFromToken(token);
+        String currentUsername = currentUser.getName();
+        authorizationUtils.checkUserOrAdminRole(token, currentUser.getId());
+        List<Review> allReviews = reviewRepository.findByProductId(productId);
+        AllReviewsCustomResponse userReview = null;
+        List<AllReviewsCustomResponse> otherReviews = new ArrayList<>();
+
+        for (Review review : allReviews) {
+            AllReviewsCustomResponse response = AllReviewsCustomResponse.builder()
+                    .username(review.getUser().getName())
+                    .userImage(review.getUser().getImageUrl())
+                    .message(review.getComment())
+                    .totalLikes(review.getLikeCount())
+                    .rating((int) review.getRating())
+                    .reviewImages(review.getReviewImages())
+                    .createdAt(review.getCreatedAt())
+                    .updatedAt(review.getUpdatedAt())
+                    .build();
+
+            if (review.getUser().getName().equals(currentUsername)) {
+                userReview = response;
+            } else {
+                otherReviews.add(response);
+            }
+        }
+
+        return ReviewsResponse.builder()
+                .userReview(userReview)
+                .otherReviews(otherReviews)
+                .build();
+    }
+
 }
