@@ -3,6 +3,7 @@ package com.hamza.fruitsappbackend.modulus.product.entity;
 import com.hamza.fruitsappbackend.modulus.cart.entity.CartItem;
 import com.hamza.fruitsappbackend.modulus.order.entity.OrderItem;
 import com.hamza.fruitsappbackend.modulus.review.entity.Review;
+import com.hamza.fruitsappbackend.modulus.wishlist.entity.Wishlist;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -107,6 +108,9 @@ public class Product {
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Review> reviews;
+
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Wishlist> wishlists;
 
     @PrePersist
     protected void onCreate() {

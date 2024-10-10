@@ -4,6 +4,7 @@ import com.hamza.fruitsappbackend.modulus.product.dto.CategoryDTO;
 import com.hamza.fruitsappbackend.modulus.product.entity.Category;
 import com.hamza.fruitsappbackend.modulus.product.exception.CategoryNotFoundException;
 import com.hamza.fruitsappbackend.modulus.product.repository.CategoryRepository;
+import com.hamza.fruitsappbackend.modulus.product.repository.ProductRepository;
 import com.hamza.fruitsappbackend.modulus.product.service.CategoryService;
 import com.hamza.fruitsappbackend.utils.AuthorizationUtils;
 import org.modelmapper.ModelMapper;
@@ -12,19 +13,22 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
 public class CategoryServiceImpl implements CategoryService {
 
     private final CategoryRepository categoryRepository;
+    private final ProductRepository productRepository;
     private final ModelMapper modelMapper;
     private final AuthorizationUtils authorizationUtils;
 
     @Autowired
-    public CategoryServiceImpl(CategoryRepository categoryRepository, ModelMapper modelMapper,
+    public CategoryServiceImpl(CategoryRepository categoryRepository, ProductRepository productRepository, ModelMapper modelMapper,
                                AuthorizationUtils authorizationUtils) {
         this.categoryRepository = categoryRepository;
+        this.productRepository = productRepository;
         this.modelMapper = modelMapper;
         this.authorizationUtils = authorizationUtils;
     }
@@ -68,9 +72,15 @@ public class CategoryServiceImpl implements CategoryService {
     public void deleteCategoryById(Long id, String token) {
         authorizationUtils.checkAdminRole(token);
 
-        if (!categoryRepository.existsById(id)) {
+        Optional<Category> category = categoryRepository.findById(id);
+
+        if (category.isEmpty()) {
             throw new CategoryNotFoundException("id", id.toString());
         }
+        if(!category.get().getProducts().isEmpty()) {
+            productRepository.deleteAllByCategoryId(id);
+        }
+
         categoryRepository.deleteById(id);
     }
 }

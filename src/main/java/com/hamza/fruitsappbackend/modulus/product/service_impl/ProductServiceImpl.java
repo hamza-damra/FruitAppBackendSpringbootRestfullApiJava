@@ -16,6 +16,7 @@ import com.hamza.fruitsappbackend.modulus.user.entity.User;
 import com.hamza.fruitsappbackend.utils.AuthorizationUtils;
 import com.hamza.fruitsappbackend.modulus.product.dto.ProductResponse;
 import com.hamza.fruitsappbackend.modulus.wishlist.repository.WishlistRepository;
+import jakarta.transaction.Transactional;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.modelmapper.ModelMapper;
@@ -115,12 +116,23 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    @Transactional
     @CacheEvict(value = "allProducts", allEntries = true)
     public void deleteProductById(Long id, String token) {
         authorizationUtils.checkAdminRole(token);
         Product product = findProductById(id);
+        if(!product.getCartItems().isEmpty()) {
+            cartItemRepository.deleteAllByProductId(product.getId());
+        }
+        if(!product.getReviews().isEmpty()) {
+            reviewRepository.deleteAllByProductId(product.getId());
+        }
+        if (!product.getWishlists().isEmpty()) {
+            wishlistRepository.deleteAllByProductId(product.getId());
+        }
         productRepository.delete(product);
     }
+
 
     private void setCategory(ProductDTO productDTO, Product product) {
         if (productDTO.getCategoryId() != null) {

@@ -26,4 +26,6 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     Page<Product> findByPriceRange(@Param("minPrice") double minPrice,
                                    @Param("maxPrice") double maxPrice,
                                    Pageable pageable);
+
+    void deleteAllByCategoryId(Long id);
 }
