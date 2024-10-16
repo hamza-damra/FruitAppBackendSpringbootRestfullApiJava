@@ -23,6 +23,7 @@ import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -143,14 +144,24 @@ public class CartItemServiceImpl implements CartItemService {
         Cart cart = cartRepository.findByUserId(userId)
                 .orElseThrow(() -> new CartNotFoundException("userId", userId.toString()));
 
-        List<CartItem> cartItems = cart.getCartItems();
+        List<CartItem> sortedCartItems = cart.getCartItems().stream()
+                .sorted(Comparator.comparing(CartItem::getCreatedAt).reversed()) // sorting by createdAt descending
+                .toList();
 
-        BigDecimal totalPrice = cartItems.stream().map(CartItem::getPrice).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
+        BigDecimal totalPrice = sortedCartItems.stream()
+                .map(CartItem::getPrice)
+                .reduce(BigDecimal::add)
+                .orElse(BigDecimal.ZERO);
 
-        return new CartResponseDto(new BigDecimal(totalPrice.toString()),cartItems.size(), cartItems.stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList()));
+        return new CartResponseDto(
+                new BigDecimal(totalPrice.toString()),
+                sortedCartItems.size(),
+                sortedCartItems.stream()
+                        .map(this::convertToDTO)
+                        .collect(Collectors.toList())
+        );
     }
+
 
     @Override
     @Transactional
