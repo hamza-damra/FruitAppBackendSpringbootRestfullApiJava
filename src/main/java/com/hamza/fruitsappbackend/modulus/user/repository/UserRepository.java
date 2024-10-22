@@ -20,10 +20,4 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     User getUserById(Long userId);
 
-    @Query("SELECT u FROM User u " +
-            "LEFT JOIN FETCH u.wishlistItems w " +
-            "LEFT JOIN FETCH u.cart c " +
-            "WHERE u.email = :email")
-    Optional<User> findUserWithWishlistAndCartByEmail(@Param("email") String email);
-
 }

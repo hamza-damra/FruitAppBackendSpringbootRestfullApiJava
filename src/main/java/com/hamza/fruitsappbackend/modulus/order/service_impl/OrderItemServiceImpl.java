@@ -41,36 +41,34 @@ public class OrderItemServiceImpl implements OrderItemService {
         Product product = productRepository.findById(orderItemDTO.getProductId())
                 .orElseThrow(() -> new ProductNotFoundException("id", orderItemDTO.getProductId().toString()));
 
-        OrderItem orderItem = new OrderItem();
+        OrderItem orderItem = modelMapper.map(orderItemDTO, OrderItem.class);
         orderItem.setProduct(product);
-        orderItem.setQuantity(orderItemDTO.getQuantity());
         orderItem.setPrice(BigDecimal.valueOf(product.getPrice()));
 
         OrderItem savedOrderItem = orderItemRepository.save(orderItem);
         logger.debug("OrderItem saved with product ID {} and quantity {}", orderItemDTO.getProductId(), orderItemDTO.getQuantity());
 
-        return mapOrderItemToDTO(savedOrderItem);
+        return modelMapper.map(savedOrderItem, OrderItemDTO.class);
     }
 
     @Override
     @Cacheable(value = "orderItems", key = "#id")
     public Optional<OrderItemDTO> getOrderItemById(Long id) {
         return orderItemRepository.findById(id)
-                .map(this::mapOrderItemToDTO);
+                .map(orderItem -> modelMapper.map(orderItem, OrderItemDTO.class));
     }
 
     @Override
-    @Cacheable(value = "orderItemsByOrderId", key = "#orderId")
     public List<OrderItemDTO> getOrderItemsByOrderId(Long orderId) {
         return orderItemRepository.findByOrderId(orderId).stream()
-                .map(this::mapOrderItemToDTO)
+                .map(orderItem -> modelMapper.map(orderItem, OrderItemDTO.class))
                 .collect(Collectors.toList());
     }
 
     @Override
     public List<OrderItemDTO> getAllOrderItems() {
         return orderItemRepository.findAll().stream()
-                .map(this::mapOrderItemToDTO)
+                .map(orderItem -> modelMapper.map(orderItem, OrderItemDTO.class))
                 .collect(Collectors.toList());
     }
 
@@ -79,19 +77,15 @@ public class OrderItemServiceImpl implements OrderItemService {
         OrderItem existingOrderItem = orderItemRepository.findById(orderItemDTO.getId())
                 .orElseThrow(() -> new OrderItemNotFoundException("id", orderItemDTO.getId().toString()));
 
-        if (orderItemDTO.getQuantity() > 0) {
-            existingOrderItem.setQuantity(orderItemDTO.getQuantity());
-        }
+        existingOrderItem.setQuantity(orderItemDTO.getQuantity());
 
         Product product = productRepository.findById(orderItemDTO.getProductId())
                 .orElseThrow(() -> new ProductNotFoundException("id", orderItemDTO.getProductId().toString()));
         existingOrderItem.setProduct(product);
-        BigDecimal productPrice = BigDecimal.valueOf(product.getPrice());
-        logger.debug("Updating price for OrderItem: {}", productPrice);
-        existingOrderItem.setPrice(productPrice);
+        existingOrderItem.setPrice(BigDecimal.valueOf(product.getPrice()));
 
         OrderItem updatedOrderItem = orderItemRepository.save(existingOrderItem);
-        return mapOrderItemToDTO(updatedOrderItem);
+        return modelMapper.map(updatedOrderItem, OrderItemDTO.class);
     }
 
     @Override
@@ -100,11 +94,5 @@ public class OrderItemServiceImpl implements OrderItemService {
             throw new OrderItemNotFoundException("id", id.toString());
         }
         orderItemRepository.deleteById(id);
-    }
-
-    private OrderItemDTO mapOrderItemToDTO(OrderItem orderItem) {
-        OrderItemDTO orderItemDTO = modelMapper.map(orderItem, OrderItemDTO.class);
-        orderItemDTO.setProductId(orderItem.getProduct().getId());
-        return orderItemDTO;
     }
 }

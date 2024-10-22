@@ -2,6 +2,7 @@ package com.hamza.fruitsappbackend.modulus.cart.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.hamza.fruitsappbackend.constant.CartStatus;
+import com.hamza.fruitsappbackend.validation.annotation.ValidTotalPrice;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -16,6 +17,7 @@ import java.util.List;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@ValidTotalPrice
 public class CartDTO {
 
     private Long id;

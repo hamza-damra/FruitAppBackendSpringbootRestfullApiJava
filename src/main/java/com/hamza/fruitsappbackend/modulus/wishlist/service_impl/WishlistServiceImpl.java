@@ -140,14 +140,15 @@ public class WishlistServiceImpl implements WishlistService {
         wishlistDTO.setCounterFiveStars(wishlist.getProduct().getCounterFiveStars());
         wishlistDTO.setCreatedAt(wishlist.getCreatedAt());
 
+        // Determine if the product is in the user's wishlist
         User user = authorizationUtils.getUserFromToken(token);
-
         boolean isFavorite = user.getWishlistItems().stream()
                 .anyMatch(wishlistItem -> wishlistItem.getProduct().getId().equals(wishlist.getProduct().getId()));
         wishlistDTO.setFavorite(isFavorite);
 
-
-        boolean isInCart = user.getCart().getCartItems().stream()
+        // Determine if the product is in the user's cart
+        boolean isInCart = user.getCarts().stream()
+                .flatMap(cart -> cart.getCartItems().stream())
                 .anyMatch(cartItem -> cartItem.getProduct().getId().equals(wishlist.getProduct().getId()));
         wishlistDTO.setInCart(isInCart);
 

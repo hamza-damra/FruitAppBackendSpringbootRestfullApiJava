@@ -1,6 +1,5 @@
 package com.hamza.fruitsappbackend.modulus.user.entity;
 
-import com.hamza.fruitsappbackend.constant.CartStatus;
 import com.hamza.fruitsappbackend.modulus.cart.entity.Cart;
 import com.hamza.fruitsappbackend.modulus.order.entity.Order;
 import com.hamza.fruitsappbackend.modulus.review.entity.Review;
@@ -12,8 +11,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -51,8 +50,9 @@ public class User {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
-    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Cart cart;
+    // Updated to OneToMany relationship for multiple carts
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<Cart> carts = new ArrayList<>();
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<Address> addresses;
@@ -78,7 +78,6 @@ public class User {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Wishlist> wishlistItems;
 
-
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "user_roles",
@@ -92,15 +91,10 @@ public class User {
         LocalDateTime now = LocalDateTime.now();
         createdAt = now;
         updatedAt = now;
-        cart = new Cart();
-        cart.setUser(this);
-        cart.setTotalPrice(new BigDecimal(0));
-        cart.setStatus(CartStatus.ACTIVE);
     }
 
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
     }
-
 }

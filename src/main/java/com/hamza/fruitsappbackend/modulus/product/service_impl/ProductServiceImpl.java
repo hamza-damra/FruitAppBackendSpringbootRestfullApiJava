@@ -28,6 +28,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -47,13 +48,13 @@ public class ProductServiceImpl implements ProductService {
     @Autowired
     public ProductServiceImpl(ProductRepository productRepository, CategoryRepository categoryRepository,
                               ReviewRepository reviewRepository, ModelMapper modelMapper, CartRepository cartRepository, WishlistRepository wishlistRepository,
-                              CartItemRepository cartItemRepository, WishlistRepository wishlistRepository1, CartItemRepository cartItemRepository1, AuthorizationUtils authorizationUtils) {
+                              CartItemRepository cartItemRepository, AuthorizationUtils authorizationUtils) {
         this.productRepository = productRepository;
         this.categoryRepository = categoryRepository;
         this.reviewRepository = reviewRepository;
         this.modelMapper = modelMapper;
-        this.wishlistRepository = wishlistRepository1;
-        this.cartItemRepository = cartItemRepository1;
+        this.wishlistRepository = wishlistRepository;
+        this.cartItemRepository = cartItemRepository;
         this.authorizationUtils = authorizationUtils;
     }
 
@@ -102,7 +103,6 @@ public class ProductServiceImpl implements ProductService {
         );
     }
 
-
     @Override
     @CacheEvict(value = "allProducts", allEntries = true)
     public ProductDTO updateProduct(ProductDTO productDTO, String token) {
@@ -133,7 +133,6 @@ public class ProductServiceImpl implements ProductService {
         productRepository.delete(product);
     }
 
-
     private void setCategory(ProductDTO productDTO, Product product) {
         if (productDTO.getCategoryId() != null) {
             Category category = categoryRepository.findById(productDTO.getCategoryId())
@@ -161,23 +160,22 @@ public class ProductServiceImpl implements ProductService {
     private ProductDTO convertToDto(Product product, String token) {
         ProductDTO productDTO = modelMapper.map(product, ProductDTO.class);
 
-
         User user = authorizationUtils.getUserFromToken(token);
 
-
+        // Determine if the product is in the user's wishlist
         boolean isFavorite = user.getWishlistItems().stream()
                 .anyMatch(wishlistItem -> wishlistItem.getProduct().getId().equals(product.getId()));
         productDTO.setIsFavorite(isFavorite);
 
-
-        boolean isInCart = user.getCart().getCartItems().stream()
+        // Determine if the product is in the user's cart
+        boolean isInCart = user.getCarts().stream()
+                .flatMap(cart -> cart.getCartItems().stream())
                 .anyMatch(cartItem -> cartItem.getProduct().getId().equals(product.getId()));
         productDTO.setIsInCart(isInCart);
-        productDTO.setAddedAt(product.getCreatedAt());
 
+        productDTO.setAddedAt(product.getCreatedAt());
         return productDTO;
     }
-
 
     private Product convertToEntity(ProductDTO productDTO) {
         Product product = new Product();
@@ -268,6 +266,5 @@ public class ProductServiceImpl implements ProductService {
                 content                         // List of products in DTO form
         );
     }
-
 
 }

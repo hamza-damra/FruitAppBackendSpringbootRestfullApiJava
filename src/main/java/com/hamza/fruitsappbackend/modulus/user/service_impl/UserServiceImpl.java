@@ -1,6 +1,7 @@
 package com.hamza.fruitsappbackend.modulus.user.service_impl;
 
 import com.hamza.fruitsappbackend.modulus.cart.entity.Cart;
+import com.hamza.fruitsappbackend.modulus.cart.entity.CartItem;
 import com.hamza.fruitsappbackend.modulus.order.entity.Order;
 import com.hamza.fruitsappbackend.modulus.review.entity.Review;
 import com.hamza.fruitsappbackend.modulus.role.entity.Role;
@@ -209,6 +210,7 @@ public class UserServiceImpl implements UserService {
     }
 
     private void mapAndSetRelatedEntities(UserDTO userDTO, User user) {
+        // Map and set the list of addresses
         if (userDTO.getAddresses() != null) {
             user.setAddresses(
                     userDTO.getAddresses().stream()
@@ -217,10 +219,16 @@ public class UserServiceImpl implements UserService {
             );
         }
 
-        if (userDTO.getCart() != null) {
-            user.setCart(modelMapper.map(userDTO.getCart(), Cart.class));
+        // Map and set the list of carts (updated for one-to-many relationship)
+        if (userDTO.getCarts() != null) {  // Use getCarts() for multiple carts
+            user.setCarts(
+                    userDTO.getCarts().stream()  // Convert each CartDTO to Cart entity
+                            .map(cartDTO -> modelMapper.map(cartDTO, Cart.class))
+                            .collect(Collectors.toList())
+            );
         }
 
+        // Map and set the list of orders
         if (userDTO.getOrders() != null) {
             user.setOrders(
                     userDTO.getOrders().stream()
@@ -229,6 +237,7 @@ public class UserServiceImpl implements UserService {
             );
         }
 
+        // Map and set the list of reviews
         if (userDTO.getReviews() != null) {
             user.setReviews(
                     userDTO.getReviews().stream()
@@ -237,6 +246,8 @@ public class UserServiceImpl implements UserService {
             );
         }
     }
+
+
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {

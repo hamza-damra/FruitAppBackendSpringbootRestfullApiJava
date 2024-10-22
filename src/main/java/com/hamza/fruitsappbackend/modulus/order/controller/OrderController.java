@@ -1,7 +1,9 @@
 package com.hamza.fruitsappbackend.modulus.order.controller;
 
+import com.hamza.fruitsappbackend.constant.OrderStatus;
 import com.hamza.fruitsappbackend.modulus.order.dto.OrderDTO;
 import com.hamza.fruitsappbackend.modulus.order.dto.OrderItemDTO;
+import com.hamza.fruitsappbackend.modulus.order.dto.OrderResponseDto;
 import com.hamza.fruitsappbackend.modulus.order.service.OrderService;
 import com.hamza.fruitsappbackend.modulus.order.service.OrderItemService;
 import jakarta.validation.Valid;
@@ -30,7 +32,7 @@ public class OrderController {
 
     @PostMapping("/create")
     public ResponseEntity<OrderDTO> createOrder(@RequestHeader("Authorization") String token, @Valid @RequestBody OrderDTO orderDTO) {
-        OrderDTO savedOrder = orderService.saveOrder(orderDTO, token);
+        OrderDTO savedOrder = orderService.createOrder(orderDTO, token);
         return ResponseEntity.ok(savedOrder);
     }
 
@@ -41,10 +43,10 @@ public class OrderController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    @GetMapping("/user/{userId}")
-    public ResponseEntity<List<OrderDTO>> getOrdersByUserId(@RequestHeader("Authorization") String token, @PathVariable Long userId) {
-        List<OrderDTO> orders = orderService.getOrdersByUserId(userId, token);
-        return ResponseEntity.ok(orders);
+    @GetMapping("/user")
+    public ResponseEntity<OrderResponseDto> getOrdersByUser(@RequestHeader("Authorization") String token) {
+        OrderResponseDto orderResponse = orderService.getOrdersByUserId(token);
+        return ResponseEntity.ok(orderResponse);
     }
 
     @GetMapping
@@ -115,6 +117,15 @@ public class OrderController {
         orderItemDTO.setId(id);
         OrderItemDTO updatedOrderItem = orderItemService.updateOrderItem(orderItemDTO);
         return ResponseEntity.ok(updatedOrderItem);
+    }
+
+    @PutMapping("/{orderId}/status")
+    public ResponseEntity<OrderDTO> updateOrderStatus(
+            @RequestHeader("Authorization") String token,
+            @PathVariable Long orderId,
+            @RequestParam("newStatus") OrderStatus newStatus) {
+        OrderDTO updatedOrder = orderService.updateOrderStatus(orderId, newStatus, token);
+        return ResponseEntity.ok(updatedOrder);
     }
 
     @DeleteMapping("/items/{id}")

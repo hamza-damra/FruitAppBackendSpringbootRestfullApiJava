@@ -2,16 +2,18 @@ package com.hamza.fruitsappbackend.modulus.order.service;
 
 import com.hamza.fruitsappbackend.constant.OrderStatus;
 import com.hamza.fruitsappbackend.modulus.order.dto.OrderDTO;
+import com.hamza.fruitsappbackend.modulus.order.dto.OrderResponseDto;
 
 import java.util.List;
 import java.util.Optional;
 
 public interface OrderService {
 
-    OrderDTO saveOrder(OrderDTO orderDTO, String token);
+    OrderDTO createOrder(OrderDTO orderDTO, String token);
+
     Optional<OrderDTO> getOrderById(Long id, String token);
 
-    List<OrderDTO> getOrdersByUserId(Long userId, String token);
+    OrderResponseDto getOrdersByUserId(String token);
 
     List<OrderDTO> getAllOrders(String token);
 

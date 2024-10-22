@@ -2,6 +2,7 @@ package com.hamza.fruitsappbackend.modulus.order.entity;
 
 import com.hamza.fruitsappbackend.constant.OrderStatus;
 import com.hamza.fruitsappbackend.constant.PaymentMethod;
+import com.hamza.fruitsappbackend.modulus.cart.entity.Cart;
 import com.hamza.fruitsappbackend.modulus.user.entity.Address;
 import com.hamza.fruitsappbackend.modulus.user.entity.User;
 import jakarta.persistence.*;
@@ -58,6 +59,11 @@ public class Order {
     @JoinColumn(name = "address_id", nullable = false)
     private Address address;
 
+    // Update: Changed from One-to-One to Many-to-One (Cart can have multiple Orders)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "cart_id", nullable = false)
+    private Cart cart;
+
     @OneToMany(mappedBy = "order", cascade = CascadeType.MERGE, orphanRemoval = true)
     private List<OrderItem> orderItems;
 
@@ -65,7 +71,6 @@ public class Order {
         orderItems.add(orderItem);
         orderItem.setOrder(this);
     }
-
 
     @PrePersist
     protected void onCreate() {
@@ -77,5 +82,12 @@ public class Order {
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
+    }
+
+    // Method to calculate total price based on OrderItems
+    public void updateTotal() {
+        this.totalPrice = this.orderItems.stream()
+                .map(OrderItem::getPrice)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 }

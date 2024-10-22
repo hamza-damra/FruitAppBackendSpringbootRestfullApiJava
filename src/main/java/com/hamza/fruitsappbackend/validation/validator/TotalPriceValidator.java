@@ -1,6 +1,6 @@
 package com.hamza.fruitsappbackend.validation.validator;
 
-import com.hamza.fruitsappbackend.modulus.order.dto.OrderDTO;
+import com.hamza.fruitsappbackend.modulus.cart.dto.CartDTO;
 import com.hamza.fruitsappbackend.modulus.product.entity.Product;
 import com.hamza.fruitsappbackend.modulus.product.repository.ProductRepository;
 import com.hamza.fruitsappbackend.validation.annotation.ValidTotalPrice;
@@ -10,16 +10,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.math.BigDecimal;
 
-public class TotalPriceValidator implements ConstraintValidator<ValidTotalPrice, OrderDTO> {
+public class TotalPriceValidator implements ConstraintValidator<ValidTotalPrice, CartDTO> {
 
     @Autowired
     private ProductRepository productRepository;
 
-    public boolean isValid(OrderDTO orderDTO, ConstraintValidatorContext context) {
+    public boolean isValid(CartDTO cartDTO, ConstraintValidatorContext context) {
         try {
             BigDecimal calculatedTotalPrice = BigDecimal.ZERO;
 
-            for (var item : orderDTO.getOrderItems()) {
+            for (var item : cartDTO.getCartItems()) {
                 if (item.getProductId() == null) {
                     context.disableDefaultConstraintViolation();
                     context.buildConstraintViolationWithTemplate("Product ID must not be null")
@@ -35,11 +35,11 @@ public class TotalPriceValidator implements ConstraintValidator<ValidTotalPrice,
                 calculatedTotalPrice = calculatedTotalPrice.add(itemTotalPrice);
             }
 
-            if (calculatedTotalPrice.compareTo(orderDTO.getTotalPrice()) != 0) {
+            if (calculatedTotalPrice.compareTo(cartDTO.getTotalPrice()) != 0) {
                 context.disableDefaultConstraintViolation();
                 context.buildConstraintViolationWithTemplate(
                                 "Provided total price does not match the calculated total price. Calculated: " +
-                                        calculatedTotalPrice + ", Provided: " + orderDTO.getTotalPrice())
+                                        calculatedTotalPrice + ", Provided: " + cartDTO.getTotalPrice())
                         .addPropertyNode("totalPrice")
                         .addConstraintViolation();
                 return false;
@@ -54,5 +54,6 @@ public class TotalPriceValidator implements ConstraintValidator<ValidTotalPrice,
             return false;
         }
     }
+
 
 }

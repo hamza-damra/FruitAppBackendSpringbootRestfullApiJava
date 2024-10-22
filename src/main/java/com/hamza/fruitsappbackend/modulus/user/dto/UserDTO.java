@@ -52,7 +52,7 @@ public class UserDTO {
     private LocalDateTime updatedAt;
 
     private List<AddressDTO> addresses;
-    private CartDTO cart;
+    private List<CartDTO> carts;
     private List<OrderDTO> orders;
     private List<ReviewDTO> reviews;
     private List<RoleDto> roles;

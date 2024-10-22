@@ -3,7 +3,6 @@ package com.hamza.fruitsappbackend.modulus.order.dto;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.hamza.fruitsappbackend.constant.OrderStatus;
 import com.hamza.fruitsappbackend.constant.PaymentMethod;
-import com.hamza.fruitsappbackend.validation.annotation.ValidTotalPrice;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PastOrPresent;
 import jakarta.validation.constraints.Positive;
@@ -20,13 +19,10 @@ import java.util.List;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@ValidTotalPrice
 public class OrderDTO {
 
     private Long id;
 
-    @Positive(message = "Total price must be a positive value")
-    @NotNull(message = "Total price is required")
     private BigDecimal totalPrice;
 
     @NotNull(message = "Order status cannot be null")
@@ -43,12 +39,7 @@ public class OrderDTO {
     @PastOrPresent(message = "Updated date cannot be in the future")
     private LocalDateTime updatedAt;
 
-    @NotNull(message = "User ID is required")
     private Long userId;
 
-    @NotNull(message = "Address ID is required")
     private Long addressId;
-
-    @NotNull(message = "Order items are required")
-    private List<OrderItemDTO> orderItems;
 }

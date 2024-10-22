@@ -25,6 +25,7 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -52,19 +53,20 @@ public class CartItemServiceImpl implements CartItemService {
             @CacheEvict(value = "allWishlists", allEntries = true),
             @CacheEvict(value = "allProducts", allEntries = true)
     })
+    @Transactional
     public CartItemDTO addCartItemToCart(Long cartId, CartItemDTO cartItemDTO, String token) {
 
         Cart cart = cartRepository.findById(cartId)
                 .orElseThrow(() -> new CartNotFoundException("id", cartId.toString()));
 
-        if(cart.getStatus() == CartStatus.COMPLETED){
-            throw new BadRequestException("Cannot add items to a completed cart");
+        if (cart.getStatus() == CartStatus.COMPLETED) {
+            cart.reopenCart();
         }
 
         Product product = productRepository.findById(cartItemDTO.getProductId())
                 .orElseThrow(() -> new ProductNotFoundException("id", cartItemDTO.getProductId().toString()));
 
-        if(cartItemRepository.existsByCartIdAndProductId(cart.getId(), product.getId())){
+        if (cartItemRepository.existsByCartIdAndProductId(cart.getId(), product.getId())) {
             throw new BadRequestException("Item already exists in the cart");
         }
 
@@ -82,7 +84,10 @@ public class CartItemServiceImpl implements CartItemService {
     public CartItemDTO getCartItemByProductId(Long productId, String token) {
         Long userId = getUserIdAndCheckRole(token);
 
-        Cart cart = cartRepository.findByUserId(userId)
+        // Ensure only one active cart is fetched
+        Cart cart = cartRepository.findAllByUserIdAndStatus(userId, CartStatus.ACTIVE)
+                .stream()
+                .findFirst()
                 .orElseThrow(() -> new CartNotFoundException("userId", userId.toString()));
 
         CartItem cartItem = cartItemRepository.findByCartIdAndProductId(cart.getId(), productId)
@@ -96,12 +101,13 @@ public class CartItemServiceImpl implements CartItemService {
             @CacheEvict(value = "allWishlists", allEntries = true),
             @CacheEvict(value = "allProducts", allEntries = true)
     })
+    @Transactional
     public CartItemDTO updateCartItem(Long cartId, CartItemDTO cartItemDTO, String token) {
 
         Cart cart = cartRepository.findById(cartId)
                 .orElseThrow(() -> new CartNotFoundException("id", cartId.toString()));
 
-        if(cart.getStatus() == CartStatus.COMPLETED){
+        if (cart.getStatus() == CartStatus.COMPLETED) {
             throw new BadRequestException("Cannot update items in a completed cart");
         }
 
@@ -117,15 +123,17 @@ public class CartItemServiceImpl implements CartItemService {
     }
 
     @Override
-    @Transactional
     @Caching(evict = {
             @CacheEvict(value = "allWishlists", allEntries = true),
             @CacheEvict(value = "allProducts", allEntries = true)
     })
+    @Transactional
     public void deleteCartItemByProductId(Long productId, String token) {
         Long userId = getUserIdAndCheckRole(token);
 
-        Cart cart = cartRepository.findByUserId(userId)
+        Cart cart = cartRepository.findAllByUserIdAndStatus(userId, CartStatus.ACTIVE)
+                .stream()
+                .findFirst()
                 .orElseThrow(() -> new CartNotFoundException("userId", userId.toString()));
 
         CartItem cartItem = cartItemRepository.findByCartIdAndProductId(cart.getId(), productId)
@@ -136,16 +144,18 @@ public class CartItemServiceImpl implements CartItemService {
         updateCartTotal(cart);
     }
 
-
     @Override
     public CartResponseDto getCartItemsByUser(String token) {
         Long userId = getUserIdAndCheckRole(token);
 
-        Cart cart = cartRepository.findByUserId(userId)
+        // Ensure only one active cart is fetched
+        Cart cart = cartRepository.findAllByUserIdAndStatus(userId, CartStatus.ACTIVE)
+                .stream()
+                .findFirst()
                 .orElseThrow(() -> new CartNotFoundException("userId", userId.toString()));
 
         List<CartItem> sortedCartItems = cart.getCartItems().stream()
-                .sorted(Comparator.comparing(CartItem::getCreatedAt).reversed()) // sorting by createdAt descending
+                .sorted(Comparator.comparing(CartItem::getCreatedAt).reversed())
                 .toList();
 
         BigDecimal totalPrice = sortedCartItems.stream()
@@ -154,7 +164,7 @@ public class CartItemServiceImpl implements CartItemService {
                 .orElse(BigDecimal.ZERO);
 
         return new CartResponseDto(
-                new BigDecimal(totalPrice.toString()),
+                totalPrice,
                 sortedCartItems.size(),
                 sortedCartItems.stream()
                         .map(this::convertToDTO)
@@ -162,17 +172,18 @@ public class CartItemServiceImpl implements CartItemService {
         );
     }
 
-
     @Override
-    @Transactional
     @Caching(evict = {
             @CacheEvict(value = "allWishlists", allEntries = true),
             @CacheEvict(value = "allProducts", allEntries = true)
     })
+    @Transactional
     public void deleteAllCartItemsByUser(String token) {
         Long userId = getUserIdAndCheckRole(token);
 
-        Cart cart = cartRepository.findByUserId(userId)
+        Cart cart = cartRepository.findAllByUserIdAndStatus(userId, CartStatus.ACTIVE)
+                .stream()
+                .findFirst()
                 .orElseThrow(() -> new CartNotFoundException("userId", userId.toString()));
 
         cartItemRepository.deleteAllByCartId(cart.getId());
@@ -183,15 +194,17 @@ public class CartItemServiceImpl implements CartItemService {
     }
 
     @Override
-    @Transactional
     @Caching(evict = {
             @CacheEvict(value = "allWishlists", allEntries = true),
             @CacheEvict(value = "allProducts", allEntries = true)
     })
+    @Transactional
     public CartItemDTO increaseCartItemQuantity(Long productId, String token) {
         Long userId = getUserIdAndCheckRole(token);
 
-        Cart cart = cartRepository.findByUserId(userId)
+        Cart cart = cartRepository.findAllByUserIdAndStatus(userId, CartStatus.ACTIVE)
+                .stream()
+                .findFirst()
                 .orElseThrow(() -> new CartNotFoundException("userId", userId.toString()));
 
         CartItem cartItem = cartItemRepository.findByCartIdAndProductId(cart.getId(), productId)
@@ -206,15 +219,17 @@ public class CartItemServiceImpl implements CartItemService {
     }
 
     @Override
-    @Transactional
     @Caching(evict = {
             @CacheEvict(value = "allWishlists", allEntries = true),
             @CacheEvict(value = "allProducts", allEntries = true)
     })
+    @Transactional
     public CartItemDTO decreaseCartItemQuantity(Long productId, String token) {
         Long userId = getUserIdAndCheckRole(token);
 
-        Cart cart = cartRepository.findByUserId(userId)
+        Cart cart = cartRepository.findAllByUserIdAndStatus(userId, CartStatus.ACTIVE)
+                .stream()
+                .findFirst()
                 .orElseThrow(() -> new CartNotFoundException("userId", userId.toString()));
 
         CartItem cartItem = cartItemRepository.findByCartIdAndProductId(cart.getId(), productId)
@@ -244,7 +259,7 @@ public class CartItemServiceImpl implements CartItemService {
         }
 
         Cart updatedCart = cartRepository.findById(cart.getId())
-                .orElseThrow(() -> new CartNotFoundException("id" , cart.getId().toString()));
+                .orElseThrow(() -> new CartNotFoundException("id", cart.getId().toString()));
 
         BigDecimal totalPrice = updatedCart.getCartItems().stream()
                 .map(item -> item.getPrice().multiply(BigDecimal.valueOf(item.getQuantity())))

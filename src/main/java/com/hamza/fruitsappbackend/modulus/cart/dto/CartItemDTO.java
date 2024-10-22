@@ -1,5 +1,6 @@
 package com.hamza.fruitsappbackend.modulus.cart.dto;
 
+import com.hamza.fruitsappbackend.validation.annotation.ValidTotalPrice;
 import jakarta.persistence.Cacheable;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
