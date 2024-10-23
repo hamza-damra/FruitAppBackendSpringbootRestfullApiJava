@@ -44,7 +44,7 @@ public class OrderController {
     }
 
     @GetMapping("/user")
-    public ResponseEntity<OrderResponseDto> getOrdersByUser(@RequestHeader("Authorization") String token) {
+    public ResponseEntity<OrderResponseDto> getOrdersByUserToken(@RequestHeader("Authorization") String token) {
         OrderResponseDto orderResponse = orderService.getOrdersByUserId(token);
         return ResponseEntity.ok(orderResponse);
     }
@@ -55,13 +55,12 @@ public class OrderController {
         return ResponseEntity.ok(orders);
     }
 
-    @PutMapping("/{orderId}/user/{userId}")
-    public ResponseEntity<OrderDTO> updateOrderByUserIdAndOrderId(
+    @PutMapping("/user/{orderId}")
+    public ResponseEntity<OrderDTO> updateOrderByUserTokenAndOrderToken(
             @RequestHeader("Authorization") String token,
             @PathVariable Long orderId,
-            @PathVariable Long userId,
             @Valid @RequestBody OrderDTO orderDTO) {
-        OrderDTO updatedOrder = orderService.updateOrderByUserIdAndOrderId(orderId, userId, orderDTO, token);
+        OrderDTO updatedOrder = orderService.updateOrderByUserTokenAndOrderId(orderId, orderDTO, token);
         return ResponseEntity.ok(updatedOrder);
     }
 
@@ -71,18 +70,17 @@ public class OrderController {
         return ResponseEntity.noContent().build();
     }
 
-    @DeleteMapping("/user/{userId}")
-    public ResponseEntity<Void> deleteOrdersByUserId(@RequestHeader("Authorization") String token, @PathVariable Long userId) {
-        orderService.deleteOrdersByUserId(userId, token);
+    @DeleteMapping("/user")
+    public ResponseEntity<Void> deleteOrdersByUserToken(@RequestHeader("Authorization") String token) {
+        orderService.deleteOrdersByUserToken(token);
         return ResponseEntity.noContent().build();
     }
 
-    @DeleteMapping("/{orderId}/user/{userId}")
-    public ResponseEntity<Void> deleteOrderByIdAndUserId(
+    @DeleteMapping("/user/{orderId}")
+    public ResponseEntity<Void> deleteOrderByIdAndUserToken(
             @RequestHeader("Authorization") String token,
-            @PathVariable Long orderId,
-            @PathVariable Long userId) {
-        orderService.deleteOrderByIdAndUserId(orderId, userId, token);
+            @PathVariable Long orderId) {
+        orderService.deleteOrderByIdAndUserToken(orderId, token);
         return ResponseEntity.noContent().build();
     }
 

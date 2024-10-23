@@ -17,13 +17,13 @@ public interface OrderService {
 
     List<OrderDTO> getAllOrders(String token);
 
-    OrderDTO updateOrderByUserIdAndOrderId(Long orderId, Long userId, OrderDTO orderDTO, String token); // User or Admin
+    OrderDTO updateOrderByUserTokenAndOrderId(Long orderId, OrderDTO orderDTO, String token);
 
     void deleteOrderById(Long id, String token);
 
     OrderDTO updateOrderStatus(Long orderId, OrderStatus newStatus, String token);
 
-    void deleteOrdersByUserId(Long userId, String token);
+    void deleteOrdersByUserToken(String token);
 
-    void deleteOrderByIdAndUserId(Long orderId, Long userId, String token);
+    void deleteOrderByIdAndUserToken(Long orderId, String token);
 }
