@@ -63,7 +63,7 @@ public class Order {
     @JoinColumn(name = "cart_id", nullable = false)
     private Cart cart;
 
-    @OneToMany(mappedBy = "order", cascade = CascadeType.MERGE, orphanRemoval = true)
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderItem> orderItems;
 
 

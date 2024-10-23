@@ -204,8 +204,10 @@ public class OrderServiceImpl implements OrderService {
                 .collect(Collectors.toList());
 
         order.setOrderItems(orderItems);
+
         return order;
     }
+
 
     private Address fetchDefaultAddress(User user) {
         return user.getAddresses().stream()
