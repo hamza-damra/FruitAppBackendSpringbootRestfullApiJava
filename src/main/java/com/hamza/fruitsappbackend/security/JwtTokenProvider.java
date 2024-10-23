@@ -1,9 +1,9 @@
 package com.hamza.fruitsappbackend.security;
 
-import com.hamza.fruitsappbackend.modulus.user.entity.User;
+import com.hamza.fruitsappbackend.modules.user.entity.User;
 import com.hamza.fruitsappbackend.security.exception.JwtAuthenticationException;
-import com.hamza.fruitsappbackend.modulus.user.exception.UserNotFoundException;
-import com.hamza.fruitsappbackend.modulus.user.repository.UserRepository;
+import com.hamza.fruitsappbackend.modules.user.exception.UserNotFoundException;
+import com.hamza.fruitsappbackend.modules.user.repository.UserRepository;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.SignatureException;

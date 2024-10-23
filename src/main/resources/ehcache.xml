@@ -5,7 +5,7 @@
                             https://www.ehcache.org/v3/schema/ehcache-core-3.0.xsd">
     <cache alias="allProducts">
         <key-type>java.lang.String</key-type>
-        <value-type>com.hamza.fruitsappbackend.modulus.product.dto.ProductResponse</value-type>
+        <value-type>com.hamza.fruitsappbackend.modules.product.dto.ProductResponse</value-type>
         <expiry>
             <ttl unit="minutes">120</ttl>
         </expiry>
@@ -17,7 +17,7 @@
 
     <cache alias="allWishlists">
         <key-type>java.lang.String</key-type>
-        <value-type>com.hamza.fruitsappbackend.modulus.wishlist.dto.WishlistResponse</value-type>
+        <value-type>com.hamza.fruitsappbackend.modules.wishlist.dto.WishlistResponse</value-type>
         <expiry>
             <ttl unit="minutes">60</ttl>
         </expiry>
@@ -29,7 +29,7 @@
 
     <cache alias="allRoles">
         <key-type>java.lang.String</key-type>
-        <value-type>com.hamza.fruitsappbackend.modulus.role.dto.RolesResponseDto</value-type>
+        <value-type>com.hamza.fruitsappbackend.modules.role.dto.RolesResponseDto</value-type>
         <expiry>
             <ttl unit="minutes">60</ttl>
         </expiry>
@@ -40,7 +40,7 @@
 
     <cache alias="cartItems">
         <key-type>java.lang.Long</key-type>
-        <value-type>com.hamza.fruitsappbackend.modulus.cart.dto.CartItemDTO</value-type>
+        <value-type>com.hamza.fruitsappbackend.modules.cart.dto.CartItemDTO</value-type>
         <expiry>
             <ttl unit="minutes">60</ttl>
         </expiry>

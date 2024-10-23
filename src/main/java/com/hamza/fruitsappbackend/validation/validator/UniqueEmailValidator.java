@@ -1,6 +1,6 @@
 package com.hamza.fruitsappbackend.validation.validator;
 
-import com.hamza.fruitsappbackend.modulus.user.repository.UserRepository;
+import com.hamza.fruitsappbackend.modules.user.repository.UserRepository;
 import com.hamza.fruitsappbackend.validation.annotation.UniqueEmail;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;

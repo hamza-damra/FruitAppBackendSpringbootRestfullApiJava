@@ -3,7 +3,7 @@ package com.hamza.fruitsappbackend.utils;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
-import com.hamza.fruitsappbackend.modulus.product.dto.ProductDTO;
+import com.hamza.fruitsappbackend.modules.product.dto.ProductDTO;
 
 import java.io.IOException;
 

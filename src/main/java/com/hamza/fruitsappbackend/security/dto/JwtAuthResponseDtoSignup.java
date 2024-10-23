@@ -1,6 +1,6 @@
 package com.hamza.fruitsappbackend.security.dto;
 
-import com.hamza.fruitsappbackend.modulus.user.dto.UserDTO;
+import com.hamza.fruitsappbackend.modules.user.dto.UserDTO;
 import lombok.Getter;
 import lombok.Setter;
 

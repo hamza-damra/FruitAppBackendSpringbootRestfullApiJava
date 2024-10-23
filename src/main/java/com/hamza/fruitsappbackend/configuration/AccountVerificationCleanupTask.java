@@ -1,6 +1,6 @@
 package com.hamza.fruitsappbackend.configuration;
 
-import com.hamza.fruitsappbackend.modulus.user.repository.AccountVerificationRepository;
+import com.hamza.fruitsappbackend.modules.user.repository.AccountVerificationRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;

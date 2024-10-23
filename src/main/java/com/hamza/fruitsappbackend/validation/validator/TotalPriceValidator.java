@@ -1,8 +1,8 @@
 package com.hamza.fruitsappbackend.validation.validator;
 
-import com.hamza.fruitsappbackend.modulus.cart.dto.CartDTO;
-import com.hamza.fruitsappbackend.modulus.product.entity.Product;
-import com.hamza.fruitsappbackend.modulus.product.repository.ProductRepository;
+import com.hamza.fruitsappbackend.modules.cart.dto.CartDTO;
+import com.hamza.fruitsappbackend.modules.product.entity.Product;
+import com.hamza.fruitsappbackend.modules.product.repository.ProductRepository;
 import com.hamza.fruitsappbackend.validation.annotation.ValidTotalPrice;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;

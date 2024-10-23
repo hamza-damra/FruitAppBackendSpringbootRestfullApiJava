@@ -2,8 +2,7 @@ package com.hamza.fruitsappbackend.websocket;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.hamza.fruitsappbackend.modulus.product.dto.ProductDTO;
-import com.hamza.fruitsappbackend.modulus.product.service_impl.ProductServiceImpl;
+import com.hamza.fruitsappbackend.modules.product.dto.ProductDTO;
 import com.hamza.fruitsappbackend.security.JwtTokenProvider;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
