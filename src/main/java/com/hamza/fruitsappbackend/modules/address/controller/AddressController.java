@@ -1,7 +1,8 @@
-package com.hamza.fruitsappbackend.modules.user.controller;
+package com.hamza.fruitsappbackend.modules.address.controller;
 
-import com.hamza.fruitsappbackend.modules.user.dto.AddressDTO;
-import com.hamza.fruitsappbackend.modules.user.service.AddressService;
+import com.hamza.fruitsappbackend.modules.address.dto.AddressDTO;
+import com.hamza.fruitsappbackend.modules.address.dto.AddressResponseDTO;
+import com.hamza.fruitsappbackend.modules.address.service.AddressService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -23,7 +24,7 @@ public class AddressController {
 
     @PostMapping("/create")
     public ResponseEntity<AddressDTO> addAddress(@RequestHeader("Authorization") String token, @RequestBody @Valid AddressDTO addressDTO) {
-        AddressDTO savedAddress = addressService.saveAddress(addressDTO, token);
+        AddressDTO savedAddress = addressService.addAddress(addressDTO, token);
         return ResponseEntity.ok(savedAddress);
     }
 
@@ -35,9 +36,10 @@ public class AddressController {
     }
 
     @GetMapping("/user")
-    public ResponseEntity<List<AddressDTO>> getAddressesByUserId(@RequestHeader("Authorization") String token) {
-        List<AddressDTO> addresses = addressService.getAddressesByUserId(token);
-        return ResponseEntity.ok(addresses);
+    public ResponseEntity<AddressResponseDTO> getAddressesByUserToken(@RequestHeader("Authorization") String token) {
+        List<AddressDTO> addressDTOList = addressService.getAddressesByUserId(token);
+        AddressResponseDTO addressResponseDTO = new AddressResponseDTO(addressDTOList.size(), addressDTOList);
+        return ResponseEntity.ok(addressResponseDTO);
     }
 
     @GetMapping("/all")
@@ -46,10 +48,9 @@ public class AddressController {
         return ResponseEntity.ok(addresses);
     }
 
-    @PutMapping("/update-by-id/{id}")
-    public ResponseEntity<AddressDTO> updateAddress(@RequestHeader("Authorization") String token, @PathVariable Long id, @RequestBody @Valid AddressDTO addressDTO) {
-        addressDTO.setId(id);
-        AddressDTO updatedAddress = addressService.updateAddress(addressDTO, token);
+    @PutMapping("/update-by-id/{addressId}")
+    public ResponseEntity<AddressDTO> updateAddress(@RequestHeader("Authorization") String token, @PathVariable Long addressId, @RequestBody @Valid AddressDTO addressDTO) {
+        AddressDTO updatedAddress = addressService.updateAddress(addressId, addressDTO, token);
         return ResponseEntity.ok(updatedAddress);
     }
 

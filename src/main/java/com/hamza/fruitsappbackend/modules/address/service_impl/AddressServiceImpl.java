@@ -1,13 +1,13 @@
-package com.hamza.fruitsappbackend.modules.user.service_impl;
+package com.hamza.fruitsappbackend.modules.address.service_impl;
 
-import com.hamza.fruitsappbackend.modules.user.dto.AddressDTO;
-import com.hamza.fruitsappbackend.modules.user.entity.Address;
+import com.hamza.fruitsappbackend.modules.address.dto.AddressDTO;
+import com.hamza.fruitsappbackend.modules.address.entity.Address;
 import com.hamza.fruitsappbackend.modules.user.entity.User;
-import com.hamza.fruitsappbackend.modules.user.exception.AddressNotFoundException;
+import com.hamza.fruitsappbackend.modules.address.exception.AddressNotFoundException;
 import com.hamza.fruitsappbackend.modules.user.exception.UserNotFoundException;
-import com.hamza.fruitsappbackend.modules.user.repository.AddressRepository;
+import com.hamza.fruitsappbackend.modules.address.repository.AddressRepository;
 import com.hamza.fruitsappbackend.modules.user.repository.UserRepository;
-import com.hamza.fruitsappbackend.modules.user.service.AddressService;
+import com.hamza.fruitsappbackend.modules.address.service.AddressService;
 import com.hamza.fruitsappbackend.utils.AuthorizationUtils;
 import com.hamza.fruitsappbackend.security.JwtTokenProvider;
 import jakarta.transaction.Transactional;
@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 @Service
@@ -26,7 +27,6 @@ public class AddressServiceImpl implements AddressService {
     private final UserRepository userRepository;
     private final ModelMapper modelMapper;
     private final AuthorizationUtils authorizationUtils;
-    private final JwtTokenProvider jwtTokenProvider;
 
     @Autowired
     public AddressServiceImpl(AddressRepository addressRepository, UserRepository userRepository,
@@ -35,12 +35,11 @@ public class AddressServiceImpl implements AddressService {
         this.userRepository = userRepository;
         this.modelMapper = modelMapper;
         this.authorizationUtils = authorizationUtils;
-        this.jwtTokenProvider = jwtTokenProvider;
     }
 
     @Override
     @Transactional
-    public AddressDTO saveAddress(AddressDTO addressDTO, String token) {
+    public AddressDTO addAddress(AddressDTO addressDTO, String token) {
         Long userId = getUserIdFromToken(token);
         authorizationUtils.checkUserOrAdminRole(token, userId);
 
@@ -79,11 +78,11 @@ public class AddressServiceImpl implements AddressService {
 
     @Override
     @Transactional
-    public AddressDTO updateAddress(AddressDTO addressDTO, String token) {
+    public AddressDTO updateAddress(Long addressId, AddressDTO addressDTO, String token) {
         Long userId = getUserIdFromToken(token);
         authorizationUtils.checkUserOrAdminRole(token, userId);
 
-        Address addressToUpdate = findAddressById(addressDTO.getId());
+        Address addressToUpdate = findAddressById(addressId);
         if (!addressToUpdate.getUser().getId().equals(userId)) {
             throw new AddressNotFoundException("id", addressDTO.getId().toString());
         }
@@ -96,26 +95,22 @@ public class AddressServiceImpl implements AddressService {
     }
 
     private void updateAddressFields(Address addressToUpdate, AddressDTO addressDTO) {
-        if (addressDTO.getCity() != null) {
-            addressToUpdate.setCity(addressDTO.getCity());
-        }
+        updateIfPresent(addressDTO.getCity(), addressToUpdate::setCity);
+        updateIfPresent(addressDTO.getStreetAddress(), addressToUpdate::setStreetAddress);
+        updateIfPresent(addressDTO.getFullName(), addressToUpdate::setFullName);
+        updateIfPresent(addressDTO.getApartmentNumber(), addressToUpdate::setApartmentNumber);
+        updateIfPresent(addressDTO.getFloorNumber(), addressToUpdate::setFloorNumber);
+        updateIfPresent(addressDTO.getPhoneNumber(), addressToUpdate::setPhoneNumber);
+        updateIfPresent(addressDTO.isDefault(), addressToUpdate::setDefault);
+        updateIfPresent(addressDTO.getZipCode(), addressToUpdate::setZipCode);
+    }
 
-        if (addressDTO.getStreetAddress() != null) {
-            addressToUpdate.setStreetAddress(addressDTO.getStreetAddress());
-        }
-
-        if (addressDTO.getFullName() != null) {
-            addressToUpdate.setFullName(addressDTO.getFullName());
-        }
-
-        if (addressDTO.getApartmentNumber() != null) {
-            addressToUpdate.setApartmentNumber(addressDTO.getApartmentNumber());
-        }
-
-        if (addressDTO.getFloorNumber() != null) {
-            addressToUpdate.setFloorNumber(addressDTO.getFloorNumber());
+    private <T> void updateIfPresent(T value, Consumer<T> setter) {
+        if (value != null) {
+            setter.accept(value);
         }
     }
+
 
     @Override
     public void deleteAddressById(Long id, String token) {
@@ -208,17 +203,21 @@ public class AddressServiceImpl implements AddressService {
     }
 
     private void handleDefaultAddressLogic(Long userId, Address address) {
+
         List<Address> userAddresses = addressRepository.findByUserId(userId);
+
 
         if (userAddresses.isEmpty()) {
             address.setDefault(true);
         } else if (address.isDefault()) {
             userAddresses.stream()
                     .filter(Address::isDefault)
+                    .filter(existingAddress -> !existingAddress.getId().equals(address.getId()))  // Unset other default addresses
                     .forEach(existingAddress -> {
                         existingAddress.setDefault(false);
                         addressRepository.save(existingAddress);
                     });
         }
     }
+
 }

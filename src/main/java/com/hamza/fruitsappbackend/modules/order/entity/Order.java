@@ -3,7 +3,7 @@ package com.hamza.fruitsappbackend.modules.order.entity;
 import com.hamza.fruitsappbackend.constant.OrderStatus;
 import com.hamza.fruitsappbackend.constant.PaymentMethod;
 import com.hamza.fruitsappbackend.modules.cart.entity.Cart;
-import com.hamza.fruitsappbackend.modules.user.entity.Address;
+import com.hamza.fruitsappbackend.modules.address.entity.Address;
 import com.hamza.fruitsappbackend.modules.user.entity.User;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;

@@ -2,6 +2,7 @@ package com.hamza.fruitsappbackend.modules.user.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.hamza.fruitsappbackend.modules.address.dto.AddressDTO;
 import com.hamza.fruitsappbackend.modules.cart.dto.CartDTO;
 import com.hamza.fruitsappbackend.modules.order.dto.OrderDTO;
 import com.hamza.fruitsappbackend.modules.review.dto.ReviewDTO;

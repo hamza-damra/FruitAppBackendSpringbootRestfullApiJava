@@ -1,10 +1,12 @@
-package com.hamza.fruitsappbackend.modules.user.entity;
+package com.hamza.fruitsappbackend.modules.address.entity;
 
+import com.hamza.fruitsappbackend.modules.user.entity.User;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+
 import java.time.LocalDateTime;
 
 @Setter
@@ -46,6 +48,12 @@ public class Address {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
+
+    @Column(name = "phone_number", nullable = false)
+    private String phoneNumber;
+
+    @Column(name = "zip_code", nullable = false)
+    private String zipCode;
 
     @PrePersist
     protected void onCreate() {

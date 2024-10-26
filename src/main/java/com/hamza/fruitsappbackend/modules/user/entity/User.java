@@ -1,5 +1,6 @@
 package com.hamza.fruitsappbackend.modules.user.entity;
 
+import com.hamza.fruitsappbackend.modules.address.entity.Address;
 import com.hamza.fruitsappbackend.modules.cart.entity.Cart;
 import com.hamza.fruitsappbackend.modules.order.entity.Order;
 import com.hamza.fruitsappbackend.modules.review.entity.Review;

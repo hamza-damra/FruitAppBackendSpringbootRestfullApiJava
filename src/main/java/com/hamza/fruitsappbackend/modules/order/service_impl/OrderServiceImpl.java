@@ -15,7 +15,7 @@ import com.hamza.fruitsappbackend.modules.order.repository.OrderRepository;
 import com.hamza.fruitsappbackend.modules.order.service.OrderService;
 import com.hamza.fruitsappbackend.modules.product.entity.Product;
 import com.hamza.fruitsappbackend.modules.product.repository.ProductRepository;
-import com.hamza.fruitsappbackend.modules.user.entity.Address;
+import com.hamza.fruitsappbackend.modules.address.entity.Address;
 import com.hamza.fruitsappbackend.modules.user.entity.User;
 import com.hamza.fruitsappbackend.modules.user.repository.UserRepository;
 import com.hamza.fruitsappbackend.utils.AuthorizationUtils;

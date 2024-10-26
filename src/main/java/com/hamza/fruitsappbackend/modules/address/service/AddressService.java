@@ -1,13 +1,13 @@
-package com.hamza.fruitsappbackend.modules.user.service;
+package com.hamza.fruitsappbackend.modules.address.service;
 
-import com.hamza.fruitsappbackend.modules.user.dto.AddressDTO;
+import com.hamza.fruitsappbackend.modules.address.dto.AddressDTO;
 
 import java.util.List;
 import java.util.Optional;
 
 public interface AddressService {
 
-    AddressDTO saveAddress(AddressDTO addressDTO, String token);
+    AddressDTO addAddress(AddressDTO addressDTO, String token);
 
     Optional<AddressDTO> getAddressById(Long id, String token);
 
@@ -15,7 +15,7 @@ public interface AddressService {
 
     List<AddressDTO> getAllAddresses(String token);
 
-    AddressDTO updateAddress(AddressDTO addressDTO, String token);
+    AddressDTO updateAddress(Long addressId, AddressDTO addressDTO, String token);
 
     void deleteAddressById(Long id, String token);
 

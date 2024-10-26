@@ -8,7 +8,7 @@ import com.hamza.fruitsappbackend.modules.user.dto.UserDTO;
 import com.hamza.fruitsappbackend.exception.global.BadRequestException;
 import com.hamza.fruitsappbackend.modules.user.exception.UserNotFoundException;
 import com.hamza.fruitsappbackend.modules.role.exception.RoleNotFoundException;
-import com.hamza.fruitsappbackend.modules.user.entity.Address;
+import com.hamza.fruitsappbackend.modules.address.entity.Address;
 import com.hamza.fruitsappbackend.modules.user.entity.User;
 import com.hamza.fruitsappbackend.modules.user.repository.UserRepository;
 import com.hamza.fruitsappbackend.modules.role.repository.RoleRepository;

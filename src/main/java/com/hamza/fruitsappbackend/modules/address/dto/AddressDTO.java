@@ -1,8 +1,9 @@
-package com.hamza.fruitsappbackend.modules.user.dto;
+package com.hamza.fruitsappbackend.modules.address.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.hamza.fruitsappbackend.validation.markers.OnCreate;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -39,9 +40,26 @@ public class AddressDTO {
 
     private boolean isDefault;
 
+    @NotBlank(message = "Phone number is required", groups = OnCreate.class)
+    @Pattern(regexp = "^\\+?[0-9]*$", message = "Phone number is invalid")
+    @Size(min = 10, max = 15, message = "Phone number should be between 10 and 15 characters")
+    private String phoneNumber;
+
+    @NotBlank(message = "Zip code is required", groups = OnCreate.class)
+    @Size(min = 5, max = 10, message = "Zip code should be between 5 and 10 characters")
+    private String zipCode;
+
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime createdAt;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime updatedAt;
+
+    public boolean isDefault() {
+        return isDefault;
+    }
+
+    public void setDefault(boolean aDefault) {
+        isDefault = aDefault;
+    }
 }
