@@ -15,7 +15,7 @@ public interface AddressService {
 
     List<AddressDTO> getAllAddresses(String token);
 
-    AddressDTO updateAddress(Long addressId, AddressDTO addressDTO, String token);
+    AddressDTO updateAddressByUserTokenAndAddressId(Long addressId, AddressDTO addressDTO, String token);
 
     void deleteAddressById(Long id, String token);
 

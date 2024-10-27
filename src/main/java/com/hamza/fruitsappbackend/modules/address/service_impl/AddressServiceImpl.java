@@ -1,5 +1,6 @@
 package com.hamza.fruitsappbackend.modules.address.service_impl;
 
+import com.hamza.fruitsappbackend.exception.global.BadRequestException;
 import com.hamza.fruitsappbackend.modules.address.dto.AddressDTO;
 import com.hamza.fruitsappbackend.modules.address.entity.Address;
 import com.hamza.fruitsappbackend.modules.user.entity.User;
@@ -14,7 +15,6 @@ import jakarta.transaction.Transactional;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -78,7 +78,7 @@ public class AddressServiceImpl implements AddressService {
 
     @Override
     @Transactional
-    public AddressDTO updateAddress(Long addressId, AddressDTO addressDTO, String token) {
+    public AddressDTO updateAddressByUserTokenAndAddressId(Long addressId, AddressDTO addressDTO, String token) {
         Long userId = getUserIdFromToken(token);
         authorizationUtils.checkUserOrAdminRole(token, userId);
 
@@ -160,7 +160,6 @@ public class AddressServiceImpl implements AddressService {
         Address updatedAddress = convertToEntity(addressDTO);
         updatedAddress.setId(existingAddress.getId());
         updatedAddress.setCreatedAt(existingAddress.getCreatedAt());
-
         handleDefaultAddressLogic(userId, updatedAddress);
 
         return convertToDto(addressRepository.save(updatedAddress));
@@ -206,7 +205,9 @@ public class AddressServiceImpl implements AddressService {
 
         List<Address> userAddresses = addressRepository.findByUserId(userId);
 
-
+        if(userAddresses.size() == 1 && !address.isDefault()){
+             throw new BadRequestException("You can't change default address if you have only one address.");
+        }
         if (userAddresses.isEmpty()) {
             address.setDefault(true);
         } else if (address.isDefault()) {

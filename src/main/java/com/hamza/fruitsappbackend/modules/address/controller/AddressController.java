@@ -49,8 +49,8 @@ public class AddressController {
     }
 
     @PutMapping("/update-by-id/{addressId}")
-    public ResponseEntity<AddressDTO> updateAddress(@RequestHeader("Authorization") String token, @PathVariable Long addressId, @RequestBody @Valid AddressDTO addressDTO) {
-        AddressDTO updatedAddress = addressService.updateAddress(addressId, addressDTO, token);
+    public ResponseEntity<AddressDTO> updateAddressByUserTokenAndAddressId(@RequestHeader("Authorization") String token, @PathVariable Long addressId, @RequestBody @Valid AddressDTO addressDTO) {
+        AddressDTO updatedAddress = addressService.updateAddressByUserTokenAndAddressId(addressId, addressDTO, token);
         return ResponseEntity.ok(updatedAddress);
     }
 
