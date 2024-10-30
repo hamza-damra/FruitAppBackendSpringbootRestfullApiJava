@@ -3,6 +3,7 @@ package com.hamza.fruitsappbackend.modules.cart.service_impl;
 import com.hamza.fruitsappbackend.constant.CartStatus;
 import com.hamza.fruitsappbackend.exception.global.BadRequestException;
 import com.hamza.fruitsappbackend.modules.cart.dto.CartItemDTO;
+import com.hamza.fruitsappbackend.modules.cart.dto.CartItemResponseDto;
 import com.hamza.fruitsappbackend.modules.cart.dto.CartResponseDto;
 import com.hamza.fruitsappbackend.modules.cart.entity.Cart;
 import com.hamza.fruitsappbackend.modules.cart.entity.CartItem;
@@ -14,6 +15,7 @@ import com.hamza.fruitsappbackend.modules.cart.repository.CartItemRepository;
 import com.hamza.fruitsappbackend.modules.cart.repository.CartRepository;
 import com.hamza.fruitsappbackend.modules.product.repository.ProductRepository;
 import com.hamza.fruitsappbackend.modules.cart.service.CartItemService;
+import com.hamza.fruitsappbackend.modules.user.repository.UserRepository;
 import com.hamza.fruitsappbackend.utils.AuthorizationUtils;
 import jakarta.transaction.Transactional;
 import org.modelmapper.ModelMapper;
@@ -35,16 +37,18 @@ public class CartItemServiceImpl implements CartItemService {
     private final ProductRepository productRepository;
     private final ModelMapper modelMapper;
     private final AuthorizationUtils authorizationUtils;
+    private final UserRepository userRepository;
 
     @Autowired
     public CartItemServiceImpl(CartItemRepository cartItemRepository, CartRepository cartRepository,
                                ProductRepository productRepository, ModelMapper modelMapper,
-                               AuthorizationUtils authorizationUtils) {
+                               AuthorizationUtils authorizationUtils, UserRepository userRepository) {
         this.cartItemRepository = cartItemRepository;
         this.cartRepository = cartRepository;
         this.productRepository = productRepository;
         this.modelMapper = modelMapper;
         this.authorizationUtils = authorizationUtils;
+        this.userRepository = userRepository;
     }
 
     @Override
@@ -127,7 +131,7 @@ public class CartItemServiceImpl implements CartItemService {
             @CacheEvict(value = "allProducts", allEntries = true)
     })
     @Transactional
-    public void deleteCartItemByProductId(Long productId, String token) {
+    public CartItemResponseDto deleteCartItemByProductId(Long productId, String token) {
         Long userId = getUserIdAndCheckRole(token);
 
         Cart cart = cartRepository.findAllByUserIdAndStatus(userId, CartStatus.ACTIVE)
@@ -141,27 +145,42 @@ public class CartItemServiceImpl implements CartItemService {
         cart.getCartItems().remove(cartItem);
         cartItemRepository.delete(cartItem);
         updateCartTotal(cart);
+
+        List<CartItemDTO> cartItemDTOS = cart.getCartItems().stream().map(this::convertToDTO).toList();
+
+        return new CartItemResponseDto(cart.getCartItems().size(), cartItemDTOS);
     }
 
     @Override
     public CartResponseDto getCartItemsByUser(String token) {
         Long userId = getUserIdAndCheckRole(token);
 
-        // Ensure only one active cart is fetched
+        // Attempt to fetch an active cart for the user
         Cart cart = cartRepository.findAllByUserIdAndStatus(userId, CartStatus.ACTIVE)
                 .stream()
                 .findFirst()
-                .orElseThrow(() -> new CartNotFoundException("userId", userId.toString()));
+                .orElseGet(() -> {
+                    // If no active cart is found, create a new one
+                    Cart newCart = new Cart();
+                    newCart.setUser(userRepository.getUserById(userId));
+                    newCart.setStatus(CartStatus.ACTIVE);
+                    newCart.setTotalPrice(BigDecimal.ZERO);
+                    newCart.setTotalQuantity(0);
+                    return cartRepository.save(newCart);
+                });
 
+        // Sort the cart items by creation date in descending order
         List<CartItem> sortedCartItems = cart.getCartItems().stream()
                 .sorted(Comparator.comparing(CartItem::getCreatedAt).reversed())
                 .toList();
 
+        // Calculate the total price for the cart items
         BigDecimal totalPrice = sortedCartItems.stream()
                 .map(CartItem::getPrice)
                 .reduce(BigDecimal::add)
                 .orElse(BigDecimal.ZERO);
 
+        // Return the cart response
         return new CartResponseDto(
                 totalPrice,
                 sortedCartItems.size(),
@@ -170,6 +189,7 @@ public class CartItemServiceImpl implements CartItemService {
                         .collect(Collectors.toList())
         );
     }
+
 
     @Override
     @Caching(evict = {

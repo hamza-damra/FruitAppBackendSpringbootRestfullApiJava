@@ -1,6 +1,7 @@
 package com.hamza.fruitsappbackend.modules.cart.controller;
 
 import com.hamza.fruitsappbackend.modules.cart.dto.CartItemDTO;
+import com.hamza.fruitsappbackend.modules.cart.dto.CartItemResponseDto;
 import com.hamza.fruitsappbackend.modules.cart.dto.CartResponseDto;
 import com.hamza.fruitsappbackend.modules.cart.service.CartItemService;
 import com.hamza.fruitsappbackend.modules.cart.service.CartService;
@@ -67,10 +68,10 @@ public class CartController {
 
     @DeleteMapping("/{productId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public ResponseEntity<Void> removeItemFromCart(@PathVariable Long productId,
-                                                   @RequestHeader("Authorization") String token) {
-        cartItemService.deleteCartItemByProductId(productId, token);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<CartItemResponseDto> removeItemFromCart(@PathVariable Long productId,
+                                                                  @RequestHeader("Authorization") String token) {
+       CartItemResponseDto cartItemResponseDto =  cartItemService.deleteCartItemByProductId(productId, token);
+        return ResponseEntity.ok(cartItemResponseDto);
     }
 
     @DeleteMapping("/all")
